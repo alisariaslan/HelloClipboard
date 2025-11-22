@@ -29,7 +29,7 @@ namespace HelloClipboard
 			}
 			else
 			{
-				SetupTextMode(item.Text);
+				SetupTextMode(item.Content);
 			}
 		}
 

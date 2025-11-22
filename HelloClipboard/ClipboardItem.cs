@@ -13,7 +13,7 @@ namespace HelloClipboard
 	{
 		public ClipboardItemType ItemType { get; set; }
 		public string Title { get; set; }
-		public string Text { get; set; }
+		public string Content { get; set; }
 		public Image ImageContent { get; set; }
 		public DateTime Timestamp { get; set; }
 		public int Index { get; set; }
@@ -21,7 +21,7 @@ namespace HelloClipboard
 		{
 			Index = index;
 			ItemType = type;
-			Text = text;
+			Content = text;
 			Timestamp = DateTime.Now;
 			Title = title;
 			ImageContent = image;

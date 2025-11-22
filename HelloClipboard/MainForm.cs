@@ -67,7 +67,7 @@ namespace HelloClipboard
 			MessagesListBox.Items.Clear();
 			var cache = _trayApplicationContext.GetClipboardCache();
 			foreach (var item in cache)
-				MessagesListBox.Items.Add(item.Text);
+				MessagesListBox.Items.Add(item.Content);
 		}
 
 		public void RemoveItem(ClipboardItem item)
@@ -242,17 +242,18 @@ namespace HelloClipboard
 
 			CloseDetailFormIfAvaible();
 
-			List<string> selectedTexts = new List<string>();
-
-			foreach (var item in MessagesListBox.SelectedItems)
-			{
-				if (item is ClipboardItem clipboardItem)
-					selectedTexts.Add(clipboardItem.Text);
-			}
+			ClipboardItem selectedItem = MessagesListBox.SelectedItem as ClipboardItem;
 
 			_trayApplicationContext.SuppressClipboardEvents(true);
 
-			Clipboard.SetText(string.Join(Environment.NewLine, selectedTexts));
+			if (selectedItem.ItemType == ClipboardItemType.Image)
+			{
+				Clipboard.SetImage(selectedItem.ImageContent);
+			}
+			else
+			{
+				Clipboard.SetText(string.Join(Environment.NewLine, selectedItem.Content));
+			}
 
 			Task.Delay(100).ContinueWith(_ =>
 			{
@@ -487,7 +488,7 @@ namespace HelloClipboard
 				var lowerSearch = searchTerm.ToLowerInvariant();
 				foreach (var item in _trayApplicationContext.GetClipboardCache())
 				{
-					if (item.Text != null && item.Text.ToLowerInvariant().Contains(lowerSearch))
+					if (item.Content != null && item.Content.ToLowerInvariant().Contains(lowerSearch))
 					{
 						MessagesListBox.Items.Add(item); // item.Title yerine item'ın kendisi
 					}

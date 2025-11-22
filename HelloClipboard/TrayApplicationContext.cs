@@ -152,7 +152,7 @@ namespace HelloClipboard
 
 			if (SettingsLoader.Current.PreventClipboardDuplication && image == null)
 			{
-				var existingItems = _clipboardCache.Where(cacheItem => cacheItem.Text == content).ToList();
+				var existingItems = _clipboardCache.Where(cacheItem => cacheItem.Content == content).ToList();
 
 				if (existingItems.Any())
 				{
