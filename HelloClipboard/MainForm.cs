@@ -165,7 +165,9 @@ namespace HelloClipboard
   <ul>
     <li><strong>Copy</strong> — Copies the selected text to the system clipboard.</li>
     <li><strong>Settings</strong> — Configure basic application options such as starting with Windows and clipboard behavior.</li>
-   
+   <li><strong>Zoom</strong> — While viewing an image or text in the detail window, you can zoom in and out by holding <strong>Ctrl</strong> and using the mouse wheel.</li>
+<li><strong>Pan</strong> — While viewing an image in the detail window, you can move the image by holding the left mouse button and dragging it around the detail window.</li>
+
   </ul>
   <p class='note'>If you experience any issues, please report them on the GitHub repository or contact <a href='mailto:dev@alisariaslan.com'>dev@alisariaslan.com</a>.</p>
   <p>GitHub: <a href='https://github.com/alisariaslan/HelloClipboard' target='_blank'>https://github.com/alisariaslan/HelloClipboard</a></p>
