@@ -1,63 +1,48 @@
-﻿
-using Microsoft.Win32;
-using System;
-using System.Net.Http;
+﻿using System;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace HelloClipboard
 {
 	public class MainFormViewModel : IDisposable
 	{
-		public event Action<string> OnMessage;
-
-
-		private readonly HttpClient _httpClient = new HttpClient();
-	
+		private readonly TrayApplicationContext _trayApplicationContext;
+		private readonly MainForm _mainForm;
 		private bool _isDisposed = false;
 
-		public MainFormViewModel(MainForm mainForm)
+		public MainFormViewModel(MainForm mainForm, TrayApplicationContext trayApplicationContext)
 		{
-		
+			_mainForm = mainForm;
+			_trayApplicationContext = trayApplicationContext;
 		}
 
 		public void LoadSettings()
 		{
 			SettingsLoader.LoadSettings();
-			OnMessage?.Invoke("Settings loaded.");
 		}
 
-
-
-		public void ToggleStartWithWindows(bool newState)
+		public void CopyClicked(ClipboardItem selectedItem)
 		{
-			string appName = Constants.AppName;
-			string exePath = $"\"{Application.ExecutablePath}\"";
-			try
+			_trayApplicationContext.SuppressClipboardEvents(true);
+
+			if (selectedItem.ItemType == ClipboardItemType.Image)
 			{
-				using (RegistryKey key = Registry.CurrentUser.OpenSubKey(
-						   @"Software\Microsoft\Windows\CurrentVersion\Run", writable: true))
-				{
-					if (newState)
-					{
-						key.SetValue(appName, exePath);
-					}
-					else
-					{
-						if (key.GetValue(appName) != null)
-							key.DeleteValue(appName);
-					}
-				}
+				Clipboard.SetImage(selectedItem.ImageContent);
 			}
-			catch (Exception ex)
+			else
 			{
-				MessageBox.Show($"Failed to update Windows startup.\nError: {ex.Message}",
-								"Startup Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				Clipboard.SetText(string.Join(Environment.NewLine, selectedItem.Content));
 			}
+
+			Task.Delay(100).ContinueWith(_ =>
+			{
+				_trayApplicationContext.SuppressClipboardEvents(false);
+			});
 		}
+
 
 		public void Dispose()
 		{
-			_httpClient.Dispose();
 			_isDisposed = true;
 		}
 	}

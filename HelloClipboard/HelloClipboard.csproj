@@ -133,6 +133,9 @@
       <DependentUpon>ClipDetail.cs</DependentUpon>
     </Compile>
     <Compile Include="Constants.cs" />
+    <Compile Include="Html\AboutHtml.cs" />
+    <Compile Include="Html\HelpHtml.cs" />
+    <Compile Include="Html\UnderDevelopmentHtml.cs" />
     <Compile Include="InfoDialog.cs">
       <SubType>Form</SubType>
     </Compile>

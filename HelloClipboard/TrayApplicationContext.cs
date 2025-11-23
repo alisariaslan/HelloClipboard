@@ -23,33 +23,26 @@ namespace HelloClipboard
 		public TrayApplicationContext()
 		{
 			Instance = this;
-
 			_form = new MainForm(this);
-
 			if (!_form.IsHandleCreated)
 			{
 				var handle = _form.Handle;
 			}
-
 			_trayIcon = new NotifyIcon()
 			{
 				Icon = Properties.Resources.favicon,
 				Visible = true,
 				Text = $"{Constants.AppName}"
 			};
-
 			var trayMenu = new ContextMenuStrip();
 			trayMenu.Items.Add("Show", null, (s, e) => ShowMainWindow());
 			trayMenu.Items.Add("Exit", null, (s, e) => ExitApplication());
 			trayMenu.Items.Add(new ToolStripMenuItem("Reset Window", null, (s, e) => ResetFormPositionAndSize()));
-
 			_trayIcon.ContextMenuStrip = trayMenu;
-
 			_trayIcon.DoubleClick += (s, e) =>
 			{
 				ShowMainWindow();
 			};
-
 			if (SettingsLoader.Current.HideToTray && !TempConfigLoader.Current.AdminPriviligesRequested)
 			{
 				HideMainWindow();
@@ -58,20 +51,16 @@ namespace HelloClipboard
 			{
 				ShowMainWindow();
 			}
-
 			if (SettingsLoader.Current.CheckUpdates)
 			{
 				StartAutoUpdateCheck();
 			}
-
 			if (SettingsLoader.Current.CheckUpdates)
 			{
 				StartAutoUpdateCheck();
 			}
-
 			TempConfigLoader.Current.AdminPriviligesRequested = false;
 			TempConfigLoader.Save();
-
 			ClipboardNotification.ClipboardUpdate += OnClipboardUpdate;
 		}
 
@@ -79,19 +68,17 @@ namespace HelloClipboard
 		{
 			if (_form == null || _form.IsDisposed)
 				return;
-
 			var cfg = TempConfigLoader.Current;
 			cfg.MainFormWidth = -1;
 			cfg.MainFormHeight = -1;
 			cfg.MainFormX = -1;
 			cfg.MainFormY = -1;
 			TempConfigLoader.Save();
-
 			HideMainWindow();
 			ShowMainWindow();
-
 			_form.ResetFormPositionAndSize();
 		}
+
 		#region CLIPBOARD HANDLING
 
 		public void SuppressClipboardEvents(bool value)
@@ -162,13 +149,13 @@ namespace HelloClipboard
 						_clipboardCache.Remove(i);
 						if (!_form.IsDisposed)
 						{
-							_form.RemoveItem(i);
+							_form.MessageRemoveItem(i);
 						}
 					}
 					_clipboardCache.Add(itemToKeep);
 					if (!_form.IsDisposed)
 					{
-						_form.MessageWriteLine(itemToKeep);
+						_form.MessageAdd(itemToKeep);
 					}
 					return;
 				}
@@ -186,15 +173,13 @@ namespace HelloClipboard
 			ClipboardItemType type = image != null ? ClipboardItemType.Image : ClipboardItemType.Text;
 			var item = new ClipboardItem(_clipboardCache.Count,type, content, cleanedContent, image);
 			_clipboardCache.Add(item);
-
 			if (!_form.IsDisposed)
 			{
-				_form.MessageWriteLine(item);
+				_form.MessageAdd(item);
 			}
-
 			if (_clipboardCache.Count > SettingsLoader.Current.MaxHistoryCount)
 			{
-				_form.RemoveAt(0);
+				_form.MessageRemoveAt(0);
 				_clipboardCache.RemoveAt(0);
 			}
 		}
@@ -211,25 +196,21 @@ namespace HelloClipboard
 			if (_updateChecksStarted)
 				return;
 			_updateChecksStarted = true;
-
 			while (SettingsLoader.Current.CheckUpdates)
 			{
 				try
 				{
 					var now = DateTime.UtcNow;
 					var last = TempConfigLoader.Current.LastUpdateCheck;
-
 					if (last == default || (now - last) >= Constants.applicationUpdateInterval)
 					{
 						await DoUpdateCheck();
 						TempConfigLoader.Current.LastUpdateCheck = DateTime.UtcNow;
 						TempConfigLoader.Save();
 					}
-
 					var remaining = Constants.applicationUpdateInterval - (now - last);
 					if (remaining < TimeSpan.Zero)
 						remaining = TimeSpan.Zero;
-
 					await Task.Delay(remaining);
 				}
 				catch
@@ -242,17 +223,14 @@ namespace HelloClipboard
 		private async Task DoUpdateCheck()
 		{
 			var update = await UpdateService.CheckForUpdateAsync(Application.ProductVersion, true);
-
 			if (update != null)
 			{
 				if (!_form.IsDisposed)
 					_form.UpdateCheckUpdateNowBtnText("Update Now");
-
 				_trayIcon.BalloonTipTitle = $"{Constants.AppName} Update";
 				_trayIcon.BalloonTipText = "A new version is available. Click \"Update Now\".";
 				_trayIcon.BalloonTipIcon = ToolTipIcon.Info;
 				_trayIcon.ShowBalloonTip(5000);
-
 				_trayIcon.BalloonTipClicked -= TrayIcon_BalloonTipClicked;
 				_trayIcon.BalloonTipClicked += TrayIcon_BalloonTipClicked;
 			}
@@ -276,7 +254,6 @@ namespace HelloClipboard
 				_form.Invoke(new MethodInvoker(ShowMainWindow));
 				return;
 			}
-
 			if (_form.IsDisposed)
 			{
 				_form = new MainForm(this);
@@ -285,14 +262,11 @@ namespace HelloClipboard
 					var handle = _form.Handle;
 				}
 			}
-
 			_form.Show();
 			_form.WindowState = FormWindowState.Normal;
 			_form.ShowInTaskbar = true;
-
 			_form.Activate();
 			_form.BringToFront();
-
 			_form.FocusSearchBox();
 		}
 

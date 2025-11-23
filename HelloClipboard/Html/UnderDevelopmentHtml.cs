@@ -1,0 +1,38 @@
+﻿namespace HelloClipboard.Html
+{
+	internal class UnderDevelopmentHtml
+	{
+		public static string GetTitle()
+		{
+			return "Under Development - HelloClipboard";
+		}
+		public static string GetHtml(string featureName)
+		{
+			string html = $@"
+<!doctype html>
+<html>
+<head>
+  <meta charset='utf-8'/>
+  <title>{featureName}</title>
+  <style>
+    body {{ font-family: Segoe UI, Tahoma, Arial; padding: 16px; color:#222; }}
+    h1 {{ margin-top:0; font-size: 20px; }}
+    p {{ margin-top:12px; color:#555; }}
+    a {{ color:#1a73e8; text-decoration:none; }}
+    a:hover {{ text-decoration:underline; }}
+    .footer {{ margin-top:20px; font-size:90%; color:#666; }}
+  </style>
+</head>
+<body>
+  <h1>{featureName}</h1>
+  <p>This feature is currently under development and will be available in a future update.</p>
+  <div class='footer'>
+    Contact: <a href='mailto:dev@alisariaslan.com'>dev@alisariaslan.com</a><br/><br/>
+    GitHub: <a href='https://github.com/alisariaslan/HelloClipboard' target='_blank'>https://github.com/alisariaslan/HelloClipboard</a>
+  </div>
+</body>
+</html>";
+			return html;
+		}
+	}
+}

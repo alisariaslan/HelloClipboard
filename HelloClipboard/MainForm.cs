@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using HelloClipboard.Html;
+using System;
 using System.ComponentModel;
 using System.Drawing;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace HelloClipboard
@@ -21,14 +20,14 @@ namespace HelloClipboard
 			this.Text = Application.ProductName + " v" + Application.ProductVersion;
 
 			_trayApplicationContext = trayApplicationContext;
-			_viewModel = new MainFormViewModel(this);
+			_viewModel = new MainFormViewModel(this,trayApplicationContext);
 
 			_viewModel.LoadSettings();
 
 			MessagesListBox.DisplayMember = "Title";
 		}
 
-		public void MessageWriteLine(ClipboardItem item)
+		public void MessageAdd(ClipboardItem item)
 		{
 			MessagesListBox.Items.Add(item);
 			int lastIndex = MessagesListBox.Items.Count - 1;
@@ -38,7 +37,7 @@ namespace HelloClipboard
 			}
 		}
 
-		public void RemoveAt(int index)
+		public void MessageRemoveAt(int index)
 		{
 			if (index < 0 || index >= MessagesListBox.Items.Count)
 				return;
@@ -52,31 +51,32 @@ namespace HelloClipboard
 			}
 		}
 
-		private void MainForm_Shown(object sender, EventArgs e)
-		{
-			MessagesListBox.Items.Clear();
-			var cbCache = _trayApplicationContext.GetClipboardCache();
-			foreach (var item in cbCache)
-			{
-				MessageWriteLine(item);
-			}
-		}
-
-		public void RefreshCacheView()
-		{
-			MessagesListBox.Items.Clear();
-			var cache = _trayApplicationContext.GetClipboardCache();
-			foreach (var item in cache)
-				MessagesListBox.Items.Add(item.Content);
-		}
-
-		public void RemoveItem(ClipboardItem item)
+		public void MessageRemoveItem(ClipboardItem item)
 		{
 			if (MessagesListBox.Items.Contains(item))
 			{
 				MessagesListBox.Items.Remove(item);
 			}
 		}
+
+		private void MainForm_Shown(object sender, EventArgs e)
+		{
+			MessagesListBox.Items.Clear();
+			var cbCache = _trayApplicationContext.GetClipboardCache();
+			foreach (var item in cbCache)
+			{
+				MessageAdd(item);
+			}
+		}
+
+		//public void RefreshCacheView()
+		//{
+		//	MessagesListBox.Items.Clear();
+		//	var cache = _trayApplicationContext.GetClipboardCache();
+		//	foreach (var item in cache)
+		//		MessagesListBox.Items.Add(item.Content);
+		//}
+
 
 		public void UpdateCheckUpdateNowBtnText(string newString)
 		{
@@ -85,36 +85,7 @@ namespace HelloClipboard
 
 		private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-
-			string aboutHtml = $@"
-<!doctype html>
-<html>
-<head>
-  <meta charset='utf-8'/>
-  <title>About - HelloClipboard</title>
-  <style>
-    body {{ font-family: Segoe UI, Tahoma, Arial; padding: 16px; color:#222; }}
-    h1 {{ margin-top:0; }}
-    a {{ color:#1a73e8; text-decoration:none; }}
-    a:hover {{ text-decoration:underline; }}
-    .meta {{ margin-top:12px; color:#555; }}
-    .footer {{ margin-top:20px; font-size:90%; color:#666; }}
-  </style>
-</head>
-<body>
-  <h1>HelloClipboard</h1>
-  <div class='meta'>Version: {Application.ProductVersion}</div>
-  <p>A modern, lightweight clipboard sharing tool for Windows.</p>
-  <p>Synchronize your clipboard securely across platforms with ease.</p>
-  <p>Developed by <strong>Ali SARIASLAN</strong></p>
-  <p>Contact: <a href='mailto:dev@alisariaslan.com'>dev@alisariaslan.com</a></p>
-  <div class='footer'>
-    GitHub: <a href='https://github.com/alisariaslan/HelloClipboard' target='_blank'>https://github.com/alisariaslan/HelloClipboard</a>
-  </div>
-</body>
-</html>";
-
-			using (var dlg = new InfoDialog("About - HelloClipboard", aboutHtml))
+			using (var dlg = new InfoDialog(AboutHtml.GetTitle(), AboutHtml.GetHtml()))
 			{
 				dlg.ShowDialog(this);
 			}
@@ -122,35 +93,7 @@ namespace HelloClipboard
 
 		private void helpToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			string helpHtml = @"
-<!doctype html>
-<html>
-<head>
-  <meta charset='utf-8'/>
-  <title>Help - HelloClipboard</title>
-  <style>
-    body { font-family: Segoe UI, Tahoma, Arial; padding:16px; color:#222; }
-    h1 { margin-top:0; }
-    ul { line-height:1.6; }
-    a { color:#1a73e8; text-decoration:none; }
-    .note { margin-top:12px; color:#555; }
-  </style>
-</head>
-<body>
-  <h1>Help - HelloClipboard</h1>
-  <ul>
-    <li><strong>Copy</strong> — Copies the selected text to the system clipboard.</li>
-    <li><strong>Settings</strong> — Configure basic application options such as starting with Windows and clipboard behavior.</li>
-   <li><strong>Zoom</strong> — While viewing an image or text in the detail window, you can zoom in and out by holding <strong>Ctrl</strong> and using the mouse wheel.</li>
-<li><strong>Pan</strong> — While viewing an image in the detail window, you can move the image by holding the left mouse button and dragging it around the detail window.</li>
-
-  </ul>
-  <p class='note'>If you experience any issues, please report them on the GitHub repository or contact <a href='mailto:dev@alisariaslan.com'>dev@alisariaslan.com</a>.</p>
-  <p>GitHub: <a href='https://github.com/alisariaslan/HelloClipboard' target='_blank'>https://github.com/alisariaslan/HelloClipboard</a></p>
-</body>
-</html>";
-
-			using (var dlg = new InfoDialog("Help - HelloClipboard", helpHtml))
+			using (var dlg = new InfoDialog(HelpHtml.GetTitle(), HelpHtml.GetHtml()))
 			{
 				dlg.ShowDialog(this);
 			}
@@ -158,32 +101,7 @@ namespace HelloClipboard
 
 		private void ShowUnderDevelopmentDialog(string featureName)
 		{
-			string html = $@"
-<!doctype html>
-<html>
-<head>
-  <meta charset='utf-8'/>
-  <title>{featureName}</title>
-  <style>
-    body {{ font-family: Segoe UI, Tahoma, Arial; padding: 16px; color:#222; }}
-    h1 {{ margin-top:0; font-size: 20px; }}
-    p {{ margin-top:12px; color:#555; }}
-    a {{ color:#1a73e8; text-decoration:none; }}
-    a:hover {{ text-decoration:underline; }}
-    .footer {{ margin-top:20px; font-size:90%; color:#666; }}
-  </style>
-</head>
-<body>
-  <h1>{featureName}</h1>
-  <p>This feature is currently under development and will be available in a future update.</p>
-  <div class='footer'>
-    Contact: <a href='mailto:dev@alisariaslan.com'>dev@alisariaslan.com</a><br/><br/>
-    GitHub: <a href='https://github.com/alisariaslan/HelloClipboard' target='_blank'>https://github.com/alisariaslan/HelloClipboard</a>
-  </div>
-</body>
-</html>";
-
-			using (var dlg = new InfoDialog(featureName, html))
+			using (var dlg = new InfoDialog(UnderDevelopmentHtml.GetTitle(), UnderDevelopmentHtml.GetHtml(featureName)))
 			{
 				dlg.ShowDialog(this);
 			}
@@ -210,57 +128,30 @@ namespace HelloClipboard
 
 		public void copyToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			_copyToolStripMenuItem_Click(sender,  e);
-		}
-
-		private void _copyToolStripMenuItem_Click(object sender, EventArgs e)
-		{
 			if (MessagesListBox.SelectedIndices.Count == 0)
 				return;
-
 			CloseDetailFormIfAvaible();
-
 			ClipboardItem selectedItem = MessagesListBox.SelectedItem as ClipboardItem;
-
-			_trayApplicationContext.SuppressClipboardEvents(true);
-
-			if (selectedItem.ItemType == ClipboardItemType.Image)
-			{
-				Clipboard.SetImage(selectedItem.ImageContent);
-			}
-			else
-			{
-				Clipboard.SetText(string.Join(Environment.NewLine, selectedItem.Content));
-			}
-
-			Task.Delay(100).ContinueWith(_ =>
-			{
-				_trayApplicationContext.SuppressClipboardEvents(false);
-			});
+			_viewModel.CopyClicked(selectedItem);
 		}
 
 		private void contextMenuStrip1_Opening(object sender, CancelEventArgs e)
 		{
 			var pos = MessagesListBox.PointToClient(Cursor.Position);
 			int index = MessagesListBox.IndexFromPoint(pos);
-
 			if (index < 0)
 			{
 				e.Cancel = true;
 				return;
 			}
 			MessagesListBox.SelectedIndex = index;
-
 			ClipboardItem selectedItem = MessagesListBox.SelectedItem as ClipboardItem;
-
 			if (selectedItem == null)
 			{
 				e.Cancel = true;
 				return;
 			}
-
 			CloseDetailFormIfAvaible();
-
 			_openDetailForm = new ClipDetail(this, selectedItem);
 			PositionDetailForm(_openDetailForm);
 			_openDetailForm.Show(this);
@@ -269,16 +160,13 @@ namespace HelloClipboard
 		private void MainForm_Load(object sender, EventArgs e)
 		{
 			var cfg = TempConfigLoader.Current;
-
 			if (cfg.MainFormWidth > 0 && cfg.MainFormHeight > 0)
 				this.Size = new Size(cfg.MainFormWidth, cfg.MainFormHeight);
-
 			if (cfg.MainFormX >= 0 && cfg.MainFormY >= 0)
 			{
 				this.StartPosition = FormStartPosition.Manual;
 				this.Location = new Point(cfg.MainFormX, cfg.MainFormY);
 			}
-
 			_isLoaded = true;
 		}
 
@@ -307,7 +195,6 @@ namespace HelloClipboard
 		private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			CloseDetailFormIfAvaible();
-
 			_SaveFormPosition();
 		}
 
@@ -322,10 +209,8 @@ namespace HelloClipboard
 			int snapDistance = 20; 
 			int newX = this.Left;
 			int newY = this.Top;
-
 			bool snappedX = false;
 			bool snappedY = false;
-
 			if (Math.Abs(this.Right - screen.Right) < snapDistance)
 			{
 				newX = screen.Right - this.Width;
@@ -336,7 +221,6 @@ namespace HelloClipboard
 				newX = screen.Left;
 				snappedX = true;
 			}
-
 			if (Math.Abs(this.Bottom - screen.Bottom) < snapDistance)
 			{
 				newY = screen.Bottom - this.Height;
@@ -347,7 +231,6 @@ namespace HelloClipboard
 				newY = screen.Top;
 				snappedY = true;
 			}
-
 			if (snappedX || snappedY)
 			{
 				this.Location = new Point(newX, newY);
@@ -370,22 +253,15 @@ namespace HelloClipboard
 			}
 		}
 
-
 		private void MessagesListBox_MouseClick(object sender, MouseEventArgs e)
 		{
 			if (e.Button != MouseButtons.Left) return;
-
 			int index = MessagesListBox.IndexFromPoint(e.Location);
 			if (index < 0) return;
-
 			MessagesListBox.SelectedIndex = index;
-
 			ClipboardItem selectedItem = MessagesListBox.SelectedItem as ClipboardItem;
-
 			if (selectedItem == null) return; 
-
 			CloseDetailFormIfAvaible();
-
 			_openDetailForm = new ClipDetail(this, selectedItem);
 			PositionDetailForm(_openDetailForm);
 			_openDetailForm.Show(this);
@@ -395,10 +271,8 @@ namespace HelloClipboard
 		{
 			var mainRect = this.Bounds;
 			var screen = Screen.FromControl(this).WorkingArea;
-
-			int padding = 10;
+			int padding = 1;
 			Point location = new Point();
-
 			if (mainRect.Right + detailForm.Width + padding <= screen.Right)
 			{
 				location = new Point(mainRect.Right + padding, mainRect.Top);
@@ -422,12 +296,11 @@ namespace HelloClipboard
 					Math.Max(screen.Top, screen.Top + (screen.Height - detailForm.Height) / 2)
 				);
 			}
-
 			detailForm.StartPosition = FormStartPosition.Manual;
 			detailForm.Location = location;
 		}
 
-		private void androidSyncToolStripMenuItem_Click(object sender, EventArgs e)
+		private void phoneSyncToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			ShowUnderDevelopmentDialog("Phone Sync");
 		}
@@ -453,12 +326,11 @@ namespace HelloClipboard
 		{
 			MessagesListBox.BeginUpdate();
 			MessagesListBox.Items.Clear();
-
 			if (string.IsNullOrWhiteSpace(searchTerm))
 			{
 				foreach (var item in _trayApplicationContext.GetClipboardCache())
 				{
-					MessagesListBox.Items.Add(item); // item.Title yerine item'ın kendisi
+					MessagesListBox.Items.Add(item);
 				}
 			}
 			else
@@ -468,11 +340,10 @@ namespace HelloClipboard
 				{
 					if (item.Content != null && item.Content.ToLowerInvariant().Contains(lowerSearch))
 					{
-						MessagesListBox.Items.Add(item); // item.Title yerine item'ın kendisi
+						MessagesListBox.Items.Add(item);
 					}
 				}
 			}
-
 			MessagesListBox.EndUpdate();
 		}
 
@@ -486,7 +357,7 @@ namespace HelloClipboard
 			ShowUnderDevelopmentDialog("Save to File");
 		}
 
-		private async void checkUpdateToolStripMenuItem_Click_1(object sender, EventArgs e)
+		private async void checkUpdateToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			checkUpdateToolStripMenuItem.Enabled = false;
 			string currentVersion = Application.ProductVersion;

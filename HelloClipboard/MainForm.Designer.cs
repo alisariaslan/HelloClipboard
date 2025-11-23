@@ -142,14 +142,14 @@
 			this.checkUpdateToolStripMenuItem.Name = "checkUpdateToolStripMenuItem";
 			this.checkUpdateToolStripMenuItem.Size = new System.Drawing.Size(118, 25);
 			this.checkUpdateToolStripMenuItem.Text = "Check Update";
-			this.checkUpdateToolStripMenuItem.Click += new System.EventHandler(this.checkUpdateToolStripMenuItem_Click_1);
+			this.checkUpdateToolStripMenuItem.Click += new System.EventHandler(this.checkUpdateToolStripMenuItem_Click);
 			// 
 			// androidSyncToolStripMenuItem
 			// 
 			this.androidSyncToolStripMenuItem.Name = "androidSyncToolStripMenuItem";
 			this.androidSyncToolStripMenuItem.Size = new System.Drawing.Size(103, 25);
 			this.androidSyncToolStripMenuItem.Text = "Phone Sync";
-			this.androidSyncToolStripMenuItem.Click += new System.EventHandler(this.androidSyncToolStripMenuItem_Click);
+			this.androidSyncToolStripMenuItem.Click += new System.EventHandler(this.phoneSyncToolStripMenuItem_Click);
 			// 
 			// textBox1_search
 			// 
