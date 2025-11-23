@@ -8,11 +8,13 @@ namespace HelloClipboard
 	{
 		private readonly MainForm _mainForm;
 
+		private Image _image;
 		private float _imageZoom = 1.0f;
 		private float _minZoom = 1.0f;
 
 		private Point _dragStart;
 		private bool _isDragging = false;
+		private Point _imageOffset = Point.Empty;
 
 		public ClipDetailImage(MainForm mainForm, ClipboardItem item)
 		{
@@ -21,61 +23,45 @@ namespace HelloClipboard
 			_mainForm = mainForm;
 			this.Text = $"Row {item.Index + 1} Detail - {Constants.AppName}";
 
-			this.MouseWheel += ClipDetail_MouseWheel;
-			panel1.MouseWheel += ClipDetail_MouseWheel;
-			pictureBox1.MouseWheel += ClipDetail_MouseWheel;
+			// Paint olayını bağla
+			panel1.Paint += panel1_Paint;
+
+			panel1.MouseWheel += Panel1_MouseWheel;
+			panel1.MouseDown += Panel1_MouseDown;
+			panel1.MouseMove += Panel1_MouseMove;
+			panel1.MouseUp += Panel1_MouseUp;
+			panel1.Resize += Panel1_Resize;
+
+			SetDoubleBuffered(panel1, true);
 
 			if (item.ItemType == ClipboardItemType.Image)
 				SetupImageMode(item.ImageContent);
 		}
 
-		// ---------------- IMAGE MODE ----------------
-		private void SetupImageMode(Image img)
-		{
-			pictureBox1.Visible = true;
-			panel1.Visible = true;
-
-			pictureBox1.Image = img;
-
-			SetDoubleBuffered(panel1, true);
-
-			pictureBox1.MouseDown += PictureBox_MouseDown;
-			pictureBox1.MouseMove += PictureBox_MouseMove;
-			pictureBox1.MouseUp += PictureBox_MouseUp;
-
-			panel1.MouseDown += Panel_MouseDown;
-			panel1.MouseUp += Panel_MouseUp;
-
-			CalculateInitialZoom();
-			ApplyZoom();
-			CenterImage();
-		}
-
-		private void Panel_MouseDown(object sender, MouseEventArgs e)
-		{
-			if (!pictureBox1.Bounds.Contains(e.Location))
-			{
-				_isDragging = true;
-				_dragStart = e.Location;
-				panel1.Cursor = Cursors.Hand;
-			}
-		}
-
-		private void Panel_MouseUp(object sender, MouseEventArgs e)
-		{
-			_isDragging = false;
-			panel1.Cursor = Cursors.Default;
-		}
 
 		private void CalculateInitialZoom()
 		{
-			float zoomX = (float)panel1.Width / pictureBox1.Image.Width;
-			float zoomY = (float)panel1.Height / pictureBox1.Image.Height;
+			if (_image == null) return;
+
+			float zoomX = (float)panel1.ClientSize.Width / _image.Width;
+			float zoomY = (float)panel1.ClientSize.Height / _image.Height;
 
 			_minZoom = Math.Min(zoomX, zoomY);
 			_imageZoom = _minZoom;
+
+			CenterImage();
 		}
 
+
+		private void SetupImageMode(Image img)
+		{
+			_image = img;
+			CalculateInitialZoom();
+			CenterImage();
+			panel1.Invalidate(); // paneli tekrar çiz
+		}
+
+		// ---------------- DOUBLE BUFFER ----------------
 		public static void SetDoubleBuffered(Control c, bool value)
 		{
 			var property = typeof(Control).GetProperty("DoubleBuffered",
@@ -85,108 +71,60 @@ namespace HelloClipboard
 		}
 
 		// ---------------- ZOOM ----------------
-		private void ClipDetail_MouseWheel(object sender, MouseEventArgs e)
+		private void Panel1_MouseWheel(object sender, MouseEventArgs e)
 		{
 			if ((ModifierKeys & Keys.Control) != Keys.Control)
 				return;
 
-			if (pictureBox1.Visible)
-			{
-				if (e.Delta > 0)
-					_imageZoom += 0.1f;
-				else
-					_imageZoom = Math.Max(_minZoom, _imageZoom - 0.1f);
-
-				ApplyZoom();
-
-				if (_imageZoom == _minZoom)
-					CenterImage();
-				else
-					ZoomBasedOnMousePixel(e);
-			}
-		}
-
-		private void ZoomBasedOnMousePixel(MouseEventArgs e)
-		{
-			if (pictureBox1.Image == null) return;
-
-			// Mouse pozisyonu panel scroll ile normalize
-			var mouseX = e.X + panel1.AutoScrollPosition.X;
-			var mouseY = e.Y + panel1.AutoScrollPosition.Y;
+			if (_image == null) return;
 
 			float oldZoom = _imageZoom;
-			float newWidth = pictureBox1.Image.Width * _imageZoom;
-			float newHeight = pictureBox1.Image.Height * _imageZoom;
 
-			pictureBox1.Width = (int)newWidth;
-			pictureBox1.Height = (int)newHeight;
+			if (e.Delta > 0)
+				_imageZoom += 0.1f;
+			else
+				_imageZoom = Math.Max(_minZoom, _imageZoom - 0.1f);
 
-			// Scroll pozisyonunu ayarla, böylece mouse noktası sabit kalır
-			int scrollX = (int)((mouseX / oldZoom) * _imageZoom - e.X);
-			int scrollY = (int)((mouseY / oldZoom) * _imageZoom - e.Y);
+			// Mouse pozisyonunu koruyacak şekilde offseti ayarla
+			float scale = _imageZoom / oldZoom;
+			_imageOffset.X = (int)(e.X - (e.X - _imageOffset.X) * scale);
+			_imageOffset.Y = (int)(e.Y - (e.Y - _imageOffset.Y) * scale);
 
-			panel1.AutoScrollPosition = new Point(scrollX, scrollY);
+			panel1.Invalidate();
 		}
-
-
-		private void ApplyZoom()
-		{
-			if (pictureBox1.Image == null) return;
-
-			pictureBox1.Width = (int)(pictureBox1.Image.Width * _imageZoom);
-			pictureBox1.Height = (int)(pictureBox1.Image.Height * _imageZoom);
-
-			// Scroll her zaman açık kalsın
-			panel1.AutoScroll = true;
-
-			if (_imageZoom <= _minZoom)
-			{
-				CenterImage();
-			}
-		}
-
-
-		private void CenterImage()
-		{
-			pictureBox1.Left = Math.Max((panel1.ClientSize.Width - pictureBox1.Width) / 2, 0);
-			pictureBox1.Top = Math.Max((panel1.ClientSize.Height - pictureBox1.Height) / 2, 0);
-		}
-
 
 		// ---------------- PAN ----------------
-		private void PictureBox_MouseDown(object sender, MouseEventArgs e)
+		private void Panel1_MouseDown(object sender, MouseEventArgs e)
 		{
 			_isDragging = true;
 			_dragStart = e.Location;
-			pictureBox1.Cursor = Cursors.Hand;
+			panel1.Cursor = Cursors.Hand;
 		}
 
-		private void PictureBox_MouseMove(object sender, MouseEventArgs e)
+		private void Panel1_MouseMove(object sender, MouseEventArgs e)
 		{
-			if (_isDragging)
-			{
-				int newX = panel1.HorizontalScroll.Value - (e.X - _dragStart.X);
-				int newY = panel1.VerticalScroll.Value - (e.Y - _dragStart.Y);
-				panel1.AutoScrollPosition = new Point(newX, newY);
+			if (!_isDragging) return;
 
-				panel1.Invalidate();
-				panel1.Update();
-			}
+			_imageOffset.X += e.X - _dragStart.X;
+			_imageOffset.Y += e.Y - _dragStart.Y;
+			_dragStart = e.Location;
+
+			panel1.Invalidate();
 		}
 
-		private void PictureBox_MouseUp(object sender, MouseEventArgs e)
+		private void Panel1_MouseUp(object sender, MouseEventArgs e)
 		{
 			_isDragging = false;
-			pictureBox1.Cursor = Cursors.Default;
+			panel1.Cursor = Cursors.Default;
 		}
 
-	
-		private void panel1_Resize(object sender, EventArgs e)
+		// ---------------- RESIZE ----------------
+		private void Panel1_Resize(object sender, EventArgs e)
 		{
-			if (pictureBox1.Image == null) return;
+			if (_image == null) return;
 
-			float zoomX = (float)panel1.Width / pictureBox1.Image.Width;
-			float zoomY = (float)panel1.Height / pictureBox1.Image.Height;
+			float zoomX = (float)panel1.Width / _image.Width;
+			float zoomY = (float)panel1.Height / _image.Height;
 			float newMinZoom = Math.Min(zoomX, zoomY);
 
 			bool wasAtMinZoom = Math.Abs(_imageZoom - _minZoom) < 0.0001f;
@@ -196,16 +134,38 @@ namespace HelloClipboard
 			if (wasAtMinZoom)
 			{
 				_imageZoom = _minZoom;
-				ApplyZoom();
-			}
-			else
-			{
-				ApplyZoom();
+				CenterImage();
 			}
 
+			panel1.Invalidate();
 		}
 
-		// ---------------- COPY ----------------
+		// ---------------- DRAW IMAGE ----------------
+		private void panel1_Paint(object sender, PaintEventArgs e)
+		{
+			if (_image == null) return;
+
+			e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+
+			int drawWidth = (int)(_image.Width * _imageZoom);
+			int drawHeight = (int)(_image.Height * _imageZoom);
+
+			e.Graphics.Clear(panel1.BackColor);
+			e.Graphics.DrawImage(_image, _imageOffset.X, _imageOffset.Y, drawWidth, drawHeight);
+		}
+
+		// ---------------- CENTER IMAGE ----------------
+		private void CenterImage()
+		{
+			if (_image == null) return;
+
+			int drawWidth = (int)(_image.Width * _imageZoom);
+			int drawHeight = (int)(_image.Height * _imageZoom);
+
+			_imageOffset.X = (panel1.ClientSize.Width - drawWidth) / 2;
+			_imageOffset.Y = (panel1.ClientSize.Height - drawHeight) / 2;
+		}
+
 		private void button1_copy_Click(object sender, EventArgs e)
 		{
 			_mainForm?.copyToolStripMenuItem_Click(sender, e);
