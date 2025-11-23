@@ -55,14 +55,29 @@ namespace HelloClipboard
 			pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
 			pictureBox1.Image = img;
 
+
 			_imageZoom = 1.0f;
 			ApplyPictureZoom();
+			SetDoubleBuffered(pictureBox1, true);
+			SetDoubleBuffered(panel1, true);
 
 			pictureBox1.MouseDown += PictureBox1_MouseDown;
 			pictureBox1.MouseMove += PictureBox1_MouseMove;
 			pictureBox1.MouseUp += PictureBox1_MouseUp;
 		}
 
+		public static void SetDoubleBuffered(Control control, bool value)
+		{
+			// Reflection kullanarak DoubleBuffered özelliğini ayarlar
+			System.Reflection.PropertyInfo propertyInfo = typeof(Control).GetProperty(
+				"DoubleBuffered",
+				System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+			if (propertyInfo != null)
+			{
+				propertyInfo.SetValue(control, value, null);
+			}
+		}
 
 		private void ClipDetail_MouseWheel(object sender, MouseEventArgs e)
 		{
@@ -114,8 +129,20 @@ namespace HelloClipboard
 		{
 			if (_isDragging)
 			{
+				// Resmin yeni konumunu ayarla
 				pictureBox1.Left += e.X - _imageDragStart.X;
 				pictureBox1.Top += e.Y - _imageDragStart.Y;
+
+				// **Eklemeniz Gereken Kısım:**
+				// PictureBox'ı ve muhtemelen onu çevreleyen Panel'i veya Form'u yeniden çizmeye zorla.
+				// Bu, eski kalıntıların temizlenmesine yardımcı olur.
+				pictureBox1.Invalidate();
+				pictureBox1.Update();
+
+				// Eğer PictureBox bir Panel içindeyse (ki kodunuzda öyle görünüyor: panel1) 
+				// hareket sırasında Panel'in de yeniden çizilmesi gerekebilir.
+				panel1.Invalidate();
+				panel1.Update();
 			}
 		}
 
