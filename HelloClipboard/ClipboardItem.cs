@@ -5,6 +5,7 @@ namespace HelloClipboard
 {
 	public enum ClipboardItemType
 	{
+		File,
 		Text,
 		Image,
 	}

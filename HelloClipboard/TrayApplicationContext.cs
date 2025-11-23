@@ -95,17 +95,20 @@ namespace HelloClipboard
 				if (Clipboard.ContainsText())
 				{
 					string text = Clipboard.GetText();
-					AddToCache(text);
+					AddToCache(ClipboardItemType.Text, text);
 				}
 				else if (Clipboard.ContainsFileDropList())
 				{
 					var files = Clipboard.GetFileDropList();
-					AddToCache(string.Join(", ", files.Cast<string>()));
+					foreach (var file in files)
+					{
+						AddToCache(ClipboardItemType.File, file);
+					}
 				}
 				else if (Clipboard.ContainsImage())
 				{
 					var image = Clipboard.GetImage();
-					AddToCache($"[IMAGE {_clipboardCache.Count}]", image);
+					AddToCache(ClipboardItemType.Image, $"[IMAGE {_clipboardCache.Count}]", image);
 				}
 			}
 			catch (Exception ex)
@@ -116,12 +119,12 @@ namespace HelloClipboard
 			}
 		}
 
-		private void AddToCache(string content, Image image = null)
+		private void AddToCache(ClipboardItemType type, string textContent, Image imageContent = null)
 		{
-			if (string.IsNullOrWhiteSpace(content) && image == null)
+			if (string.IsNullOrWhiteSpace(textContent) && imageContent == null)
 				return;
 
-			if (SettingsLoader.Current.PreventClipboardDuplication && image != null)
+			if (SettingsLoader.Current.PreventClipboardDuplication && type == ClipboardItemType.Image)
 			{
 				if (_clipboardCache.Any())
 				{
@@ -129,7 +132,7 @@ namespace HelloClipboard
 
 					if (lastItem.ImageContent != null)
 					{
-						if (ImageAnalizer.AreImagesEqual(image, lastItem.ImageContent))
+						if (ImageAnalizer.AreImagesEqual(imageContent, lastItem.ImageContent))
 						{
 							return;
 						}
@@ -137,9 +140,9 @@ namespace HelloClipboard
 				}
 			}
 
-			if (SettingsLoader.Current.PreventClipboardDuplication && image == null)
+			if (SettingsLoader.Current.PreventClipboardDuplication && type == ClipboardItemType.Text)
 			{
-				var existingItems = _clipboardCache.Where(cacheItem => cacheItem.Content == content).ToList();
+				var existingItems = _clipboardCache.Where(cacheItem => cacheItem.Content == textContent).ToList();
 
 				if (existingItems.Any())
 				{
@@ -161,17 +164,21 @@ namespace HelloClipboard
 				}
 			}
 
-			string cleanedContent = content;
-			if (SettingsLoader.Current.EnableBetterHistoryVisualization)
+			string newTitle = textContent;
+			if (SettingsLoader.Current.EnableBetterHistoryVisualization && type == ClipboardItemType.Text)
 			{
-				string replacedContent = content.Replace('\r', ' ')
+				string replacedContent = textContent.Replace('\r', ' ')
 												.Replace('\n', ' ')
 												.Replace('\t', ' ');
-				cleanedContent = Regex.Replace(replacedContent, @"\s+", " ");
+				newTitle = Regex.Replace(replacedContent, @"\s+", " ");
+			}
+			else if (SettingsLoader.Current.EnableBetterHistoryVisualization && type == ClipboardItemType.File)
+			{
+				newTitle = $"{System.IO.Path.GetFileName(textContent)} -> {textContent}";
 			}
 
-			ClipboardItemType type = image != null ? ClipboardItemType.Image : ClipboardItemType.Text;
-			var item = new ClipboardItem(_clipboardCache.Count,type, content, cleanedContent, image);
+			var item = new ClipboardItem(_clipboardCache.Count, type, textContent, newTitle, imageContent);
+
 			_clipboardCache.Add(item);
 			if (!_form.IsDisposed)
 			{
