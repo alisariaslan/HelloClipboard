@@ -110,21 +110,48 @@ namespace HelloClipboard
 		{
 			if (pictureBox1.Image == null) return;
 
-			float imageX = (float)(e.X - pictureBox1.Left) / _imageZoom;
-			float imageY = (float)(e.Y - pictureBox1.Top) / _imageZoom;
+			// Mouse pozisyonu panel scroll ile normalize
+			var mouseX = e.X + panel1.AutoScrollPosition.X;
+			var mouseY = e.Y + panel1.AutoScrollPosition.Y;
 
-			float newScreenX = imageX * _imageZoom;
-			float newScreenY = imageY * _imageZoom;
+			float oldZoom = _imageZoom;
+			float newWidth = pictureBox1.Image.Width * _imageZoom;
+			float newHeight = pictureBox1.Image.Height * _imageZoom;
 
-			pictureBox1.Left = (int)(e.X - newScreenX);
-			pictureBox1.Top = (int)(e.Y - newScreenY);
+			pictureBox1.Width = (int)newWidth;
+			pictureBox1.Height = (int)newHeight;
+
+			// Scroll pozisyonunu ayarla, böylece mouse noktası sabit kalır
+			int scrollX = (int)((mouseX / oldZoom) * _imageZoom - e.X);
+			int scrollY = (int)((mouseY / oldZoom) * _imageZoom - e.Y);
+
+			panel1.AutoScrollPosition = new Point(scrollX, scrollY);
 		}
+
 
 		private void ApplyZoom()
 		{
+			if (pictureBox1.Image == null) return;
+
 			pictureBox1.Width = (int)(pictureBox1.Image.Width * _imageZoom);
 			pictureBox1.Height = (int)(pictureBox1.Image.Height * _imageZoom);
+
+			// Scroll her zaman açık kalsın
+			panel1.AutoScroll = true;
+
+			if (_imageZoom <= _minZoom)
+			{
+				CenterImage();
+			}
 		}
+
+
+		private void CenterImage()
+		{
+			pictureBox1.Left = Math.Max((panel1.ClientSize.Width - pictureBox1.Width) / 2, 0);
+			pictureBox1.Top = Math.Max((panel1.ClientSize.Height - pictureBox1.Height) / 2, 0);
+		}
+
 
 		// ---------------- PAN ----------------
 		private void PictureBox_MouseDown(object sender, MouseEventArgs e)
@@ -138,8 +165,10 @@ namespace HelloClipboard
 		{
 			if (_isDragging)
 			{
-				pictureBox1.Left += e.X - _dragStart.X;
-				pictureBox1.Top += e.Y - _dragStart.Y;
+				int newX = panel1.HorizontalScroll.Value - (e.X - _dragStart.X);
+				int newY = panel1.VerticalScroll.Value - (e.Y - _dragStart.Y);
+				panel1.AutoScrollPosition = new Point(newX, newY);
+
 				panel1.Invalidate();
 				panel1.Update();
 			}
@@ -151,13 +180,7 @@ namespace HelloClipboard
 			pictureBox1.Cursor = Cursors.Default;
 		}
 
-		// ---------------- CENTER IMAGE ----------------
-		private void CenterImage()
-		{
-			pictureBox1.Left = (panel1.Width - pictureBox1.Width) / 2;
-			pictureBox1.Top = (panel1.Height - pictureBox1.Height) / 2;
-		}
-
+	
 		private void panel1_Resize(object sender, EventArgs e)
 		{
 			if (pictureBox1.Image == null) return;
@@ -174,12 +197,12 @@ namespace HelloClipboard
 			{
 				_imageZoom = _minZoom;
 				ApplyZoom();
-				CenterImage();
 			}
 			else
 			{
 				ApplyZoom();
 			}
+
 		}
 
 		// ---------------- COPY ----------------
