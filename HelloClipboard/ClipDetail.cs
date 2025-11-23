@@ -38,7 +38,6 @@ namespace HelloClipboard
 			richTextBox1.Visible = true;
 			pictureBox1.Visible = false;
 			panel1.Visible = false;
-
 			richTextBox1.WordWrap = false;
 			richTextBox1.ScrollBars = RichTextBoxScrollBars.Both;
 			richTextBox1.Text = text;
@@ -50,17 +49,12 @@ namespace HelloClipboard
 			richTextBox1.Visible = false;
 			pictureBox1.Visible = true;
 			panel1.Visible = true;
-
-			// PictureBox autosize moduna alınır
 			pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
 			pictureBox1.Image = img;
-
-
 			_imageZoom = 1.0f;
 			ApplyPictureZoom();
 			SetDoubleBuffered(pictureBox1, true);
 			SetDoubleBuffered(panel1, true);
-
 			pictureBox1.MouseDown += PictureBox1_MouseDown;
 			pictureBox1.MouseMove += PictureBox1_MouseMove;
 			pictureBox1.MouseUp += PictureBox1_MouseUp;
@@ -68,7 +62,6 @@ namespace HelloClipboard
 
 		public static void SetDoubleBuffered(Control control, bool value)
 		{
-			// Reflection kullanarak DoubleBuffered özelliğini ayarlar
 			System.Reflection.PropertyInfo propertyInfo = typeof(Control).GetProperty(
 				"DoubleBuffered",
 				System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
@@ -83,22 +76,16 @@ namespace HelloClipboard
 		{
 			if ((ModifierKeys & Keys.Control) != Keys.Control)
 				return;
-
-			// TEXT MODE ZOOM
 			if (richTextBox1.Visible)
 			{
 				if (e.Delta > 0) _textZoom += 0.1f;
 				else if (_textZoom > 0.3f) _textZoom -= 0.1f;
-
 				richTextBox1.Font = new Font(richTextBox1.Font.FontFamily, 12 * _textZoom);
 			}
-
-			// IMAGE MODE ZOOM
 			if (pictureBox1.Visible)
 			{
 				if (e.Delta > 0) _imageZoom += 0.1f;
 				else if (_imageZoom > 0.1f) _imageZoom -= 0.1f;
-
 				ApplyPictureZoom(); 
 			}
 		}
@@ -106,12 +93,8 @@ namespace HelloClipboard
 		private void ApplyPictureZoom()
 		{
 			if (pictureBox1.Image == null) return;
-
-			// Resmin orijinal boyutlarını al
 			int originalWidth = pictureBox1.Image.Width;
 			int originalHeight = pictureBox1.Image.Height;
-
-			// Zoom faktörüne göre yeni boyutları hesapla
 			pictureBox1.Width = (int)(originalWidth * _imageZoom);
 			pictureBox1.Height = (int)(originalHeight * _imageZoom);
 		}
@@ -129,18 +112,10 @@ namespace HelloClipboard
 		{
 			if (_isDragging)
 			{
-				// Resmin yeni konumunu ayarla
 				pictureBox1.Left += e.X - _imageDragStart.X;
 				pictureBox1.Top += e.Y - _imageDragStart.Y;
-
-				// **Eklemeniz Gereken Kısım:**
-				// PictureBox'ı ve muhtemelen onu çevreleyen Panel'i veya Form'u yeniden çizmeye zorla.
-				// Bu, eski kalıntıların temizlenmesine yardımcı olur.
 				pictureBox1.Invalidate();
 				pictureBox1.Update();
-
-				// Eğer PictureBox bir Panel içindeyse (ki kodunuzda öyle görünüyor: panel1) 
-				// hareket sırasında Panel'in de yeniden çizilmesi gerekebilir.
 				panel1.Invalidate();
 				panel1.Update();
 			}
