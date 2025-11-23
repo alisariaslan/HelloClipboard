@@ -37,7 +37,6 @@ namespace HelloClipboard
 				SetupImageMode(item.ImageContent);
 		}
 
-
 		private void CalculateInitialZoom()
 		{
 			if (_image == null) return;
@@ -51,13 +50,12 @@ namespace HelloClipboard
 			CenterImage();
 		}
 
-
 		private void SetupImageMode(Image img)
 		{
 			_image = img;
 			CalculateInitialZoom();
 			CenterImage();
-			panel1.Invalidate(); // paneli tekrar çiz
+			panel1.Invalidate();
 		}
 
 		// ---------------- DOUBLE BUFFER ----------------
@@ -74,7 +72,6 @@ namespace HelloClipboard
 		{
 			if (_image == null) return;
 
-			// CTRL ile zoom
 			if ((ModifierKeys & Keys.Control) == Keys.Control)
 			{
 				float oldZoom = _imageZoom;
@@ -100,7 +97,6 @@ namespace HelloClipboard
 				return;
 			}
 
-			// SHIFT ile yatay pan
 			if ((ModifierKeys & Keys.Shift) == Keys.Shift)
 			{
 				int scrollAmount = panel1.ClientSize.Width / 10;
@@ -109,7 +105,6 @@ namespace HelloClipboard
 			}
 			else
 			{
-				// Dikey pan
 				int scrollAmount = panel1.ClientSize.Height / 10;
 				scrollAmount = e.Delta > 0 ? scrollAmount : -scrollAmount;
 				_imageOffset.Y += scrollAmount;
@@ -191,7 +186,6 @@ namespace HelloClipboard
 			int drawWidth = (int)(_image.Width * _imageZoom);
 			int drawHeight = (int)(_image.Height * _imageZoom);
 
-			// Eğer resim panelden daha küçükse merkezle
 			if (drawWidth < panel1.ClientSize.Width)
 				_imageOffset.X = (panel1.ClientSize.Width - drawWidth) / 2;
 			else
@@ -210,8 +204,6 @@ namespace HelloClipboard
 				_imageOffset.Y = Math.Min(maxY, Math.Max(minY, _imageOffset.Y));
 			}
 		}
-
-
 
 		// ---------------- CENTER IMAGE ----------------
 		private void CenterImage()

@@ -21,7 +21,6 @@ namespace HelloClipboard
 			this.MouseWheel += ClipDetail_MouseWheel;
 			richTextBox1.MouseWheel += ClipDetail_MouseWheel;
 
-			// Sadece metin modu
 			SetupTextMode(item.Content);
 		}
 
@@ -44,7 +43,6 @@ namespace HelloClipboard
 		// ---------------- ZOOM ----------------
 		private void ClipDetail_MouseWheel(object sender, MouseEventArgs e)
 		{
-			// Ctrl + Wheel -> Zoom
 			if ((ModifierKeys & Keys.Control) == Keys.Control)
 			{
 				if (richTextBox1.Visible)
@@ -53,12 +51,10 @@ namespace HelloClipboard
 					richTextBox1.Font = new Font(richTextBox1.Font.FontFamily, 12 * _textZoom);
 				}
 			}
-			// Shift + Wheel -> Yatay kaydırma
 			else if ((ModifierKeys & Keys.Shift) == Keys.Shift)
 			{
 				if (richTextBox1.Visible)
 				{
-					// HScroll yap
 					int scrollAmount = e.Delta > 0 ? -10 : 10; 
 					int steps = 10; 
 					for (int i = 0; i < steps; i++)
