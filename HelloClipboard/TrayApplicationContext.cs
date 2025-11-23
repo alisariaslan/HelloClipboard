@@ -209,13 +209,13 @@ namespace HelloClipboard
 				{
 					var now = DateTime.UtcNow;
 					var last = TempConfigLoader.Current.LastUpdateCheck;
-					if (last == default || (now - last) >= Constants.applicationUpdateInterval)
+					if (last == default || (now - last) >= Constants.ApplicationUpdateInterval)
 					{
 						await DoUpdateCheck();
 						TempConfigLoader.Current.LastUpdateCheck = DateTime.UtcNow;
 						TempConfigLoader.Save();
 					}
-					var remaining = Constants.applicationUpdateInterval - (now - last);
+					var remaining = Constants.ApplicationUpdateInterval - (now - last);
 					if (remaining < TimeSpan.Zero)
 						remaining = TimeSpan.Zero;
 					await Task.Delay(remaining);

@@ -21,7 +21,8 @@ namespace HelloClipboard
 			InitializeComponent();
 
 			_mainForm = mainForm;
-			this.Text = $"Row {item.Index + 1} Detail - {Constants.AppName}";
+			string shortTitle = item.Title.Length > Constants.MaxDetailFormTitleLength ? item.Title.Substring(0, Constants.MaxDetailFormTitleLength) + "…" : item.Title;
+			this.Text = $"{shortTitle} - {Constants.AppName}";
 
 			panel1.Paint += panel1_Paint;
 			panel1.MouseWheel += Panel1_MouseWheel;

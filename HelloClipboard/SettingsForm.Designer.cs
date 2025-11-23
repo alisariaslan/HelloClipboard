@@ -78,7 +78,7 @@
 			// 
 			// textBox1_maxHistoryCount
 			// 
-			this.textBox1_maxHistoryCount.Location = new System.Drawing.Point(352, 10);
+			this.textBox1_maxHistoryCount.Location = new System.Drawing.Point(160, 268);
 			this.textBox1_maxHistoryCount.Name = "textBox1_maxHistoryCount";
 			this.textBox1_maxHistoryCount.Size = new System.Drawing.Size(100, 29);
 			this.textBox1_maxHistoryCount.TabIndex = 4;
@@ -90,7 +90,7 @@
 			// label1
 			// 
 			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(204, 13);
+			this.label1.Location = new System.Drawing.Point(12, 271);
 			this.label1.Name = "label1";
 			this.label1.Size = new System.Drawing.Size(142, 21);
 			this.label1.TabIndex = 5;

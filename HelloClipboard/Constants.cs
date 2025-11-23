@@ -9,11 +9,11 @@ namespace HelloClipboard
 
 		public static readonly string AppBaseDir = AppDomain.CurrentDomain.BaseDirectory;
 
-		public static readonly string UserDataDir =
-	   Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppName);
+		public static readonly string UserDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppName);
 
-
-		public static TimeSpan applicationUpdateInterval = TimeSpan.FromHours(6);
+		public static readonly TimeSpan ApplicationUpdateInterval = TimeSpan.FromHours(6);
+		
+		public const int MaxDetailFormTitleLength = 15;
 
 		private const string _appSettingsFileName = "settings.json";
 		private const string _tempConfigsFileName = "tempconfigs.json";

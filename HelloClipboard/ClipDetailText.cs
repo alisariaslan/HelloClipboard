@@ -15,7 +15,8 @@ namespace HelloClipboard
 			InitializeComponent();
 
 			_mainForm = mainForm;
-			this.Text = $"Row {item.Index + 1} Detail - {Constants.AppName}";
+			string shortTitle = item.Title.Length > Constants.MaxDetailFormTitleLength ? item.Title.Substring(0, Constants.MaxDetailFormTitleLength) + "…" : item.Title;
+			this.Text = $"{shortTitle} - {Constants.AppName}";
 
 			this.MouseWheel += ClipDetail_MouseWheel;
 			richTextBox1.MouseWheel += ClipDetail_MouseWheel;
@@ -31,21 +32,51 @@ namespace HelloClipboard
 			richTextBox1.WordWrap = false;
 			richTextBox1.ScrollBars = RichTextBoxScrollBars.Both;
 			richTextBox1.Text = text;
-			richTextBox1.Font = new Font(richTextBox1.Font.FontFamily, 12);
+
+			float baseFontSize = 12;
+
+			_textZoom = 0.8f;
+
+			richTextBox1.Font = new Font(richTextBox1.Font.FontFamily, baseFontSize * _textZoom);
 		}
+
 
 		// ---------------- ZOOM ----------------
 		private void ClipDetail_MouseWheel(object sender, MouseEventArgs e)
 		{
-			if ((ModifierKeys & Keys.Control) != Keys.Control)
-				return;
-
-			if (richTextBox1.Visible)
+			// Ctrl + Wheel -> Zoom
+			if ((ModifierKeys & Keys.Control) == Keys.Control)
 			{
-				_textZoom = Math.Max(0.3f, _textZoom + (e.Delta > 0 ? 0.1f : -0.1f));
-				richTextBox1.Font = new Font(richTextBox1.Font.FontFamily, 12 * _textZoom);
+				if (richTextBox1.Visible)
+				{
+					_textZoom = Math.Max(0.3f, _textZoom + (e.Delta > 0 ? 0.1f : -0.1f));
+					richTextBox1.Font = new Font(richTextBox1.Font.FontFamily, 12 * _textZoom);
+				}
+			}
+			// Shift + Wheel -> Yatay kaydırma
+			else if ((ModifierKeys & Keys.Shift) == Keys.Shift)
+			{
+				if (richTextBox1.Visible)
+				{
+					// HScroll yap
+					int scrollAmount = e.Delta > 0 ? -10 : 10; 
+					int steps = 10; 
+					for (int i = 0; i < steps; i++)
+					{
+						SendMessage(richTextBox1.Handle, WM_HSCROLL, (IntPtr)(e.Delta > 0 ? SB_LINELEFT : SB_LINERIGHT), IntPtr.Zero);
+					}
+				}
 			}
 		}
+
+		// ---------------- P/Invoke ----------------
+		private const int WM_HSCROLL = 0x114;
+		private const int SB_LINELEFT = 0;
+		private const int SB_LINERIGHT = 1;
+
+		[System.Runtime.InteropServices.DllImport("user32.dll")]
+		private static extern int SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
+
 
 		// ---------------- COPY ----------------
 		private void button1_copy_Click(object sender, EventArgs e)
