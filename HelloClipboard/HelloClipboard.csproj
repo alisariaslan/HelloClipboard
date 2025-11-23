@@ -126,11 +126,17 @@
   <ItemGroup>
     <Compile Include="ClipboardItem.cs" />
     <Compile Include="ClipboardNotification.cs" />
-    <Compile Include="ClipDetail.cs">
+    <Compile Include="ClipDetailImage.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ClipDetail.Designer.cs">
-      <DependentUpon>ClipDetail.cs</DependentUpon>
+    <Compile Include="ClipDetailImage.Designer.cs">
+      <DependentUpon>ClipDetailImage.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ClipDetailText.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ClipDetailText.Designer.cs">
+      <DependentUpon>ClipDetailText.cs</DependentUpon>
     </Compile>
     <Compile Include="Constants.cs" />
     <Compile Include="Html\AboutHtml.cs" />
@@ -164,8 +170,11 @@
     <Compile Include="Utils\FileOpener.cs" />
     <Compile Include="Utils\ImageAnalyzer.cs" />
     <Compile Include="Utils\PriviligesHelper.cs" />
-    <EmbeddedResource Include="ClipDetail.resx">
-      <DependentUpon>ClipDetail.cs</DependentUpon>
+    <EmbeddedResource Include="ClipDetailImage.resx">
+      <DependentUpon>ClipDetailImage.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ClipDetailText.resx">
+      <DependentUpon>ClipDetailText.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="InfoDialog.resx">
       <DependentUpon>InfoDialog.cs</DependentUpon>

@@ -11,7 +11,7 @@ namespace HelloClipboard
 		private readonly TrayApplicationContext _trayApplicationContext;
 		private readonly MainFormViewModel _viewModel;
 		private bool _isLoaded = false;
-		private ClipDetail _openDetailForm;
+		private Form _openDetailForm;
 
 		public MainForm(TrayApplicationContext trayApplicationContext)
 		{
@@ -135,6 +135,27 @@ namespace HelloClipboard
 			_viewModel.CopyClicked(selectedItem);
 		}
 
+		private void OpenDetailForIndex(int index)
+		{
+			if (index < 0) return;
+
+			MessagesListBox.SelectedIndex = index;
+
+			if (!(MessagesListBox.SelectedItem is ClipboardItem selectedItem))
+				return;
+
+			CloseDetailFormIfAvaible();
+
+			if( selectedItem.ItemType == ClipboardItemType.Image )
+				_openDetailForm = new ClipDetailImage(this, selectedItem);
+			else
+			{
+				_openDetailForm = new ClipDetailText(this, selectedItem);
+			}
+			PositionDetailForm(_openDetailForm);
+			_openDetailForm.Show(this);
+		}
+
 		private void contextMenuStrip1_Opening(object sender, CancelEventArgs e)
 		{
 			var pos = MessagesListBox.PointToClient(Cursor.Position);
@@ -144,17 +165,14 @@ namespace HelloClipboard
 				e.Cancel = true;
 				return;
 			}
-			MessagesListBox.SelectedIndex = index;
-			ClipboardItem selectedItem = MessagesListBox.SelectedItem as ClipboardItem;
-			if (selectedItem == null)
-			{
-				e.Cancel = true;
-				return;
-			}
-			CloseDetailFormIfAvaible();
-			_openDetailForm = new ClipDetail(this, selectedItem);
-			PositionDetailForm(_openDetailForm);
-			_openDetailForm.Show(this);
+			OpenDetailForIndex(index);
+		}
+		private void MessagesListBox_MouseClick(object sender, MouseEventArgs e)
+		{
+			if (e.Button != MouseButtons.Left) return;
+
+			int index = MessagesListBox.IndexFromPoint(e.Location);
+			OpenDetailForIndex(index);
 		}
 
 		private void MainForm_Load(object sender, EventArgs e)
@@ -253,19 +271,6 @@ namespace HelloClipboard
 			}
 		}
 
-		private void MessagesListBox_MouseClick(object sender, MouseEventArgs e)
-		{
-			if (e.Button != MouseButtons.Left) return;
-			int index = MessagesListBox.IndexFromPoint(e.Location);
-			if (index < 0) return;
-			MessagesListBox.SelectedIndex = index;
-			ClipboardItem selectedItem = MessagesListBox.SelectedItem as ClipboardItem;
-			if (selectedItem == null) return; 
-			CloseDetailFormIfAvaible();
-			_openDetailForm = new ClipDetail(this, selectedItem);
-			PositionDetailForm(_openDetailForm);
-			_openDetailForm.Show(this);
-		}
 
 		private void PositionDetailForm(Form detailForm)
 		{

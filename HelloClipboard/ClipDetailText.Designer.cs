@@ -1,6 +1,6 @@
 ﻿namespace HelloClipboard
 {
-	partial class ClipDetail
+	partial class ClipDetailText
 	{
 		/// <summary>
 		/// Required designer variable.
@@ -30,10 +30,6 @@
 		{
 			this.button1_copy = new System.Windows.Forms.Button();
 			this.richTextBox1 = new System.Windows.Forms.RichTextBox();
-			this.pictureBox1 = new System.Windows.Forms.PictureBox();
-			this.panel1 = new System.Windows.Forms.Panel();
-			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
-			this.panel1.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// button1_copy
@@ -58,43 +54,22 @@
 			this.richTextBox1.TabIndex = 1;
 			this.richTextBox1.Text = "";
 			// 
-			// pictureBox1
-			// 
-			this.pictureBox1.Location = new System.Drawing.Point(3, 3);
-			this.pictureBox1.Name = "pictureBox1";
-			this.pictureBox1.Size = new System.Drawing.Size(100, 50);
-			this.pictureBox1.TabIndex = 2;
-			this.pictureBox1.TabStop = false;
-			// 
-			// panel1
-			// 
-			this.panel1.AutoScroll = true;
-			this.panel1.Controls.Add(this.pictureBox1);
-			this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.panel1.Location = new System.Drawing.Point(0, 0);
-			this.panel1.Name = "panel1";
-			this.panel1.Size = new System.Drawing.Size(344, 284);
-			this.panel1.TabIndex = 3;
-			// 
-			// ClipDetail
+			// ClipDetailText
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 21F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(344, 321);
-			this.Controls.Add(this.panel1);
 			this.Controls.Add(this.richTextBox1);
 			this.Controls.Add(this.button1_copy);
 			this.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
 			this.MinimizeBox = false;
 			this.MinimumSize = new System.Drawing.Size(360, 360);
-			this.Name = "ClipDetail";
+			this.Name = "ClipDetailText";
 			this.ShowIcon = false;
 			this.ShowInTaskbar = false;
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-			this.Text = "Detail - HelloClipbaord";
-			((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
-			this.panel1.ResumeLayout(false);
+			this.Text = "Text Detail - HelloClipbaord";
 			this.ResumeLayout(false);
 
 		}
@@ -103,7 +78,5 @@
 
 		private System.Windows.Forms.Button button1_copy;
 		private System.Windows.Forms.RichTextBox richTextBox1;
-		private System.Windows.Forms.PictureBox pictureBox1;
-		private System.Windows.Forms.Panel panel1;
 	}
 }
