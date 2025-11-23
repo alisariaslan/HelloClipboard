@@ -1,4 +1,4 @@
 {
-    "Version": "1.0.0.0",
-    "Notes": "First Launch"
+    "Version": "1.0.0.1",
+    "Notes": "Added image support for clipboard items, improved Prevent Duplication by moving the latest duplicate to the bottom and removing older ones, and enabled zooming (Ctrl + Mouse Wheel) for both images and text."
 }
