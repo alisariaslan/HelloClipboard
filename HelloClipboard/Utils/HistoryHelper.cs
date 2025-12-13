@@ -38,7 +38,6 @@ namespace HelloClipboard
 				return;
 			}
 
-			// Statik yardımcı sınıfı kullan
 			string extension = FileExtensionHelper.GetFileExtension(item.ItemType);
 			string filePath = Path.Combine(historyDir, item.ContentHash + extension);
 
@@ -110,7 +109,6 @@ namespace HelloClipboard
 				string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileInfo.Name);
 				string extension = Path.GetExtension(fileInfo.Name);
 
-				// Statik yardımcı sınıfı kullan
 				ClipboardItemType type = FileExtensionHelper.GetItemTypeFromExtension(extension);
 
 				try

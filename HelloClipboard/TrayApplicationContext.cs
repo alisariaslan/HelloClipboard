@@ -1,7 +1,9 @@
 ﻿using HelloClipboard.Utils;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -44,6 +46,21 @@ namespace HelloClipboard
 						_clipboardHashPool.Add(item.ContentHash);
 					}
 				}
+
+#if DEBUG
+				string historyPath = Constants.HistoryDirectory;
+				if (Directory.Exists(historyPath))
+				{
+					try
+					{
+						Process.Start(historyPath);
+					}
+					catch (Exception ex)
+					{
+						System.Diagnostics.Debug.WriteLine($"Error: History folder couldn't open: {ex.Message}");
+					}
+				}
+#endif
 			}
 
 			_trayIcon = new NotifyIcon()
@@ -143,7 +160,6 @@ namespace HelloClipboard
 			string calculatedHash = null;
 			ClipboardItem existingItem = null;
 
-			// 1. HASH HESAPLAMA (Tüm ilgili tipler için)
 			if (SettingsLoader.Current.PreventClipboardDuplication)
 			{
 				if (type == ClipboardItemType.Text || type == ClipboardItemType.File)
@@ -152,21 +168,16 @@ namespace HelloClipboard
 				}
 				else if (type == ClipboardItemType.Image && imageContent != null)
 				{
-					// Görsel Hash Mantığı
 					calculatedHash = HashHelper.HashImageBytes(imageContent);
 				}
 			}
 
-			// 2. DUPLİKASYON KONTROLÜ (O(1))
 			if (calculatedHash != null && _clipboardHashPool.Contains(calculatedHash))
 			{
-				// Duplikasyon bulundu. Hash'i kullanarak listede arama (O(N))
-				// Not: Bu, ContentHash'in ClipboardItem'a gömülü olmasını gerektirir.
 				existingItem = _clipboardCache.FirstOrDefault(i => i.ContentHash == calculatedHash);
 
 				if (existingItem != null)
 				{
-					// Kaldır ve en sona ekle (başa taşı)
 					_clipboardCache.Remove(existingItem);
 					if (!_form.IsDisposed) { _form.MessageRemoveItem(existingItem); }
 
@@ -176,10 +187,6 @@ namespace HelloClipboard
 				return;
 			}
 
-			// 3. --- Öğe Oluşturma ve Ekleme (Tüm Tipler Ortak) ---
-
-			// Başlık Oluşturma
-
 			string newTitle = "";
 
 			if (SettingsLoader.Current.EnableBetterHistoryVisualization && type == ClipboardItemType.Text)
@@ -188,7 +195,7 @@ namespace HelloClipboard
 										 .Replace('\n', ' ')
 										 .Replace('\t', ' ');
 				string cleanedWhitespace = Regex.Replace(replacedNewlines, @"\s+", " ");
-				 newTitle = cleanedWhitespace.Trim();
+				newTitle = cleanedWhitespace.Trim();
 				if (newTitle.Length > 1024)
 				{
 					newTitle = newTitle.Substring(0, 1024) + "...";
@@ -203,49 +210,40 @@ namespace HelloClipboard
 				newTitle = $"{System.IO.Path.GetFileName(textContent)} -> {textContent}";
 			}
 
-			// Item Oluşturma
 			var item = new ClipboardItem(_clipboardCache.Count, type, textContent, newTitle, imageContent, calculatedHash);
 
-			// Eğer geçmiş aktifse ve hash varsa, dosyaya kaydet
 			if (SettingsLoader.Current.EnableClipboardHistory && item.ContentHash != null)
 			{
-				// *** GÜNCELLEME: HistoryHelper kullan ***
 				historyHelper.SaveItemToHistoryFile(item);
 			}
 
-			// Önbelleğe Ekle
 			_clipboardCache.Add(item);
 
-			// Hash Havuzuna Ekle
 			if (item.ContentHash != null)
 			{
 				_clipboardHashPool.Add(item.ContentHash);
 			}
 
-			// Form'a Ekle
 			if (!_form.IsDisposed)
 			{
 				_form.MessageAdd(item);
 			}
 
-			// Limit Kontrolü
 			if (_clipboardCache.Count > SettingsLoader.Current.MaxHistoryCount)
 			{
 				var oldestItem = _clipboardCache[0];
 
-				// Gömülü hash'i kullanarak O(1) hızında havuçtan temizle
 				if (oldestItem.ContentHash != null)
 				{
 					_clipboardHashPool.Remove(oldestItem.ContentHash);
 
-					// *** EKLEME: Dosyayı da sil ***
 					if (SettingsLoader.Current.EnableClipboardHistory)
 					{
 						historyHelper.DeleteItemFromFile(oldestItem.ContentHash);
 					}
 				}
 
-				_form.MessageRemoveAt(0);
+				_form.RemoveOldestMessage();
 				_clipboardCache.RemoveAt(0);
 			}
 		}

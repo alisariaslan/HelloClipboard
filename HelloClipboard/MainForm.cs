@@ -49,12 +49,23 @@ namespace HelloClipboard
 			}
 		}
 
-		public void MessageRemoveAt(int index)
+		public void RemoveOldestMessage()
 		{
-			if (index < 0 || index >= MessagesListBox.Items.Count)
+			if (MessagesListBox.Items.Count == 0)
 				return;
 
-			MessagesListBox.Items.RemoveAt(index);
+			int removeIndex;
+
+			if (SettingsLoader.Current.InvertClipboardHistoryListing)
+			{
+				removeIndex = MessagesListBox.Items.Count - 1;
+			}
+			else
+			{
+				removeIndex = 0;
+			}
+
+			MessagesListBox.Items.RemoveAt(removeIndex);
 
 			int lastIndex = MessagesListBox.Items.Count - 1;
 			if (lastIndex >= 0)
@@ -84,7 +95,6 @@ namespace HelloClipboard
 			}
 			else
 			{
-				// Normal sıra (eski kod)
 				foreach (var item in cbCache)
 				{
 					MessageAdd(item);
