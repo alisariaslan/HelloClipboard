@@ -401,7 +401,7 @@ namespace HelloClipboard
 
 		private void pictureBox2_Click(object sender, EventArgs e)
 		{
-			ClearSearchBox();
+			_trayApplicationContext.ClearClipboard();
 		}
 
 		private void saveToFileToolStripMenuItem_Click(object sender, EventArgs e)

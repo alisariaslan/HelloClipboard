@@ -14,7 +14,7 @@ namespace HelloClipboard
 		public bool InvertClipboardHistoryListing { get; set; } = false;
 		public bool EnableClipboardHistory { get; set; } = false;
 		public bool EnableTimeStamps { get; set; } = false;
-		public int MaxHistoryCount { get; set; } = 50;
+		public int MaxHistoryCount { get; set; } = 100;
 	}
 
 	public static class SettingsLoader

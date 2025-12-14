@@ -114,6 +114,60 @@ namespace HelloClipboard
 
 		#region CLIPBOARD HANDLING
 
+		public void ClearClipboard()
+		{
+			SuppressClipboardEvents(true);
+
+			try
+			{
+				Clipboard.Clear();
+
+				_clipboardCache.Clear();
+				_clipboardHashPool.Clear();
+
+				if (SettingsLoader.Current.EnableClipboardHistory)
+				{
+					try
+					{
+						string historyPath = Constants.HistoryDirectory;
+						if (Directory.Exists(historyPath))
+						{
+							var files = Directory.GetFiles(historyPath);
+							foreach (var file in files)
+							{
+								File.Delete(file);
+							}
+						}
+					}
+					catch (Exception ex)
+					{
+#if DEBUG
+						System.Diagnostics.Debug.WriteLine($"History delete error: {ex.Message}");
+#endif
+					}
+				}
+
+				if (_form != null && !_form.IsDisposed)
+				{
+					_form.Invoke(new MethodInvoker(() =>
+					{
+						_form.RefreshCacheView();
+						_form.ClearSearchBox();
+					}));
+				}
+
+				MessageBox.Show($"Clipboard cleared.", "Success", MessageBoxButtons.OK);
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show($"Error clearing clipboard: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+			finally
+			{
+				SuppressClipboardEvents(false);
+			}
+		}
+
 		public void SuppressClipboardEvents(bool value)
 		{
 			_suppressClipboardEvents = value;
