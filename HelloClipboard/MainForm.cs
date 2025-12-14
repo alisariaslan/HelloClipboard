@@ -104,12 +104,15 @@ namespace HelloClipboard
 
 		public void RefreshCacheView()
 		{
+			MessagesListBox.BeginUpdate();
 			MessagesListBox.Items.Clear();
 			var cache = _trayApplicationContext.GetClipboardCache();
 			foreach (var item in cache)
-				MessagesListBox.Items.Add(item.Content);
+			{
+				MessageAdd(item);
+			}
+			MessagesListBox.EndUpdate();
 		}
-
 
 		public void UpdateCheckUpdateNowBtnText(string newString)
 		{

@@ -212,6 +212,7 @@ namespace HelloClipboard
 		{
 			SettingsLoader.Current.InvertClipboardHistoryListing = checkBox1_invertClipboardHistoryListing.Checked;
 			SettingsLoader.Save();
+			_mainForm.RefreshCacheView();
 		}
 
 		private void checkBox1_clipboardHistory_CheckedChanged(object sender, EventArgs e)
