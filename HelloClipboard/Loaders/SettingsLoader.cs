@@ -13,6 +13,7 @@ namespace HelloClipboard
 		public bool PreventClipboardDuplication { get; set; } = false;
 		public bool InvertClipboardHistoryListing { get; set; } = false;
 		public bool EnableClipboardHistory { get; set; } = false;
+		public bool EnableTimeStamps { get; set; } = false;
 		public int MaxHistoryCount { get; set; } = 50;
 	}
 

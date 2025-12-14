@@ -13,6 +13,10 @@ namespace HelloClipboard
 
 		public static readonly string HistoryDirectory = Path.Combine(UserDataDir, "ClipboardHistory");
 
+		public static readonly string RegistryKeyPath = @"Software\HelloClipboard";
+
+		public static readonly string RegistryKeyValueName = "AppSecret";
+
 		public static readonly TimeSpan ApplicationUpdateInterval = TimeSpan.FromHours(6);
 		
 		public const int MaxDetailFormTitleLength = 15;
