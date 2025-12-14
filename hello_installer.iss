@@ -2,7 +2,7 @@
 
 [Setup]
 AppName=HelloClipboard
-AppVersion=1.0.0.2
+AppVersion=1.0.0.3
 DefaultDirName={commonpf}\HelloClipboard
 DefaultGroupName=HelloClipboard
 OutputBaseFilename=HelloClipboard_Installer
