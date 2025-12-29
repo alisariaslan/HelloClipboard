@@ -1,4 +1,4 @@
 {
-    "Version": "1.0.0.3",
-    "Notes": "🔥 New Update Live! (Dec 14, v1.0.0.3) We've just pushed a big update focusing on security and usability. Here is what's new: Security First: Your history is now encrypted using DPAPI. More History: Bumped the limit to 100 items! 📈 Better UI: Added Always on Top mode, Lock/Unlock icons, and Timestamps. Quality of Life: Settings changes now refresh the view instantly, plus a new Clear All feature for clipboard & history. Update now to get the latest fixes and features! 🚀"
+    "Version": "1.0.4.4",
+    "Notes": "🔥 🚀 Release v1.0.4.4 | What's New: UX enhancements with new navigation options and a streamlined installer. ✨ New Features: Advanced Clipboard Options, Auto-Hide on Unfocus, Taskbar Visibility Toggle, Single/Double Click Toggle, Improved Listing Logic. Update now to get the latest fixes and features! 🚀"
 }
