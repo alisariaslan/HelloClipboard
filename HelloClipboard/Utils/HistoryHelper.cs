@@ -194,9 +194,6 @@ namespace HelloClipboard
 				}
 			}
 
-			if (SettingsLoader.Current.InvertClipboardHistoryListing)
-				loadedCache.Reverse();
-
 			return loadedCache;
 		}
 	}
