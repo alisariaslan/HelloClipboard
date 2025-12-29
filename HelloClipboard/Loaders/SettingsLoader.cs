@@ -10,12 +10,15 @@ namespace HelloClipboard
 		public bool HideToTray { get; set; } = true;
 		public bool CheckUpdates { get; set; } = true;
 		public bool StartWithWindows { get; set; } = false;
-		public bool PreventClipboardDuplication { get; set; } = false;
-		public bool InvertClipboardHistoryListing { get; set; } = false;
-		public bool EnableClipboardHistory { get; set; } = false;
+		public bool PreventClipboardDuplication { get; set; } = true;
+		public bool InvertClipboardHistoryListing { get; set; } = true;
+		public bool EnableClipboardHistory { get; set; } = true;
 		public bool EnableTimeStamps { get; set; } = false;
-		public bool AlwaysTopMost { get; set; } = false;
-		public int MaxHistoryCount { get; set; } = 100;
+		public bool AlwaysTopMost { get; set; } = true;
+		public bool ShowInTaskbar { get; set; } = false;
+		public bool OpenWithSingleClick { get; set; } = true;
+		public bool AutoHideWhenUnfocus { get; set; } = true;
+		public int MaxHistoryCount { get; set; } = 1000;
 	}
 
 	public static class SettingsLoader

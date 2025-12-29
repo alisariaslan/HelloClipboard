@@ -29,6 +29,33 @@ namespace HelloClipboard
 			MessagesListBox.DisplayMember = "Title";
 
 			var enableClipboardHistory = SettingsLoader.Current.EnableClipboardHistory;
+
+			this.Deactivate += MainForm_Deactivate;
+		}
+
+		private void MainForm_Deactivate(object sender, EventArgs e)
+		{
+			if (!SettingsLoader.Current.AutoHideWhenUnfocus || !_isLoaded)
+				return;
+
+			BeginInvoke(new MethodInvoker(() =>
+			{
+				Form activeForm = Form.ActiveForm;
+
+				if (activeForm == null || (activeForm != this && !IsFormOwnedByMe(activeForm)))
+				{
+					_trayApplicationContext.HideMainWindow();
+				}
+			}));
+		}
+
+		private bool IsFormOwnedByMe(Form activeForm)
+		{
+			if (activeForm == null) return false;
+
+			return activeForm == this ||
+				   activeForm.Owner == this ||
+				   _openDetailForm != null && activeForm == _openDetailForm;
 		}
 
 		public void MessageAdd(ClipboardItem item)
@@ -84,22 +111,7 @@ namespace HelloClipboard
 
 		private void MainForm_Shown(object sender, EventArgs e)
 		{
-			MessagesListBox.Items.Clear();
-			var cbCache = _trayApplicationContext.GetClipboardCache();
-			if (SettingsLoader.Current.InvertClipboardHistoryListing)
-			{
-				foreach (var item in cbCache.Reverse())
-				{
-					MessageAdd(item);
-				}
-			}
-			else
-			{
-				foreach (var item in cbCache)
-				{
-					MessageAdd(item);
-				}
-			}
+			RefreshCacheView();
 		}
 
 		public void RefreshCacheView()
@@ -109,6 +121,8 @@ namespace HelloClipboard
 			var cache = _trayApplicationContext.GetClipboardCache();
 			foreach (var item in cache)
 			{
+				// MessageAdd, item'ın tarih sırasına göre (eskiden yeniye) 
+				// gelmesini bekler ve ayar aktifse yeni geleni hep 0. indexe koyar.
 				MessageAdd(item);
 			}
 			MessagesListBox.EndUpdate();
@@ -227,7 +241,14 @@ namespace HelloClipboard
 			}
 			CheckAndUpdateTopMostImage();
 
+			this.ShowInTaskbar = SettingsLoader.Current.ShowInTaskbar;
+
 			_isLoaded = true;
+		}
+
+		public void UpdateTaskbarVisibility(bool visible)
+		{
+			this.ShowInTaskbar = visible;
 		}
 
 		private void _SaveFormPosition()
@@ -387,24 +408,19 @@ namespace HelloClipboard
 		{
 			MessagesListBox.BeginUpdate();
 			MessagesListBox.Items.Clear();
-			if (string.IsNullOrWhiteSpace(searchTerm))
+
+			var cache = _trayApplicationContext.GetClipboardCache();
+			var itemsToDisplay = string.IsNullOrWhiteSpace(searchTerm)
+				? cache
+				: cache.Where(i => i.Content != null && i.Content.ToLowerInvariant().Contains(searchTerm.ToLowerInvariant()));
+
+			foreach (var item in itemsToDisplay)
 			{
-				foreach (var item in _trayApplicationContext.GetClipboardCache())
-				{
-					MessagesListBox.Items.Add(item);
-				}
+				// Direkt Add(item) yaparsanız ayarı görmezden gelip sona ekler.
+				// MessageAdd(item) metodunu kullanırsanız ayara göre başa veya sona ekler.
+				MessageAdd(item);
 			}
-			else
-			{
-				var lowerSearch = searchTerm.ToLowerInvariant();
-				foreach (var item in _trayApplicationContext.GetClipboardCache())
-				{
-					if (item.Content != null && item.Content.ToLowerInvariant().Contains(lowerSearch))
-					{
-						MessagesListBox.Items.Add(item);
-					}
-				}
-			}
+
 			MessagesListBox.EndUpdate();
 		}
 

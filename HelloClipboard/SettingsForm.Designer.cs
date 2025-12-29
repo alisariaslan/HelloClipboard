@@ -38,6 +38,9 @@
 			this.checkBox1_invertClipboardHistoryListing = new System.Windows.Forms.CheckBox();
 			this.checkBox1_clipboardHistory = new System.Windows.Forms.CheckBox();
 			this.checkBox1_alwaysTopMost = new System.Windows.Forms.CheckBox();
+			this.checkBox1_showInTaskbar = new System.Windows.Forms.CheckBox();
+			this.checkBox2_openWithSingleClick = new System.Windows.Forms.CheckBox();
+			this.checkBox1_autoHideWhenUnfocus = new System.Windows.Forms.CheckBox();
 			this.SuspendLayout();
 			// 
 			// checkBox1_startWithWindows
@@ -78,7 +81,7 @@
 			// 
 			// textBox1_maxHistoryCount
 			// 
-			this.textBox1_maxHistoryCount.Location = new System.Drawing.Point(176, 341);
+			this.textBox1_maxHistoryCount.Location = new System.Drawing.Point(352, 33);
 			this.textBox1_maxHistoryCount.Name = "textBox1_maxHistoryCount";
 			this.textBox1_maxHistoryCount.Size = new System.Drawing.Size(100, 29);
 			this.textBox1_maxHistoryCount.TabIndex = 4;
@@ -90,7 +93,7 @@
 			// label1
 			// 
 			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(28, 344);
+			this.label1.Location = new System.Drawing.Point(310, 9);
 			this.label1.Name = "label1";
 			this.label1.Size = new System.Drawing.Size(142, 21);
 			this.label1.TabIndex = 5;
@@ -156,11 +159,50 @@
 			this.checkBox1_alwaysTopMost.UseVisualStyleBackColor = true;
 			this.checkBox1_alwaysTopMost.CheckedChanged += new System.EventHandler(this.checkBox1_alwaysTopMost_CheckedChanged);
 			// 
+			// checkBox1_showInTaskbar
+			// 
+			this.checkBox1_showInTaskbar.AutoSize = true;
+			this.checkBox1_showInTaskbar.Location = new System.Drawing.Point(12, 257);
+			this.checkBox1_showInTaskbar.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+			this.checkBox1_showInTaskbar.Name = "checkBox1_showInTaskbar";
+			this.checkBox1_showInTaskbar.Size = new System.Drawing.Size(141, 25);
+			this.checkBox1_showInTaskbar.TabIndex = 14;
+			this.checkBox1_showInTaskbar.Text = "Show In Taskbar";
+			this.checkBox1_showInTaskbar.UseVisualStyleBackColor = true;
+			this.checkBox1_showInTaskbar.CheckedChanged += new System.EventHandler(this.checkBox1_showInTaskbar_CheckedChanged);
+			// 
+			// checkBox2_openWithSingleClick
+			// 
+			this.checkBox2_openWithSingleClick.AutoSize = true;
+			this.checkBox2_openWithSingleClick.Location = new System.Drawing.Point(12, 292);
+			this.checkBox2_openWithSingleClick.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+			this.checkBox2_openWithSingleClick.Name = "checkBox2_openWithSingleClick";
+			this.checkBox2_openWithSingleClick.Size = new System.Drawing.Size(185, 25);
+			this.checkBox2_openWithSingleClick.TabIndex = 15;
+			this.checkBox2_openWithSingleClick.Text = "Open with Single Click";
+			this.checkBox2_openWithSingleClick.UseVisualStyleBackColor = true;
+			this.checkBox2_openWithSingleClick.CheckedChanged += new System.EventHandler(this.checkBox2_openWithSingleClick_CheckedChanged);
+			// 
+			// checkBox1_autoHideWhenUnfocus
+			// 
+			this.checkBox1_autoHideWhenUnfocus.AutoSize = true;
+			this.checkBox1_autoHideWhenUnfocus.Location = new System.Drawing.Point(13, 327);
+			this.checkBox1_autoHideWhenUnfocus.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+			this.checkBox1_autoHideWhenUnfocus.Name = "checkBox1_autoHideWhenUnfocus";
+			this.checkBox1_autoHideWhenUnfocus.Size = new System.Drawing.Size(204, 25);
+			this.checkBox1_autoHideWhenUnfocus.TabIndex = 16;
+			this.checkBox1_autoHideWhenUnfocus.Text = "Auto Hide When Unfocus";
+			this.checkBox1_autoHideWhenUnfocus.UseVisualStyleBackColor = true;
+			this.checkBox1_autoHideWhenUnfocus.CheckedChanged += new System.EventHandler(this.checkBox1_autoHideWhenUnfocus_CheckedChanged);
+			// 
 			// SettingsForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 21F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(464, 441);
+			this.Controls.Add(this.checkBox1_autoHideWhenUnfocus);
+			this.Controls.Add(this.checkBox2_openWithSingleClick);
+			this.Controls.Add(this.checkBox1_showInTaskbar);
 			this.Controls.Add(this.checkBox1_alwaysTopMost);
 			this.Controls.Add(this.checkBox1_clipboardHistory);
 			this.Controls.Add(this.checkBox1_invertClipboardHistoryListing);
@@ -199,5 +241,8 @@
 		private System.Windows.Forms.CheckBox checkBox1_invertClipboardHistoryListing;
 		private System.Windows.Forms.CheckBox checkBox1_clipboardHistory;
 		private System.Windows.Forms.CheckBox checkBox1_alwaysTopMost;
+		private System.Windows.Forms.CheckBox checkBox1_showInTaskbar;
+		private System.Windows.Forms.CheckBox checkBox2_openWithSingleClick;
+		private System.Windows.Forms.CheckBox checkBox1_autoHideWhenUnfocus;
 	}
 }

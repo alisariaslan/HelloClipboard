@@ -1,7 +1,6 @@
 ﻿using HelloClipboard.Utils;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -53,7 +52,7 @@ namespace HelloClipboard
 				{
 					try
 					{
-						Process.Start(historyPath);
+						//Process.Start(historyPath);
 					}
 					catch (Exception ex)
 					{
@@ -77,6 +76,13 @@ namespace HelloClipboard
 			_trayIcon.DoubleClick += (s, e) =>
 			{
 				ShowMainWindow();
+			};
+			_trayIcon.MouseClick += (s, e) =>
+			{
+				if (e.Button == MouseButtons.Left && SettingsLoader.Current.OpenWithSingleClick)
+				{
+					ShowMainWindow();
+				}
 			};
 			if (SettingsLoader.Current.HideToTray && !TempConfigLoader.Current.AdminPriviligesRequested)
 			{
@@ -383,7 +389,9 @@ namespace HelloClipboard
 			}
 			_form.Show();
 			_form.WindowState = FormWindowState.Normal;
-			_form.ShowInTaskbar = true;
+
+			_form.ShowInTaskbar = SettingsLoader.Current.ShowInTaskbar;
+
 			_form.Activate();
 			_form.BringToFront();
 			_form.FocusSearchBox();

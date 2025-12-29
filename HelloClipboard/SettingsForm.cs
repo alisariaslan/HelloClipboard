@@ -19,15 +19,7 @@ namespace HelloClipboard
 			_debounceTimer.Interval = 500;
 			_debounceTimer.Tick += DebounceTimer_Tick;
 
-			checkBox2_hideToSystemTray.CheckedChanged -= checkBox2_hideToSystemTray_CheckedChanged;
-			checkBox3_checkUpdates.CheckedChanged -= checkBox3_checkUpdates_CheckedChanged;
-			checkBox1_startWithWindows.CheckedChanged -= checkBox1_startWithWindows_CheckedChanged;
-			checkBox4_preventClipboardDuplication.CheckedChanged -= checkBox4_preventClipboardDuplication_CheckedChanged;
-			textBox1_maxHistoryCount.TextChanged -= textBox1_maxHistoryCount_TextChanged;
-			checkBox1_invertClipboardHistoryListing.TextChanged -= checkBox1_invertClipboardHistoryListing_CheckedChanged;
-			checkBox1_clipboardHistory.TextChanged -= checkBox1_clipboardHistory_CheckedChanged;
-			checkBox1_alwaysTopMost.TextChanged -= checkBox1_alwaysTopMost_CheckedChanged;
-
+			RemoveSettingEvents();
 			checkBox2_hideToSystemTray.Checked = SettingsLoader.Current.HideToTray;
 			checkBox3_checkUpdates.Checked = SettingsLoader.Current.CheckUpdates;
 			checkBox1_startWithWindows.Checked = SettingsLoader.Current.StartWithWindows;
@@ -36,15 +28,11 @@ namespace HelloClipboard
 			checkBox1_invertClipboardHistoryListing.Checked = SettingsLoader.Current.InvertClipboardHistoryListing;
 			checkBox1_clipboardHistory.Checked = SettingsLoader.Current.EnableClipboardHistory;
 			checkBox1_alwaysTopMost.Checked = SettingsLoader.Current.AlwaysTopMost;
+			checkBox1_showInTaskbar.Checked = SettingsLoader.Current.ShowInTaskbar;
+			checkBox2_openWithSingleClick.Checked = SettingsLoader.Current.OpenWithSingleClick;
+			checkBox1_autoHideWhenUnfocus.Checked = SettingsLoader.Current.AutoHideWhenUnfocus;
+			AddSettingEvents();
 
-			checkBox2_hideToSystemTray.CheckedChanged += checkBox2_hideToSystemTray_CheckedChanged;
-			checkBox3_checkUpdates.CheckedChanged += checkBox3_checkUpdates_CheckedChanged;
-			checkBox1_startWithWindows.CheckedChanged += checkBox1_startWithWindows_CheckedChanged;
-			checkBox4_preventClipboardDuplication.CheckedChanged += checkBox4_preventClipboardDuplication_CheckedChanged;
-			textBox1_maxHistoryCount.TextChanged += textBox1_maxHistoryCount_TextChanged;
-			checkBox1_invertClipboardHistoryListing.TextChanged += checkBox1_invertClipboardHistoryListing_CheckedChanged;
-			checkBox1_clipboardHistory.TextChanged += checkBox1_clipboardHistory_CheckedChanged;
-			checkBox1_alwaysTopMost.TextChanged += checkBox1_alwaysTopMost_CheckedChanged;
 		}
 
 
@@ -97,39 +85,57 @@ namespace HelloClipboard
 			SettingsLoader.Save();
 		}
 
+		private void RemoveSettingEvents()
+		{
+			textBox1_maxHistoryCount.TextChanged -= textBox1_maxHistoryCount_TextChanged;
+			checkBox3_checkUpdates.CheckedChanged -= checkBox3_checkUpdates_CheckedChanged;
+			checkBox1_startWithWindows.CheckedChanged -= checkBox1_startWithWindows_CheckedChanged;
+			checkBox2_hideToSystemTray.CheckedChanged -= checkBox2_hideToSystemTray_CheckedChanged;
+			checkBox4_preventClipboardDuplication.CheckedChanged -= checkBox4_preventClipboardDuplication_CheckedChanged;
+			checkBox1_invertClipboardHistoryListing.CheckedChanged -= checkBox1_invertClipboardHistoryListing_CheckedChanged;
+			checkBox1_clipboardHistory.CheckedChanged -= checkBox1_clipboardHistory_CheckedChanged;
+			checkBox1_alwaysTopMost.CheckedChanged -= checkBox1_alwaysTopMost_CheckedChanged;
+			checkBox1_showInTaskbar.CheckedChanged -= checkBox1_showInTaskbar_CheckedChanged;
+			checkBox2_openWithSingleClick.CheckedChanged -= checkBox2_openWithSingleClick_CheckedChanged;
+			checkBox1_autoHideWhenUnfocus.CheckedChanged -= checkBox1_autoHideWhenUnfocus_CheckedChanged;
+
+		}
+
+		private void AddSettingEvents()
+		{
+			textBox1_maxHistoryCount.TextChanged += textBox1_maxHistoryCount_TextChanged;
+			checkBox3_checkUpdates.CheckedChanged += checkBox3_checkUpdates_CheckedChanged;
+			checkBox1_startWithWindows.CheckedChanged += checkBox1_startWithWindows_CheckedChanged;
+			checkBox2_hideToSystemTray.CheckedChanged += checkBox2_hideToSystemTray_CheckedChanged;
+			checkBox4_preventClipboardDuplication.CheckedChanged += checkBox4_preventClipboardDuplication_CheckedChanged;
+			checkBox1_invertClipboardHistoryListing.CheckedChanged += checkBox1_invertClipboardHistoryListing_CheckedChanged;
+			checkBox1_clipboardHistory.CheckedChanged += checkBox1_clipboardHistory_CheckedChanged;
+			checkBox1_alwaysTopMost.CheckedChanged += checkBox1_alwaysTopMost_CheckedChanged;
+			checkBox1_showInTaskbar.CheckedChanged += checkBox1_showInTaskbar_CheckedChanged;
+			checkBox2_openWithSingleClick.CheckedChanged += checkBox2_openWithSingleClick_CheckedChanged;
+			checkBox1_autoHideWhenUnfocus.CheckedChanged += checkBox1_autoHideWhenUnfocus_CheckedChanged;
+		}
+
 		private async void button2_Defaults_Click(object sender, EventArgs e)
 		{
 			if (!await PrivilegesHelper.EnsureAdministrator())
 				return;
 
-			var def = new SettingsModel(); 
+			var def = new SettingsModel();
 
-			checkBox1_startWithWindows.CheckedChanged -= checkBox1_startWithWindows_CheckedChanged;
-			checkBox2_hideToSystemTray.CheckedChanged -= checkBox2_hideToSystemTray_CheckedChanged;
-			checkBox3_checkUpdates.CheckedChanged -= checkBox3_checkUpdates_CheckedChanged;
-			checkBox4_preventClipboardDuplication.CheckedChanged -= checkBox4_preventClipboardDuplication_CheckedChanged;
-			textBox1_maxHistoryCount.TextChanged -= textBox1_maxHistoryCount_TextChanged;
-			checkBox1_invertClipboardHistoryListing.TextChanged -= checkBox1_invertClipboardHistoryListing_CheckedChanged;
-			checkBox1_clipboardHistory.TextChanged -= checkBox1_clipboardHistory_CheckedChanged;
-			checkBox1_alwaysTopMost.TextChanged -= checkBox1_alwaysTopMost_CheckedChanged;
-
+			RemoveSettingEvents();
+			textBox1_maxHistoryCount.Text = def.MaxHistoryCount.ToString();
+			checkBox3_checkUpdates.Checked = def.CheckUpdates;
 			checkBox1_startWithWindows.Checked = def.StartWithWindows;
 			checkBox2_hideToSystemTray.Checked = def.HideToTray;
-			checkBox3_checkUpdates.Checked = def.CheckUpdates;
 			checkBox4_preventClipboardDuplication.Checked = def.PreventClipboardDuplication;
-			textBox1_maxHistoryCount.Text = def.MaxHistoryCount.ToString();
 			checkBox1_invertClipboardHistoryListing.Checked = def.InvertClipboardHistoryListing;
 			checkBox1_clipboardHistory.Checked = def.EnableClipboardHistory;
 			checkBox1_alwaysTopMost.Checked = def.AlwaysTopMost;
-
-			checkBox1_startWithWindows.CheckedChanged += checkBox1_startWithWindows_CheckedChanged;
-			checkBox2_hideToSystemTray.CheckedChanged += checkBox2_hideToSystemTray_CheckedChanged;
-			checkBox3_checkUpdates.CheckedChanged += checkBox3_checkUpdates_CheckedChanged;
-			checkBox4_preventClipboardDuplication.CheckedChanged += checkBox4_preventClipboardDuplication_CheckedChanged;
-			textBox1_maxHistoryCount.TextChanged += textBox1_maxHistoryCount_TextChanged;
-			checkBox1_invertClipboardHistoryListing.TextChanged += checkBox1_invertClipboardHistoryListing_CheckedChanged;
-			checkBox1_clipboardHistory.TextChanged += checkBox1_clipboardHistory_CheckedChanged;
-			checkBox1_alwaysTopMost.TextChanged += checkBox1_alwaysTopMost_CheckedChanged;
+			checkBox1_showInTaskbar.Checked = def.ShowInTaskbar;
+			checkBox2_openWithSingleClick.Checked = def.OpenWithSingleClick;
+			checkBox1_autoHideWhenUnfocus.Checked = def.AutoHideWhenUnfocus;
+			AddSettingEvents();
 
 			SettingsLoader.Current = def;
 			SettingsLoader.Save();
@@ -226,6 +232,26 @@ namespace HelloClipboard
 			_mainForm.TopMost = checkBox1_alwaysTopMost.Checked;
 			_mainForm.CheckAndUpdateTopMostImage();
 			SettingsLoader.Current.AlwaysTopMost = checkBox1_alwaysTopMost.Checked;
+			SettingsLoader.Save();
+		}
+
+		private void checkBox1_showInTaskbar_CheckedChanged(object sender, EventArgs e)
+		{
+			SettingsLoader.Current.ShowInTaskbar = checkBox1_showInTaskbar.Checked;
+			SettingsLoader.Save();
+
+			_mainForm.UpdateTaskbarVisibility(checkBox1_showInTaskbar.Checked);
+		}
+
+		private void checkBox2_openWithSingleClick_CheckedChanged(object sender, EventArgs e)
+		{
+			SettingsLoader.Current.OpenWithSingleClick = checkBox2_openWithSingleClick.Checked;
+			SettingsLoader.Save();
+		}
+
+		private void checkBox1_autoHideWhenUnfocus_CheckedChanged(object sender, EventArgs e)
+		{
+			SettingsLoader.Current.AutoHideWhenUnfocus = checkBox1_autoHideWhenUnfocus.Checked;
 			SettingsLoader.Save();
 		}
 	}
