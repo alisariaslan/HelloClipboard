@@ -435,17 +435,22 @@ namespace HelloClipboard
 			if (string.IsNullOrWhiteSpace(textContent) && imageContent == null)
 				return;
 
-			if (type == ClipboardItemType.Text && textContent == _lastTextContent)
-				return;
+			bool preventDuplication = SettingsLoader.Current.PreventClipboardDuplication;
 
-			if (type == ClipboardItemType.File && textContent == _lastFileContent)
-				return;
+			if (preventDuplication)
+			{
+				if (type == ClipboardItemType.Text && textContent == _lastTextContent)
+					return;
+
+				if (type == ClipboardItemType.File && textContent == _lastFileContent)
+					return;
+			}
 
 			string imageHash = null;
 			if (type == ClipboardItemType.Image && imageContent != null)
 			{
 				imageHash = HashHelper.HashImageBytes(imageContent);
-				if (!string.IsNullOrEmpty(imageHash) && imageHash == _lastImageHash)
+				if (preventDuplication && !string.IsNullOrEmpty(imageHash) && imageHash == _lastImageHash)
 					return;
 				_lastImageHash = imageHash;
 			}
@@ -453,7 +458,7 @@ namespace HelloClipboard
 			string calculatedHash = null;
 			ClipboardItem existingItem = null;
 
-			if (SettingsLoader.Current.PreventClipboardDuplication)
+			if (preventDuplication)
 			{
 				if (type == ClipboardItemType.Text || type == ClipboardItemType.File)
 				{
