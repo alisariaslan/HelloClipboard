@@ -27,7 +27,7 @@ namespace HelloClipboard
 		private uint _lastClipboardSequenceNumber;
 		private string _lastTextContent;
 		private string _lastFileContent;
-		private string _lastImageSignature;
+		private string _lastImageHash;
 		private HotkeyWindow _hotkeyWindow;
 		private bool _hotkeyRegistered;
 		public bool HotkeyRegistered => _hotkeyRegistered;
@@ -442,12 +442,13 @@ namespace HelloClipboard
 			if (type == ClipboardItemType.File && textContent == _lastFileContent)
 				return;
 
+			string imageHash = null;
 			if (type == ClipboardItemType.Image && imageContent != null)
 			{
-				string signature = $"{imageContent.Width}x{imageContent.Height}_{imageContent.PixelFormat}";
-				if (signature == _lastImageSignature)
+				imageHash = HashHelper.HashImageBytes(imageContent);
+				if (!string.IsNullOrEmpty(imageHash) && imageHash == _lastImageHash)
 					return;
-				_lastImageSignature = signature;
+				_lastImageHash = imageHash;
 			}
 
 			string calculatedHash = null;
@@ -461,7 +462,7 @@ namespace HelloClipboard
 				}
 				else if (type == ClipboardItemType.Image && imageContent != null)
 				{
-					calculatedHash = HashHelper.HashImageBytes(imageContent);
+					calculatedHash = imageHash ?? HashHelper.HashImageBytes(imageContent);
 				}
 			}
 
