@@ -19,6 +19,7 @@ namespace HelloClipboard
 		public bool OpenWithSingleClick { get; set; } = true;
 		public bool AutoHideWhenUnfocus { get; set; } = true;
 		public int MaxHistoryCount { get; set; } = 1000;
+		public int PrivacyModeDurationMinutes { get; set; } = 10;
 		public bool EnableGlobalHotkey { get; set; } = false;
 		public System.Windows.Forms.Keys HotkeyModifiers { get; set; } = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift;
 		public System.Windows.Forms.Keys HotkeyKey { get; set; } = System.Windows.Forms.Keys.H;

@@ -38,7 +38,6 @@ namespace HelloClipboard
 		private const int ClipboardMaxAttempts = 4;
 		private const int ClipboardFastRetryDelayMs = 25;
 		private const int HotkeyId = 1001;
-		private static readonly TimeSpan DefaultPrivacyDuration = TimeSpan.FromMinutes(10);
 
 		internal const int WM_HOTKEY = 0x0312;
 		private const uint MOD_ALT = 0x0001;
@@ -106,7 +105,7 @@ namespace HelloClipboard
 			trayMenu.Items.Add("Show", null, (s, e) => ShowMainWindow());
 			trayMenu.Items.Add("Exit", null, (s, e) => ExitApplication());
 			trayMenu.Items.Add(new ToolStripMenuItem("Reset Window", null, (s, e) => ResetFormPositionAndSize()));
-			_trayPrivacyMenuItem = new ToolStripMenuItem("Enable Private Mode (10 min)", null, (s, e) => TogglePrivacyMode());
+			_trayPrivacyMenuItem = new ToolStripMenuItem($"Enable Private Mode ({GetPrivacyDurationMinutes()} min)", null, (s, e) => TogglePrivacyMode());
 			trayMenu.Items.Add(_trayPrivacyMenuItem);
 			_trayIcon.ContextMenuStrip = trayMenu;
 			_trayIcon.DoubleClick += (s, e) =>
@@ -283,7 +282,7 @@ namespace HelloClipboard
 			}
 			else
 			{
-				EnablePrivacyMode(DefaultPrivacyDuration);
+				EnablePrivacyMode(GetPrivacyDuration());
 			}
 		}
 
@@ -325,7 +324,7 @@ namespace HelloClipboard
 			}
 			else
 			{
-				_trayPrivacyMenuItem.Text = "Enable Private Mode (10 min)";
+				_trayPrivacyMenuItem.Text = $"Enable Private Mode ({GetPrivacyDurationMinutes()} min)";
 			}
 		}
 
@@ -695,6 +694,26 @@ namespace HelloClipboard
 			_trayIcon.Visible = false;
 			_trayIcon.Dispose();
 			ExitThread();
+		}
+
+		public void RefreshPrivacyMenuLabel()
+		{
+			UpdatePrivacyMenuText();
+		}
+
+		private TimeSpan GetPrivacyDuration()
+		{
+			return TimeSpan.FromMinutes(GetPrivacyDurationMinutes());
+		}
+
+		private int GetPrivacyDurationMinutes()
+		{
+			int minutes = SettingsLoader.Current?.PrivacyModeDurationMinutes ?? 10;
+			if (minutes < 1)
+				minutes = 10;
+			if (minutes > 99)
+				minutes = 99;
+			return minutes;
 		}
 
 		#endregion

@@ -44,6 +44,8 @@
 			this.label2_hotkey = new System.Windows.Forms.Label();
 			this.textBox_hotkey = new System.Windows.Forms.TextBox();
 			this.checkBox_enableHotkey = new System.Windows.Forms.CheckBox();
+			this.label_privacyDuration = new System.Windows.Forms.Label();
+			this.textBox_privacyDuration = new System.Windows.Forms.TextBox();
 			this.SuspendLayout();
 			// 
 			// checkBox1_startWithWindows
@@ -198,6 +200,23 @@
 			this.checkBox1_autoHideWhenUnfocus.UseVisualStyleBackColor = true;
 			this.checkBox1_autoHideWhenUnfocus.CheckedChanged += new System.EventHandler(this.checkBox1_autoHideWhenUnfocus_CheckedChanged);
 			// 
+			// label_privacyDuration
+			// 
+			this.label_privacyDuration.AutoSize = true;
+			this.label_privacyDuration.Location = new System.Drawing.Point(248, 324);
+			this.label_privacyDuration.Name = "label_privacyDuration";
+			this.label_privacyDuration.Size = new System.Drawing.Size(204, 21);
+			this.label_privacyDuration.TabIndex = 20;
+			this.label_privacyDuration.Text = "Private Mode Duration (min)";
+			// 
+			// textBox_privacyDuration
+			// 
+			this.textBox_privacyDuration.Location = new System.Drawing.Point(352, 348);
+			this.textBox_privacyDuration.MaxLength = 2;
+			this.textBox_privacyDuration.Name = "textBox_privacyDuration";
+			this.textBox_privacyDuration.Size = new System.Drawing.Size(100, 29);
+			this.textBox_privacyDuration.TabIndex = 21;
+			// 
 			// label2_hotkey
 			// 
 			this.label2_hotkey.AutoSize = true;
@@ -232,6 +251,8 @@
 			this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 21F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(464, 483);
+			this.Controls.Add(this.textBox_privacyDuration);
+			this.Controls.Add(this.label_privacyDuration);
 			this.Controls.Add(this.checkBox_enableHotkey);
 			this.Controls.Add(this.textBox_hotkey);
 			this.Controls.Add(this.label2_hotkey);
@@ -282,5 +303,7 @@
 		private System.Windows.Forms.Label label2_hotkey;
 		private System.Windows.Forms.TextBox textBox_hotkey;
 		private System.Windows.Forms.CheckBox checkBox_enableHotkey;
+		private System.Windows.Forms.Label label_privacyDuration;
+		private System.Windows.Forms.TextBox textBox_privacyDuration;
 	}
 }

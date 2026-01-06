@@ -33,6 +33,7 @@ namespace HelloClipboard
 			checkBox1_showInTaskbar.Checked = SettingsLoader.Current.ShowInTaskbar;
 			checkBox2_openWithSingleClick.Checked = SettingsLoader.Current.OpenWithSingleClick;
 			checkBox1_autoHideWhenUnfocus.Checked = SettingsLoader.Current.AutoHideWhenUnfocus;
+			textBox_privacyDuration.Text = SettingsLoader.Current.PrivacyModeDurationMinutes.ToString();
 			checkBox_enableHotkey.Checked = SettingsLoader.Current.EnableGlobalHotkey;
 			textBox_hotkey.Text = FormatHotkey(SettingsLoader.Current.HotkeyModifiers, SettingsLoader.Current.HotkeyKey);
 			textBox_hotkey.Enabled = SettingsLoader.Current.EnableGlobalHotkey;
@@ -105,6 +106,8 @@ namespace HelloClipboard
 			checkBox1_showInTaskbar.CheckedChanged -= checkBox1_showInTaskbar_CheckedChanged;
 			checkBox2_openWithSingleClick.CheckedChanged -= checkBox2_openWithSingleClick_CheckedChanged;
 			checkBox1_autoHideWhenUnfocus.CheckedChanged -= checkBox1_autoHideWhenUnfocus_CheckedChanged;
+			textBox_privacyDuration.KeyPress -= textBox_privacyDuration_KeyPress;
+			textBox_privacyDuration.Leave -= textBox_privacyDuration_Leave;
 			checkBox_enableHotkey.CheckedChanged -= checkBox_enableHotkey_CheckedChanged;
 			textBox_hotkey.KeyDown -= textBox_hotkey_KeyDown;
 
@@ -123,6 +126,8 @@ namespace HelloClipboard
 			checkBox1_showInTaskbar.CheckedChanged += checkBox1_showInTaskbar_CheckedChanged;
 			checkBox2_openWithSingleClick.CheckedChanged += checkBox2_openWithSingleClick_CheckedChanged;
 			checkBox1_autoHideWhenUnfocus.CheckedChanged += checkBox1_autoHideWhenUnfocus_CheckedChanged;
+			textBox_privacyDuration.KeyPress += textBox_privacyDuration_KeyPress;
+			textBox_privacyDuration.Leave += textBox_privacyDuration_Leave;
 			checkBox_enableHotkey.CheckedChanged += checkBox_enableHotkey_CheckedChanged;
 			textBox_hotkey.KeyDown += textBox_hotkey_KeyDown;
 		}
@@ -146,6 +151,7 @@ namespace HelloClipboard
 			checkBox1_showInTaskbar.Checked = def.ShowInTaskbar;
 			checkBox2_openWithSingleClick.Checked = def.OpenWithSingleClick;
 			checkBox1_autoHideWhenUnfocus.Checked = def.AutoHideWhenUnfocus;
+			textBox_privacyDuration.Text = def.PrivacyModeDurationMinutes.ToString();
 			checkBox_enableHotkey.Checked = def.EnableGlobalHotkey;
 			textBox_hotkey.Text = FormatHotkey(def.HotkeyModifiers, def.HotkeyKey);
 			textBox_hotkey.Enabled = def.EnableGlobalHotkey;
@@ -154,6 +160,7 @@ namespace HelloClipboard
 			SettingsLoader.Current = def;
 			SettingsLoader.Save();
 			TrayApplicationContext.Instance?.ReloadGlobalHotkey();
+			TrayApplicationContext.Instance?.RefreshPrivacyMenuLabel();
 
 			try
 			{
@@ -185,11 +192,11 @@ namespace HelloClipboard
 			if (!await PrivilegesHelper.EnsureAdministrator())
 				return;
 			try
-			{
-				string appName = Constants.AppName;
-				string exePath = $"\"{Application.ExecutablePath}\"";
-				using (RegistryKey key = Registry.CurrentUser.OpenSubKey(
-						   @"Software\Microsoft\Windows\CurrentVersion\Run", writable: true))
+		{
+			string appName = Constants.AppName;
+			string exePath = $"\"{Application.ExecutablePath}\"";
+			using (RegistryKey key = Registry.CurrentUser.OpenSubKey(
+					   @"Software\Microsoft\Windows\CurrentVersion\Run", writable: true))
 				{
 					if (checkBox1_startWithWindows.Checked)
 					{
@@ -227,6 +234,53 @@ namespace HelloClipboard
 		{
 			SettingsLoader.Current.PreventClipboardDuplication = checkBox4_preventClipboardDuplication.Checked;
 			SettingsLoader.Save();
+		}
+
+		private void textBox_privacyDuration_KeyPress(object sender, KeyPressEventArgs e)
+		{
+			if (char.IsControl(e.KeyChar))
+				return;
+
+			var tb = sender as TextBox;
+			if (!char.IsDigit(e.KeyChar))
+			{
+				e.Handled = true;
+				return;
+			}
+
+			var existingLength = tb?.Text?.Length ?? 0;
+			var selectionLength = tb?.SelectionLength ?? 0;
+			if (selectionLength == 0 && existingLength >= 2)
+				e.Handled = true;
+		}
+
+		private void textBox_privacyDuration_Leave(object sender, EventArgs e)
+		{
+			SavePrivacyDuration();
+		}
+
+		private void SavePrivacyDuration()
+		{
+			var text = textBox_privacyDuration.Text.Trim();
+			if (string.IsNullOrEmpty(text))
+				return;
+
+			if (!int.TryParse(text, out var minutes))
+				return;
+
+			if (minutes < 1)
+				minutes = 1;
+			if (minutes > 99)
+				minutes = 99;
+
+			textBox_privacyDuration.Text = minutes.ToString();
+
+			if (SettingsLoader.Current.PrivacyModeDurationMinutes == minutes)
+				return;
+
+			SettingsLoader.Current.PrivacyModeDurationMinutes = minutes;
+			SettingsLoader.Save();
+			TrayApplicationContext.Instance?.RefreshPrivacyMenuLabel();
 		}
 
 		private void checkBox1_invertClipboardHistoryListing_CheckedChanged(object sender, EventArgs e)
