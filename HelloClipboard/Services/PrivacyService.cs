@@ -44,6 +44,16 @@ namespace HelloClipboard.Services
 			});
 		}
 
+		public int GetPrivacyDurationMinutes()
+		{
+			int minutes = SettingsLoader.Current?.PrivacyModeDurationMinutes ?? 10;
+			if (minutes < 1)
+				minutes = 10;
+			if (minutes > 99)
+				minutes = 99;
+			return minutes;
+		}
+
 		public void Disable()
 		{
 			if (!_isActive) return;

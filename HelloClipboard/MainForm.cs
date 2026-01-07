@@ -1,16 +1,12 @@
 ﻿using HelloClipboard.Html;
+using HelloClipboard.Utils;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Text.RegularExpressions;
-using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Windows.Forms;
-using System.Drawing.Imaging;
 
 namespace HelloClipboard
 {
@@ -23,10 +19,10 @@ namespace HelloClipboard
 		private ClipDetailText _detailTextForm;
 		private ClipDetailImage _detailImageForm;
 		private FormWindowState _previousWindowState = FormWindowState.Normal;
-		private bool _useRegexSearch = false;
-		private bool _caseSensitiveSearch = false;
+
+
 		private string _currentSearchTerm = string.Empty;
-		private Regex _currentRegex = null;
+
 
 		[DllImport("user32.dll")]
 		private static extern IntPtr GetForegroundWindow();
@@ -41,7 +37,7 @@ namespace HelloClipboard
 			this.Text = Application.ProductName + " v" + Application.ProductVersion;
 
 			_trayApplicationContext = trayApplicationContext;
-			_viewModel = new MainFormViewModel(this, trayApplicationContext);
+			_viewModel = new MainFormViewModel(trayApplicationContext);
 
 			_viewModel.LoadSettings();
 
@@ -59,17 +55,88 @@ namespace HelloClipboard
 			textBox1_search.KeyPress += textBox1_search_KeyPress;
 		}
 
+		#region FORM EVENTS
+		private void MainForm_Deactivate(object sender, EventArgs e)
+		{
+			MainFormDeactivated();
+		}
+
 		private void textBox1_search_KeyDown(object sender, KeyEventArgs e)
+		{
+			TextBoxSearchKeydown(e);
+		}
+		private void MessagesListBox_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			MessagesListBoxSelectedIndexChanged();
+		}
+		private void MainForm_Shown(object sender, EventArgs e)
+		{
+			RefreshCacheView();
+		}
+		public void UpdateCheckUpdateNowBtnText(string newString)
+		{
+			checkUpdateToolStripMenuItem.Text = newString;
+		}
+		private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			using (var dlg = new InfoDialog(AboutHtml.GetTitle(), AboutHtml.GetHtml()))
+			{
+				dlg.ShowDialog(this);
+			}
+		}
+		private void helpToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			using (var dlg = new InfoDialog(HelpHtml.GetTitle(), HelpHtml.GetHtml()))
+			{
+				dlg.ShowDialog(this);
+			}
+		}
+		private void ShowUnderDevelopmentDialog(string featureName)
+		{
+			using (var dlg = new InfoDialog(UnderDevelopmentHtml.GetTitle(), UnderDevelopmentHtml.GetHtml(featureName)))
+			{
+				dlg.ShowDialog(this);
+			}
+		}
+		public void copyToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			CopyClicked();
+		}
+
+		private void contextMenuStrip1_Opening(object sender, CancelEventArgs e)
+		{
+			ContextMenuStrip1Opening(e);
+		}
+		protected override void OnFormClosing(FormClosingEventArgs e)
+		{
+			if (_trayApplicationContext.ApplicationExiting)
+			{
+				base.OnFormClosing(e);
+				return;
+			}
+			if (!SettingsLoader.Current.HideToTray || TempConfigLoader.Current.AdminPriviligesRequested)
+			{
+				_trayApplicationContext.ExitApplication();
+			}
+			else
+			{
+				e.Cancel = true;
+				_trayApplicationContext.HideMainWindow();
+			}
+		}
+		#endregion
+
+		void TextBoxSearchKeydown(KeyEventArgs e)
 		{
 			if (e.Control && e.KeyCode == Keys.Back)
 			{
-				DeletePreviousWord(textBox1_search);
+				textBox1_search.DeletePreviousWord(); 
 				e.SuppressKeyPress = true;
 				return;
 			}
 			if (e.Control && e.KeyCode == Keys.Delete)
 			{
-				DeleteNextWord(textBox1_search);
+				textBox1_search.DeleteNextWord(); 
 				e.SuppressKeyPress = true;
 				return;
 			}
@@ -110,7 +177,7 @@ namespace HelloClipboard
 			}
 		}
 
-		private void MessagesListBox_SelectedIndexChanged(object sender, EventArgs e)
+		void MessagesListBoxSelectedIndexChanged()
 		{
 			if (MessagesListBox.SelectedIndex >= 0)
 			{
@@ -128,168 +195,51 @@ namespace HelloClipboard
 			}
 		}
 
-		private void DeletePreviousWord(TextBox tb)
-		{
-			int pos = tb.SelectionStart;
-			if (pos == 0) return;
-
-			string text = tb.Text;
-			int start = pos;
-
-			while (start > 0 && char.IsWhiteSpace(text[start - 1]))
-				start--;
-			while (start > 0 && !char.IsWhiteSpace(text[start - 1]))
-				start--;
-
-			int length = pos - start;
-			if (length <= 0) return;
-
-			tb.Text = text.Remove(start, length);
-			tb.SelectionStart = start;
-		}
-
-		private void DeleteNextWord(TextBox tb)
-		{
-			int pos = tb.SelectionStart;
-			string text = tb.Text;
-			if (pos >= text.Length) return;
-
-			int end = pos;
-			while (end < text.Length && char.IsWhiteSpace(text[end]))
-				end++;
-			while (end < text.Length && !char.IsWhiteSpace(text[end]))
-				end++;
-
-			int length = end - pos;
-			if (length <= 0) return;
-
-			tb.Text = text.Remove(pos, length);
-			tb.SelectionStart = pos;
-		}
-
-		private bool IsAppFocused()
-		{
-			IntPtr foregroundWindow = GetForegroundWindow();
-			if (foregroundWindow == IntPtr.Zero) return false;
-
-			uint foregroundProcessId;
-			GetWindowThreadProcessId(foregroundWindow, out foregroundProcessId);
-
-			// Şu anki çalışan sürecin (Process) ID'si ile öndeki pencerenin ID'sini karşılaştır
-			return foregroundProcessId == (uint)Process.GetCurrentProcess().Id;
-		}
-
-		private void MainForm_Deactivate(object sender, EventArgs e)
+		void MainFormDeactivated()
 		{
 			if (!SettingsLoader.Current.AutoHideWhenUnfocus || !_isLoaded)
 				return;
 
-			// Task.Delay yerine kontrolü bir tık sonraya atmak için
 			BeginInvoke(new MethodInvoker(async () =>
 			{
-				// Windows'un odağı tam devretmesi için çok kısa bir bekleme
 				await System.Threading.Tasks.Task.Delay(100);
 
-				if (!IsAppFocused())
+				// NativeMethods içindeki temiz metodu çağırdık
+				if (!NativeMethods.IsCurrentProcessFocused())
 				{
-					// Eğer öndeki pencere bizim uygulamamıza ait değilse gizle
 					_trayApplicationContext.HideMainWindow();
 				}
 			}));
 		}
 
-		private bool IsFormOwnedByMe(Form activeForm)
-		{
-			if (activeForm == null) return false;
-
-			return activeForm == this ||
-				   activeForm.Owner == this ||
-				   _openDetailForm != null && activeForm == _openDetailForm;
-		}
-
 		public void MessageAdd(ClipboardItem item)
 		{
+			int index = _viewModel.GetInsertionIndex(
+				item,
+				MessagesListBox.Items.Count,
+				(i) => MessagesListBox.Items[i] as ClipboardItem
+			);
+
+			MessagesListBox.Items.Insert(index, item);
+
+			// Otomatik kaydırma mantığı
 			if (SettingsLoader.Current.InvertClipboardHistoryListing)
-			{
-				if (item.IsPinned)
-				{
-					MessagesListBox.Items.Insert(0, item);
-					MessagesListBox.TopIndex = 0;
-				}
-				else
-				{
-					int offset = MessagesListBox.Items.Cast<object>().TakeWhile(i => (i as ClipboardItem)?.IsPinned == true).Count();
-					MessagesListBox.Items.Insert(offset, item);
-					MessagesListBox.TopIndex = offset;
-				}
-			}
+				MessagesListBox.TopIndex = index;
 			else
-			{
-				if (item.IsPinned)
-				{
-					MessagesListBox.Items.Insert(0, item);
-				}
-				else
-				{
-					int offset = MessagesListBox.Items.Cast<object>().TakeWhile(i => (i as ClipboardItem)?.IsPinned == true).Count();
-					MessagesListBox.Items.Insert(offset, item);
-				}
-				int lastIndex = MessagesListBox.Items.Count - 1;
-				if (lastIndex >= 0)
-				{
-					MessagesListBox.TopIndex = lastIndex;
-				}
-			}
+				MessagesListBox.TopIndex = MessagesListBox.Items.Count - 1;
 		}
 
 		public void RemoveOldestMessage()
 		{
-			if (MessagesListBox.Items.Count == 0)
-				return;
+			int removeIndex = _viewModel.GetIndexToRemove(MessagesListBox.Items.Cast<ClipboardItem>());
 
-			int removeIndex;
-
-			if (SettingsLoader.Current.InvertClipboardHistoryListing)
+			if (removeIndex != -1)
 			{
-				// Pinned kalemler liste başında, invert modda sondan sil
-				int lastIndex = MessagesListBox.Items.Count - 1;
-				while (lastIndex >= 0)
-				{
-					if ((MessagesListBox.Items[lastIndex] as ClipboardItem)?.IsPinned == true)
-					{
-						lastIndex--;
-						continue;
-					}
-					break;
-				}
-				if (lastIndex < 0)
-					return;
-				removeIndex = lastIndex;
-			}
-			else
-			{
-				// Normal listede ilk unpinned öğeyi sil
-				int idx = 0;
-				while (idx < MessagesListBox.Items.Count)
-				{
-					if ((MessagesListBox.Items[idx] as ClipboardItem)?.IsPinned == true)
-					{
-						idx++;
-						continue;
-					}
-					break;
-				}
-				if (idx >= MessagesListBox.Items.Count)
-					return;
-				removeIndex = idx;
-			}
+				MessagesListBox.Items.RemoveAt(removeIndex);
 
-			MessagesListBox.Items.RemoveAt(removeIndex);
-
-			int lastIndexAfterRemoval = MessagesListBox.Items.Count - 1;
-			if (lastIndexAfterRemoval >= 0)
-			{
-				MessagesListBox.TopIndex = lastIndexAfterRemoval;
+				// Kaydırma mantığı (UI ile ilgili olduğu için burada kalabilir)
+				if (MessagesListBox.Items.Count > 0)
+					MessagesListBox.TopIndex = SettingsLoader.Current.InvertClipboardHistoryListing ? 0 : MessagesListBox.Items.Count - 1;
 			}
 		}
 
@@ -302,10 +252,7 @@ namespace HelloClipboard
 			}
 		}
 
-		private void MainForm_Shown(object sender, EventArgs e)
-		{
-			RefreshCacheView();
-		}
+
 
 		public void RefreshCacheView()
 		{
@@ -321,54 +268,12 @@ namespace HelloClipboard
 			MessagesListBox.EndUpdate();
 		}
 
-		public void UpdateCheckUpdateNowBtnText(string newString)
-		{
-			checkUpdateToolStripMenuItem.Text = newString;
-		}
 
-		private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			using (var dlg = new InfoDialog(AboutHtml.GetTitle(), AboutHtml.GetHtml()))
-			{
-				dlg.ShowDialog(this);
-			}
-		}
 
-		private void helpToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			using (var dlg = new InfoDialog(HelpHtml.GetTitle(), HelpHtml.GetHtml()))
-			{
-				dlg.ShowDialog(this);
-			}
-		}
 
-		private void ShowUnderDevelopmentDialog(string featureName)
-		{
-			using (var dlg = new InfoDialog(UnderDevelopmentHtml.GetTitle(), UnderDevelopmentHtml.GetHtml(featureName)))
-			{
-				dlg.ShowDialog(this);
-			}
-		}
 
-		protected override void OnFormClosing(FormClosingEventArgs e)
-		{
-			if (_trayApplicationContext.ApplicationExiting)
-			{
-				base.OnFormClosing(e);
-				return;
-			}
-			if (!SettingsLoader.Current.HideToTray || TempConfigLoader.Current.AdminPriviligesRequested)
-			{
-				_trayApplicationContext.ExitApplication();
-			}
-			else
-			{
-				e.Cancel = true;
-				_trayApplicationContext.HideMainWindow();
-			}
-		}
 
-		public void copyToolStripMenuItem_Click(object sender, EventArgs e)
+		public void CopyClicked()
 		{
 			if (MessagesListBox.SelectedIndices.Count == 0)
 				return;
@@ -376,6 +281,7 @@ namespace HelloClipboard
 			ClipboardItem selectedItem = MessagesListBox.SelectedItem as ClipboardItem;
 			_viewModel.CopyClicked(selectedItem);
 		}
+
 
 		private void OpenDetailForIndex(int index)
 		{
@@ -432,7 +338,8 @@ namespace HelloClipboard
 			}
 		}
 
-		private void contextMenuStrip1_Opening(object sender, CancelEventArgs e)
+
+		void ContextMenuStrip1Opening(CancelEventArgs e)
 		{
 			var pos = MessagesListBox.PointToClient(Cursor.Position);
 			int index = MessagesListBox.IndexFromPoint(pos);
@@ -447,13 +354,14 @@ namespace HelloClipboard
 				pinToolStripMenuItem.Checked = selected.IsPinned;
 				pinToolStripMenuItem.Text = selected.IsPinned ? "Unpin" : "Pin";
 
-				var isUrl = selected.ItemType == ClipboardItemType.Text && IsValidUrl(selected.Content);
+				var isUrl = selected.ItemType == ClipboardItemType.Text && UrlHelper.IsValidUrl(selected.Content);
 				openUrlToolStripMenuItem.Visible = isUrl;
 
 				var fileExists = selected.ItemType != ClipboardItemType.File || (!string.IsNullOrWhiteSpace(selected.Content) && File.Exists(selected.Content));
 				saveToFileToolStripMenuItem.Enabled = fileExists;
 			}
 		}
+
 		private void MessagesListBox_MouseClick(object sender, MouseEventArgs e)
 		{
 			if (e.Button != MouseButtons.Left) return;
@@ -467,14 +375,7 @@ namespace HelloClipboard
 
 		private void MainForm_Load(object sender, EventArgs e)
 		{
-			var cfg = TempConfigLoader.Current;
-			if (cfg.MainFormWidth > 0 && cfg.MainFormHeight > 0)
-				this.Size = new Size(cfg.MainFormWidth, cfg.MainFormHeight);
-			if (cfg.MainFormX >= 0 && cfg.MainFormY >= 0)
-			{
-				this.StartPosition = FormStartPosition.Manual;
-				this.Location = new Point(cfg.MainFormX, cfg.MainFormY);
-			}
+			FormPersistence.ApplyStoredGeometry(this); // Utils kullanıldı
 
 			if (SettingsLoader.Current.AlwaysTopMost)
 			{
@@ -483,7 +384,6 @@ namespace HelloClipboard
 			CheckAndUpdateTopMostImage();
 
 			this.ShowInTaskbar = SettingsLoader.Current.ShowInTaskbar;
-
 			_isLoaded = true;
 		}
 
@@ -494,14 +394,9 @@ namespace HelloClipboard
 
 		private void _SaveFormPosition()
 		{
-			if (this.WindowState == FormWindowState.Normal && _isLoaded)
+			if (_isLoaded)
 			{
-				var cfg = TempConfigLoader.Current;
-				cfg.MainFormWidth = this.Width;
-				cfg.MainFormHeight = this.Height;
-				cfg.MainFormX = this.Location.X;
-				cfg.MainFormY = this.Location.Y;
-				TempConfigLoader.Save();
+				FormPersistence.SaveGeometry(this); // Utils kullanıldı
 			}
 		}
 
@@ -543,41 +438,13 @@ namespace HelloClipboard
 
 		private void MainForm_Move(object sender, EventArgs e)
 		{
-			var screen = Screen.FromControl(this).WorkingArea;
-			int snapDistance = 20;
-			int newX = this.Left;
-			int newY = this.Top;
-			bool snappedX = false;
-			bool snappedY = false;
-			if (Math.Abs(this.Right - screen.Right) < snapDistance)
-			{
-				newX = screen.Right - this.Width;
-				snappedX = true;
-			}
-			else if (Math.Abs(this.Left - screen.Left) < snapDistance)
-			{
-				newX = screen.Left;
-				snappedX = true;
-			}
-			if (Math.Abs(this.Bottom - screen.Bottom) < snapDistance)
-			{
-				newY = screen.Bottom - this.Height;
-				snappedY = true;
-			}
-			else if (Math.Abs(this.Top - screen.Top) < snapDistance)
-			{
-				newY = screen.Top;
-				snappedY = true;
-			}
-			if (snappedX || snappedY)
-			{
-				this.Location = new Point(newX, newY);
-			}
+			// Utils içindeki yeni metodu çağırdık
+			this.Location = WindowHelper.GetSnappedLocation(this);
+
 			if (_openDetailForm != null && !_openDetailForm.IsDisposed)
-			{
 				PositionDetailForm(_openDetailForm);
-			}
 		}
+
 
 		public void ResetFormPositionAndSize()
 		{
@@ -675,8 +542,18 @@ namespace HelloClipboard
 			_currentSearchTerm = textBox1_search.Text;
 			CloseDetailFormIfAvaible();
 			MessagesListBox.ClearSelected();
-			BuildSearchRegex();
-			FilterClipboardCache(_currentSearchTerm);
+			RefreshFilteredList();
+		}
+
+		private void RefreshFilteredList()
+		{
+			MessagesListBox.BeginUpdate();
+			MessagesListBox.Items.Clear();
+			foreach (var item in _viewModel.GetFilteredItems(_currentSearchTerm))
+			{
+				MessageAdd(item);
+			}
+			MessagesListBox.EndUpdate();
 		}
 
 		private void textBox1_search_KeyPress(object sender, KeyPressEventArgs e)
@@ -685,60 +562,6 @@ namespace HelloClipboard
 			if (char.IsControl(e.KeyChar) && e.KeyChar != '\b')
 			{
 				e.Handled = true;
-			}
-		}
-
-		private void FilterClipboardCache(string searchTerm)
-		{
-			MessagesListBox.BeginUpdate();
-			MessagesListBox.Items.Clear();
-
-			var cache = _trayApplicationContext.GetClipboardCache();
-			IEnumerable<ClipboardItem> itemsToDisplay;
-
-			if (string.IsNullOrWhiteSpace(searchTerm))
-			{
-				itemsToDisplay = cache;
-			}
-			else if (_useRegexSearch && _currentRegex != null)
-			{
-				itemsToDisplay = cache.Where(i =>
-				{
-					if (i.Content == null) return false;
-					return _currentRegex.IsMatch(i.Content);
-				});
-			}
-			else
-			{
-				if (_caseSensitiveSearch)
-					itemsToDisplay = cache.Where(i => i.Content != null && i.Content.Contains(searchTerm));
-				else
-					itemsToDisplay = cache.Where(i => i.Content != null && i.Content.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0);
-			}
-
-			foreach (var item in itemsToDisplay)
-			{
-				// Direkt Add(item) yaparsanız ayarı görmezden gelip sona ekler.
-				// MessageAdd(item) metodunu kullanırsanız ayara göre başa veya sona ekler.
-				MessageAdd(item);
-			}
-
-			MessagesListBox.EndUpdate();
-		}
-
-		private void BuildSearchRegex()
-		{
-			_currentRegex = null;
-			if (!_useRegexSearch || string.IsNullOrWhiteSpace(_currentSearchTerm))
-				return;
-			try
-			{
-				var options = _caseSensitiveSearch ? RegexOptions.None : RegexOptions.IgnoreCase;
-				_currentRegex = new Regex(_currentSearchTerm, options);
-			}
-			catch
-			{
-				_currentRegex = null;
 			}
 		}
 
@@ -754,43 +577,29 @@ namespace HelloClipboard
 
 		private void checkBoxRegex_CheckedChanged(object sender, EventArgs e)
 		{
-			_useRegexSearch = checkBoxRegex.Checked;
-			BuildSearchRegex();
-			FilterClipboardCache(_currentSearchTerm);
+			_viewModel.SetSearchOptions(checkBoxRegex.Checked, checkBoxCaseSensitive.Checked);
+			textBox1_search_TextChanged(null, null);
 		}
 
 		private void checkBoxCaseSensitive_CheckedChanged(object sender, EventArgs e)
 		{
-			_caseSensitiveSearch = checkBoxCaseSensitive.Checked;
-			BuildSearchRegex();
-			FilterClipboardCache(_currentSearchTerm);
+			// ViewModel'e yeni ayarları gönder
+			_viewModel.SetSearchOptions(checkBoxRegex.Checked, checkBoxCaseSensitive.Checked);
+
+			// Listeyi tazele
+			RefreshFilteredList();
 		}
 
 		private void pinToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			if (MessagesListBox.SelectedItem is ClipboardItem selected)
 			{
-				selected.IsPinned = !selected.IsPinned;
-				if (selected.ContentHash != null)
-				{
-					if (selected.IsPinned)
-					{
-						if (!TempConfigLoader.Current.PinnedHashes.Contains(selected.ContentHash))
-							TempConfigLoader.Current.PinnedHashes.Add(selected.ContentHash);
-					}
-					else
-					{
-						TempConfigLoader.Current.PinnedHashes.Remove(selected.ContentHash);
-					}
-					TempConfigLoader.Save();
-				}
+				bool isPinned = _viewModel.TogglePin(selected);
 
 				MessagesListBox.BeginUpdate();
 				MessagesListBox.Items.Remove(selected);
-				if (selected.IsPinned)
-				{
+				if (isPinned)
 					MessagesListBox.Items.Insert(0, selected);
-				}
 				else
 				{
 					int offset = MessagesListBox.Items.Cast<object>().TakeWhile(i => (i as ClipboardItem)?.IsPinned == true).Count();
@@ -799,172 +608,68 @@ namespace HelloClipboard
 				MessagesListBox.EndUpdate();
 				MessagesListBox.Refresh();
 
-				pinToolStripMenuItem.Checked = selected.IsPinned;
-				pinToolStripMenuItem.Text = selected.IsPinned ? "Unpin" : "Pin";
+				pinToolStripMenuItem.Checked = isPinned;
+				pinToolStripMenuItem.Text = isPinned ? "Unpin" : "Pin";
 			}
 		}
 
 		private void saveToFileToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			if (!(MessagesListBox.SelectedItem is ClipboardItem selected))
-				return;
+			if (!(MessagesListBox.SelectedItem is ClipboardItem selected)) return;
 
-			try
-			{
-				if (selected.ItemType == ClipboardItemType.Image)
-				{
-					SaveImageItem(selected);
-				}
-				else if (selected.ItemType == ClipboardItemType.File)
-				{
-					SaveFileItem(selected);
-				}
-				else
-				{
-					SaveTextItem(selected);
-				}
-			}
-			catch (Exception ex)
-			{
-				MessageBox.Show($"Kaydetme sırasında hata oluştu.\n{ex.Message}", "Kaydetme hatası", MessageBoxButtons.OK, MessageBoxIcon.Error);
-			}
-		}
+			var saveInfo = _viewModel.GetSaveFileInfo(selected);
 
-		private void SaveImageItem(ClipboardItem item)
-		{
-			if (item.ImageContent == null)
+			using (var dialog = new SaveFileDialog())
 			{
-				MessageBox.Show("Kaydedilecek görsel bulunamadı.", "Görsel kaydetme", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-				return;
-			}
+				dialog.Title = saveInfo.Title;
+				dialog.Filter = saveInfo.Filter;
+				dialog.FileName = saveInfo.FileName;
 
-			using (var dialog = new SaveFileDialog
-			{
-				Title = "Resmi Kaydet",
-				Filter = "PNG Image|*.png|JPEG Image|*.jpg;*.jpeg|Bitmap Image|*.bmp|All files|*.*",
-				FileName = "clipboard"
-			})
-			{
 				if (dialog.ShowDialog(this) == DialogResult.OK)
 				{
-					var ext = Path.GetExtension(dialog.FileName)?.ToLowerInvariant();
-					var format = ImageFormat.Png;
-					if (ext == ".jpg" || ext == ".jpeg")
-						format = ImageFormat.Jpeg;
-					else if (ext == ".bmp")
-						format = ImageFormat.Bmp;
-
-					item.ImageContent.Save(dialog.FileName, format);
-				}
-			}
-		}
-
-		private void SaveFileItem(ClipboardItem item)
-		{
-			var sourcePath = item.Content;
-			if (string.IsNullOrWhiteSpace(sourcePath) || !File.Exists(sourcePath))
-			{
-				MessageBox.Show("Kaynak dosya bulunamadı.", "Dosya kaydetme", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-				return;
-			}
-
-			using (var dialog = new SaveFileDialog
-			{
-				Title = "Dosyayı Farklı Kaydet",
-				FileName = Path.GetFileName(sourcePath),
-				Filter = "All files|*.*",
-				InitialDirectory = Path.GetDirectoryName(sourcePath)
-			})
-			{
-				if (dialog.ShowDialog(this) == DialogResult.OK)
-				{
-					File.Copy(sourcePath, dialog.FileName, true);
-				}
-			}
-		}
-
-		private void SaveTextItem(ClipboardItem item)
-		{
-			var content = item.Content ?? string.Empty;
-
-			using (var dialog = new SaveFileDialog
-			{
-				Title = "Metni Kaydet",
-				Filter = "Text File|*.txt|All files|*.*",
-				FileName = "clipboard.txt",
-				DefaultExt = "txt",
-				AddExtension = true
-			})
-			{
-				if (dialog.ShowDialog(this) == DialogResult.OK)
-				{
-					File.WriteAllText(dialog.FileName, content, Encoding.UTF8);
+					_viewModel.SaveItemToDisk(selected, dialog.FileName);
 				}
 			}
 		}
 
 		private void openUrlToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			if (!(MessagesListBox.SelectedItem is ClipboardItem selected))
-				return;
-
-			var url = selected.Content?.Trim();
-			if (!IsValidUrl(url))
-			{
-				MessageBox.Show("Geçerli bir URL bulunamadı.", "URL açma", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-				return;
-			}
+			if (!(MessagesListBox.SelectedItem is ClipboardItem selected)) return;
 
 			try
 			{
-				Process.Start(new ProcessStartInfo
-				{
-					FileName = url,
-					UseShellExecute = true
-				});
+				UrlHelper.OpenUrl(selected.Content);
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show($"URL açılamadı.\n{ex.Message}", "URL açma hatası", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				MessageBox.Show(ex.Message, "URL Hatası", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
-		}
-
-		private bool IsValidUrl(string text)
-		{
-			if (string.IsNullOrWhiteSpace(text))
-				return false;
-
-			text = text.Trim();
-
-			if (Uri.TryCreate(text, UriKind.Absolute, out var uri))
-			{
-				return uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps;
-			}
-
-			return false;
 		}
 
 		private async void checkUpdateToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			checkUpdateToolStripMenuItem.Enabled = false;
-			string currentVersion = Application.ProductVersion;
-			var update = await UpdateService.CheckForUpdateAsync(currentVersion, false);
+
+			// Context üzerinden instance servise erişiyoruz
+			var updateService = _trayApplicationContext.GetUpdateService();
+			var update = await updateService.CheckForUpdateAsync(Application.ProductVersion, false);
+
 			if (update != null)
 			{
 				var result = MessageBox.Show(
-					"A new version is available. Do you want to download it now? New update features: " + update.Notes,
-					"Update Available v" + update.Version,
-					MessageBoxButtons.YesNo,
-					MessageBoxIcon.Information);
+					$"New version v{update.Version} is available!\n\nNotes: {update.Notes}\n\nDownload now?",
+					"Update Found", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+
 				if (result == DialogResult.Yes)
 				{
-					await UpdateService.DownloadAndRunUpdateAsync();
+					await updateService.DownloadAndRunUpdateAsync();
 				}
 			}
 			else
 			{
-				MessageBox.Show("No updates available.", "Up to date", MessageBoxButtons.OK, MessageBoxIcon.Information);
+				MessageBox.Show("Your application is up to date.", "No Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
 			}
+
 			checkUpdateToolStripMenuItem.Enabled = true;
 		}
 
@@ -1012,85 +717,10 @@ namespace HelloClipboard
 			if (item.IsPinned)
 				displayText = "[PIN] " + displayText;
 
-			DrawTextWithHighlight(e.Graphics, displayText, e.Font, textColor, bounds, selected);
+			DrawingHelper.DrawTextWithHighlight(e.Graphics, displayText, e.Font, textColor, bounds, selected, _currentSearchTerm, _viewModel.GetHighlightRegex(_currentSearchTerm), _viewModel.CaseSensitive);
+
 			e.DrawFocusRectangle();
 		}
 
-		private void DrawTextWithHighlight(Graphics g, string text, Font font, Color textColor, Rectangle bounds, bool selected)
-		{
-			if (string.IsNullOrEmpty(text))
-				return;
-
-			var format = TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis;
-
-			if (string.IsNullOrWhiteSpace(_currentSearchTerm))
-			{
-				TextRenderer.DrawText(g, text, font, bounds, textColor, format);
-				return;
-			}
-
-			List<(string part, bool highlight)> parts = new List<(string, bool)>();
-
-			if (_useRegexSearch && _currentRegex != null)
-			{
-				int lastIndex = 0;
-				foreach (Match m in _currentRegex.Matches(text))
-				{
-					if (m.Index > lastIndex)
-					{
-						parts.Add((text.Substring(lastIndex, m.Index - lastIndex), false));
-					}
-					parts.Add((text.Substring(m.Index, m.Length), true));
-					lastIndex = m.Index + m.Length;
-				}
-				if (lastIndex < text.Length)
-				{
-					parts.Add((text.Substring(lastIndex), false));
-				}
-			}
-			else
-			{
-				StringComparison comp = _caseSensitiveSearch ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
-				int start = 0;
-				while (true)
-				{
-					int idx = text.IndexOf(_currentSearchTerm, start, comp);
-					if (idx < 0)
-					{
-						parts.Add((text.Substring(start), false));
-						break;
-					}
-					if (idx > start)
-					{
-						parts.Add((text.Substring(start, idx - start), false));
-					}
-					parts.Add((text.Substring(idx, _currentSearchTerm.Length), true));
-					start = idx + _currentSearchTerm.Length;
-					if (start >= text.Length)
-						break;
-				}
-			}
-
-			int x = bounds.Left;
-			foreach (var (part, highlight) in parts)
-			{
-				if (string.IsNullOrEmpty(part))
-					continue;
-				var size = TextRenderer.MeasureText(g, part, font, new Size(int.MaxValue, int.MaxValue), format);
-				var rect = new Rectangle(x, bounds.Top, size.Width, bounds.Height);
-				if (highlight)
-				{
-					Color back = selected ? Color.Gold : Color.Yellow;
-					using (var brush = new SolidBrush(back))
-					{
-						g.FillRectangle(brush, rect);
-					}
-				}
-				TextRenderer.DrawText(g, part, font, rect, textColor, format);
-				x += size.Width;
-				if (x > bounds.Right)
-					break;
-			}
-		}
 	}
 }

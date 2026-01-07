@@ -153,9 +153,12 @@
     <Compile Include="Loaders\SettingsLoader.cs" />
     <Compile Include="Loaders\TempConfigLoader.cs" />
     <Compile Include="MainForm.vm.cs" />
+    <Compile Include="Models\SaveFileInfo.cs" />
+    <Compile Include="Services\ClipboardMonitor.cs" />
     <Compile Include="Services\ClipboardService.cs" />
     <Compile Include="Services\HotkeyService.cs" />
     <Compile Include="Services\PrivacyService.cs" />
+    <Compile Include="Services\TrayIconManager.cs" />
     <Compile Include="SettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -174,14 +177,20 @@
     <Compile Include="TrayApplicationContext.cs" />
     <Compile Include="Utils\CharHelper.cs" />
     <Compile Include="Utils\CyptoHelper.cs" />
+    <Compile Include="Utils\DrawingHelper.cs" />
     <Compile Include="Utils\FileExtensionHelper.cs" />
     <Compile Include="Utils\FileOpener.cs" />
+    <Compile Include="Utils\FormPersistence.cs" />
     <Compile Include="Utils\HashHelper.cs" />
     <Compile Include="Utils\HistoryHelper.cs" />
     <Compile Include="Utils\ImageAnalyzer.cs" />
+    <Compile Include="Utils\NativeMethods.cs" />
     <Compile Include="Utils\PriviligesHelper.cs" />
     <Compile Include="Utils\ScreenHelper.cs" />
     <Compile Include="Utils\StringHelper.cs" />
+    <Compile Include="Utils\TextBoxExtensions.cs" />
+    <Compile Include="Utils\UrlHelper.cs" />
+    <Compile Include="Utils\WindowHelper.cs" />
     <EmbeddedResource Include="ClipDetailImage.resx">
       <DependentUpon>ClipDetailImage.cs</DependentUpon>
     </EmbeddedResource>

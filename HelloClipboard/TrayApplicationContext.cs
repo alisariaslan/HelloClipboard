@@ -2,172 +2,181 @@
 using HelloClipboard.Utils;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace HelloClipboard
 {
 	public class TrayApplicationContext : ApplicationContext
 	{
-		private NotifyIcon _trayIcon;
-		private MainForm _form;
-		private bool _updateChecksStarted;
-		private readonly List<ClipboardItem> _clipboardCache = new List<ClipboardItem>();
-		private readonly HashSet<string> _clipboardHashPool = new HashSet<string>();
-		private bool _trayMinimizedNotifyShown;
-		public bool ApplicationExiting;
 		public static TrayApplicationContext Instance { get; private set; }
-		private bool _suppressClipboardEvents = false;
-		private HistoryHelper historyHelper { get; set; }
-		private uint _lastClipboardSequenceNumber;
-		private string _lastTextContent;
-		private string _lastFileContent;
-		private string _lastImageHash;
-		private ToolStripMenuItem _trayPrivacyMenuItem;
+		public bool ApplicationExiting { get; private set; }
 
-		private const int ClipboardMaxAttempts = 4;
-		private const int ClipboardFastRetryDelayMs = 25;
+		private MainForm _form;
+		private TrayIconManager _trayManager;
+		private bool _trayMinimizedNotifyShown;
 
-		private readonly ClipboardService _clipboardService = new ClipboardService();
+		private readonly HistoryHelper _historyHelper = new HistoryHelper();
+		private readonly ClipboardMonitor _clipboardMonitor;
 		private readonly HotkeyService _hotkeyService = new HotkeyService();
 		private readonly PrivacyService _privacyService = new PrivacyService();
-
-		[DllImport("user32.dll")]
-		private static extern uint GetClipboardSequenceNumber();
-
+		private readonly UpdateService _updateService = new UpdateService();
 
 		public TrayApplicationContext()
 		{
 			Instance = this;
 
+			// 1. Servisleri Başlat
+			_clipboardMonitor = new ClipboardMonitor(_historyHelper, _privacyService);
+			BindEvents();
+			_clipboardMonitor.Start();
+
+			// 2. UI Bileşenlerini Hazırla
 			_form = new MainForm(this);
-			if (!_form.IsHandleCreated)
-			{
-				var handle = _form.Handle;
-			}
+			_trayManager = new TrayIconManager(
+				onShow: ShowMainWindow,
+				onHide: HideMainWindow,
+				onReset: ResetFormPositionAndSize,
+				onTogglePrivacy: TogglePrivacyMode,
+				onExit: ExitApplication
+			);
 
-			historyHelper = new HistoryHelper();
-			if (SettingsLoader.Current.EnableClipboardHistory)
-			{
-				var loadedItems = historyHelper.LoadHistoryFromFiles();
-				foreach (var item in loadedItems)
-				{
-					if (item.ContentHash != null && TempConfigLoader.Current.PinnedHashes.Contains(item.ContentHash))
-					{
-						item.IsPinned = true;
-					}
-					_clipboardCache.Add(item);
-					if (item.ContentHash != null)
-					{
-						_clipboardHashPool.Add(item.ContentHash);
-					}
-				}
-
-#if DEBUG
-				string historyPath = Constants.HistoryDirectory;
-				if (Directory.Exists(historyPath))
-				{
-					try
-					{
-						//Process.Start(historyPath);
-					}
-					catch (Exception ex)
-					{
-						System.Diagnostics.Debug.WriteLine($"Error: History folder couldn't open: {ex.Message}");
-					}
-				}
-#endif
-			}
-
-			_trayIcon = new NotifyIcon()
-			{
-				Icon = Properties.Resources.favicon,
-				Visible = true,
-				Text = $"{Constants.AppName}"
-			};
-			var trayMenu = new ContextMenuStrip();
-			trayMenu.Items.Add("Show", null, (s, e) => ShowMainWindow());
-			trayMenu.Items.Add("Exit", null, (s, e) => ExitApplication());
-			trayMenu.Items.Add(new ToolStripMenuItem("Reset Window", null, (s, e) => ResetFormPositionAndSize()));
-			_trayPrivacyMenuItem = new ToolStripMenuItem($"Enable Private Mode ({GetPrivacyDurationMinutes()} min)", null, (s, e) => TogglePrivacyMode());
-			trayMenu.Items.Add(_trayPrivacyMenuItem);
-			_trayIcon.ContextMenuStrip = trayMenu;
-			_trayIcon.DoubleClick += (s, e) =>
-			{
-				ShowMainWindow();
-			};
-			_trayIcon.MouseClick += (s, e) =>
-			{
-				if (e.Button == MouseButtons.Left && SettingsLoader.Current.OpenWithSingleClick)
-				{
-					ShowMainWindow();
-				}
-			};
-			if (SettingsLoader.Current.HideToTray && !TempConfigLoader.Current.AdminPriviligesRequested)
-			{
-				HideMainWindow();
-			}
-			else
-			{
-				ShowMainWindow();
-			}
+			// 3. Ayarları Uygula
 			if (SettingsLoader.Current.CheckUpdates)
-			{
-				StartAutoUpdateCheck();
-			}
-
-			_privacyService.StateChanged += OnPrivacyStateChanged;
-			_privacyService.Tick += () => UpdatePrivacyMenuText();
+				_updateService.StartPeriodicCheck(Application.ProductVersion);
 
 			TryRegisterGlobalHotkey();
+			UpdatePrivacyMenuText();
+			HandleInitialVisibility();
+		}
+
+		#region Initialization & Binding
+
+		private void BindEvents()
+		{
+			// Clipboard Olayları
+			_clipboardMonitor.ItemCaptured += (item) => RunOnUI(() => _form.MessageAdd(item));
+			_clipboardMonitor.ItemUpdated += (item) => RunOnUI(() => {
+				_form.MessageRemoveItem(item);
+				_form.MessageAdd(item);
+			});
+			_clipboardMonitor.ItemRemoved += () => RunOnUI(() => _form.RemoveOldestMessage());
+			_clipboardMonitor.ClipboardCleared += () => RunOnUI(() => {
+				_form.RefreshCacheView();
+				_form.ClearSearchBox();
+			});
+
+			// Servis Olayları
+			_updateService.UpdateAvailable += OnUpdateAvailable;
+			_privacyService.StateChanged += OnPrivacyStateChanged;
+			_privacyService.Tick += UpdatePrivacyMenuText;
+		}
+
+		private void HandleInitialVisibility()
+		{
+			if (SettingsLoader.Current.HideToTray && !TempConfigLoader.Current.AdminPriviligesRequested)
+				HideMainWindow();
+			else
+				ShowMainWindow();
 
 			TempConfigLoader.Current.AdminPriviligesRequested = false;
 			TempConfigLoader.Save();
-			ClipboardNotification.ClipboardUpdate += OnClipboardUpdate;
 		}
 
+		#endregion
 
-		#region HOTKEY & PRIVACY
+		#region Window Management
+
+		public void ShowMainWindow()
+		{
+			RunOnUI(() => {
+				if (_form.IsDisposed) _form = new MainForm(this);
+				_form.Show();
+				_form.WindowState = FormWindowState.Normal;
+				_form.ShowInTaskbar = SettingsLoader.Current.ShowInTaskbar;
+				_form.Activate();
+				_form.BringToFront();
+				_form.FocusSearchBox();
+			});
+		}
+
+		public void HideMainWindow()
+		{
+			if (_form == null) return;
+			RunOnUI(() => {
+				_form.CloseDetailFormIfAvaible();
+				foreach (Form owned in _form.OwnedForms)
+					if (owned != null && !owned.IsDisposed) try { owned.Close(); } catch { }
+
+				_form.Hide();
+				if (!_trayMinimizedNotifyShown)
+				{
+					_trayManager.ShowNotification(Constants.AppName, "Minimized to tray.");
+					_trayMinimizedNotifyShown = true;
+				}
+			});
+		}
+
+		private void ResetFormPositionAndSize()
+		{
+			var cfg = TempConfigLoader.Current;
+			cfg.MainFormWidth = cfg.MainFormHeight = cfg.MainFormX = cfg.MainFormY = -1;
+			TempConfigLoader.Save();
+			RunOnUI(() => {
+				_form.ResetFormPositionAndSize();
+				HideMainWindow();
+				ShowMainWindow();
+				ScreenHelper.CenterFormManually(_form);
+			});
+		}
+
+		#endregion
+
+		#region Logic Handlers
+
+		public void ClearClipboard()
+		{
+			_clipboardMonitor.SuppressEvents(true);
+			try
+			{
+				Clipboard.Clear();
+				_clipboardMonitor.ClearAll();
+				MessageBox.Show("Clipboard cleared.", "Success", MessageBoxButtons.OK);
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
+			finally
+			{
+				_clipboardMonitor.SuppressEvents(false);
+			}
+		}
+
+		private void TogglePrivacyMode() => _privacyService.Toggle(_privacyService.GetPrivacyDurationMinutes());
 
 		private void OnPrivacyStateChanged(bool active)
 		{
 			UpdatePrivacyMenuText();
-			string status = active ? "enabled" : "disabled";
-			_trayIcon.ShowBalloonTip(2000, Constants.AppName, $"Private Mode {status}.", ToolTipIcon.Info);
-		}
-
-		private void TogglePrivacyMode()
-		{
-			_privacyService.Toggle(GetPrivacyDurationMinutes());
+			_trayManager.ShowNotification(Constants.AppName, $"Private Mode {(active ? "enabled" : "disabled")}.");
 		}
 
 		private void UpdatePrivacyMenuText()
 		{
-			if (_trayPrivacyMenuItem == null) return;
-
-			// UI Thread kontrolü
-			if (_trayIcon.ContextMenuStrip.InvokeRequired)
-			{
-				_trayIcon.ContextMenuStrip.Invoke(new Action(UpdatePrivacyMenuText));
-				return;
-			}
-
-			if (_privacyService.IsActive)
-			{
-				var remaining = _privacyService.Until - DateTime.UtcNow;
-				var min = Math.Max(0, Math.Ceiling(remaining.TotalMinutes));
-				_trayPrivacyMenuItem.Text = $"Disable Private Mode ({min} min left)";
-			}
-			else
-			{
-				_trayPrivacyMenuItem.Text = $"Enable Private Mode ({GetPrivacyDurationMinutes()} min)";
-			}
+			RunOnUI(() => {
+				var remaining = Math.Max(0, Math.Ceiling((_privacyService.Until - DateTime.UtcNow).TotalMinutes));
+				_trayManager.UpdatePrivacyText(_privacyService.IsActive, remaining, _privacyService.GetPrivacyDurationMinutes());
+			});
 		}
+
+		private void OnUpdateAvailable(object sender, UpdateInfo e)
+		{
+			RunOnUI(() => _form.UpdateCheckUpdateNowBtnText("Update Now"));
+			_trayManager.ShowNotification($"{Constants.AppName} Update", $"Version v{e.Version} available.", ToolTipIcon.Info, ShowMainWindow);
+		}
+
+		#endregion
+
+		#region Global Hotkey
 
 		public bool ReloadGlobalHotkey() => TryRegisterGlobalHotkey();
 
@@ -178,465 +187,49 @@ namespace HelloClipboard
 
 			_hotkeyService.HotkeyPressed -= ToggleMainWindowFromHotkey;
 			_hotkeyService.HotkeyPressed += ToggleMainWindowFromHotkey;
-
-			return _hotkeyService.Register(
-				SettingsLoader.Current.HotkeyModifiers,
-				SettingsLoader.Current.HotkeyKey
-			);
+			return _hotkeyService.Register(SettingsLoader.Current.HotkeyModifiers, SettingsLoader.Current.HotkeyKey);
 		}
 
 		private void ToggleMainWindowFromHotkey()
 		{
 			if (ApplicationExiting) return;
-			if (_form != null && !_form.IsDisposed && _form.Visible) HideMainWindow();
-			else ShowMainWindow();
+			if (_form.Visible) HideMainWindow(); else ShowMainWindow();
 		}
 
 		#endregion
 
-		private void ResetFormPositionAndSize()
-		{
-			if (_form == null || _form.IsDisposed)
-				return;
-			var cfg = TempConfigLoader.Current;
-			cfg.MainFormWidth = -1;
-			cfg.MainFormHeight = -1;
-			cfg.MainFormX = -1;
-			cfg.MainFormY = -1;
-			TempConfigLoader.Save();
-			_form.ResetFormPositionAndSize();
-			HideMainWindow();
-			ShowMainWindow();
-			ScreenHelper.CenterFormManually(_form);
-		}
-
-		#region CLIPBOARD HANDLING
-
-		public void ClearClipboard()
-		{
-			SuppressClipboardEvents(true);
-
-			try
-			{
-				Clipboard.Clear();
-
-				_clipboardCache.Clear();
-				_clipboardHashPool.Clear();
-				TempConfigLoader.Current.PinnedHashes.Clear();
-
-				if (SettingsLoader.Current.EnableClipboardHistory)
-				{
-					try
-					{
-						string historyPath = Constants.HistoryDirectory;
-						if (Directory.Exists(historyPath))
-						{
-							var files = Directory.GetFiles(historyPath);
-							foreach (var file in files)
-							{
-								File.Delete(file);
-							}
-						}
-					}
-					catch (Exception ex)
-					{
-#if DEBUG
-						System.Diagnostics.Debug.WriteLine($"History delete error: {ex.Message}");
-#endif
-					}
-				}
-
-				if (_form != null && !_form.IsDisposed)
-				{
-					_form.Invoke(new MethodInvoker(() =>
-					{
-						_form.RefreshCacheView();
-						_form.ClearSearchBox();
-					}));
-				}
-
-				MessageBox.Show($"Clipboard cleared.", "Success", MessageBoxButtons.OK);
-			}
-			catch (Exception ex)
-			{
-				MessageBox.Show($"Error clearing clipboard: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-			}
-			finally
-			{
-				SuppressClipboardEvents(false);
-			}
-		}
-
-		public void SuppressClipboardEvents(bool value)
-		{
-			_suppressClipboardEvents = value;
-		}
-
-		private async void OnClipboardUpdate(object sender, EventArgs e)
-		{
-			if (_suppressClipboardEvents || _privacyService.IsActive)
-				return;
-
-		
-
-			// Yinelenen olayları atla
-			uint seq = GetClipboardSequenceNumber();
-			if (seq != 0 && seq == _lastClipboardSequenceNumber)
-				return;
-			_lastClipboardSequenceNumber = seq;
-
-			await TryReadClipboardAsync();
-		}
-
-		private async Task TryReadClipboardAsync()
-		{
-			for (int attempt = 0; attempt < ClipboardMaxAttempts; attempt++)
-			{
-				try
-				{
-					var dataObj = Clipboard.GetDataObject();
-
-					if (dataObj != null && dataObj.GetDataPresent(DataFormats.UnicodeText, true))
-					{
-						string text = dataObj.GetData(DataFormats.UnicodeText, true) as string;
-						if (!string.IsNullOrEmpty(text))
-						{
-							AddToCache(ClipboardItemType.Text, text);
-							return;
-						}
-					}
-
-					if (dataObj != null && dataObj.GetDataPresent(DataFormats.FileDrop))
-					{
-						var files = dataObj.GetData(DataFormats.FileDrop) as string[];
-						if (files != null && files.Length > 0)
-						{
-							foreach (var file in files)
-							{
-								AddToCache(ClipboardItemType.File, file);
-							}
-							return;
-						}
-					}
-
-					if (dataObj != null && dataObj.GetDataPresent(DataFormats.Bitmap))
-					{
-						var image = Clipboard.GetImage();
-						if (image != null)
-						{
-							var imageCount = _clipboardCache.Count(i => i.ItemType == ClipboardItemType.Image);
-							AddToCache(ClipboardItemType.Image, $"[IMAGE {imageCount + 1}]", image);
-							return;
-						}
-					}
-
-					// Pano hazır değilse kısa bir beklemeyle tekrar dene
-					if (attempt < ClipboardMaxAttempts - 1)
-						await Task.Delay(ClipboardFastRetryDelayMs);
-				}
-				catch (ExternalException)
-				{
-					if (attempt < ClipboardMaxAttempts - 1)
-						await Task.Delay(ClipboardFastRetryDelayMs);
-				}
-				catch (Exception ex)
-				{
-#if DEBUG
-					System.Diagnostics.Debug.WriteLine($"Clipboard Error: {ex.Message}");
-#endif
-					return;
-				}
-			}
-		}
-
-		private void AddToCache(ClipboardItemType type, string textContent, Image imageContent = null)
-		{
-			if (string.IsNullOrWhiteSpace(textContent) && imageContent == null)
-				return;
-
-			bool preventDuplication = SettingsLoader.Current.PreventClipboardDuplication;
-
-			if (preventDuplication)
-			{
-				if (type == ClipboardItemType.Text && textContent == _lastTextContent)
-					return;
-
-				if (type == ClipboardItemType.File && textContent == _lastFileContent)
-					return;
-			}
-
-			string imageHash = null;
-			if (type == ClipboardItemType.Image && imageContent != null)
-			{
-				imageHash = HashHelper.HashImageBytes(imageContent);
-				if (preventDuplication && !string.IsNullOrEmpty(imageHash) && imageHash == _lastImageHash)
-					return;
-				_lastImageHash = imageHash;
-			}
-
-			string calculatedHash = null;
-			ClipboardItem existingItem = null;
-
-			if (preventDuplication)
-			{
-				if (type == ClipboardItemType.Text || type == ClipboardItemType.File)
-				{
-					calculatedHash = HashHelper.CalculateMd5Hash(textContent);
-				}
-				else if (type == ClipboardItemType.Image && imageContent != null)
-				{
-					calculatedHash = imageHash ?? HashHelper.HashImageBytes(imageContent);
-				}
-			}
-
-			if (calculatedHash != null && _clipboardHashPool.Contains(calculatedHash))
-			{
-				existingItem = _clipboardCache.FirstOrDefault(i => i.ContentHash == calculatedHash);
-
-				if (existingItem != null)
-				{
-					_clipboardCache.Remove(existingItem);
-					if (!_form.IsDisposed) { _form.MessageRemoveItem(existingItem); }
-
-					_clipboardCache.Add(existingItem);
-					if (!_form.IsDisposed) { _form.MessageAdd(existingItem); }
-				}
-				return;
-			}
-
-			string newTitle = "";
-
-			if ( type == ClipboardItemType.Text)
-			{
-				string replacedNewlines = textContent.Replace('\r', ' ')
-										 .Replace('\n', ' ')
-										 .Replace('\t', ' ');
-				string cleanedWhitespace = Regex.Replace(replacedNewlines, @"\s+", " ");
-				newTitle = cleanedWhitespace.Trim();
-				if (newTitle.Length > 1024)
-				{
-					newTitle = newTitle.Substring(0, 1024) + "...";
-				}
-			}
-			else if ( type == ClipboardItemType.Image)
-			{
-				newTitle = textContent;
-			}
-			else if ( type == ClipboardItemType.File)
-			{
-				newTitle = $"{System.IO.Path.GetFileName(textContent)} -> {textContent}";
-			}
-
-			var item = new ClipboardItem(_clipboardCache.Count, type, textContent, newTitle, imageContent, calculatedHash);
-			if (item.ContentHash != null && TempConfigLoader.Current.PinnedHashes.Contains(item.ContentHash))
-			{
-				item.IsPinned = true;
-			}
-
-			if (SettingsLoader.Current.EnableClipboardHistory && item.ContentHash != null)
-			{
-				// Disk yazımını UI işleyicisinden ayır
-				Task.Run(() => historyHelper.SaveItemToHistoryFile(item));
-			}
-
-			if (item.IsPinned)
-			{
-				_clipboardCache.Add(item);
-			}
-			else
-			{
-				var insertIndex = _clipboardCache.TakeWhile(i => i.IsPinned).Count();
-				_clipboardCache.Insert(insertIndex, item);
-			}
-
-			if (item.ContentHash != null)
-			{
-				_clipboardHashPool.Add(item.ContentHash);
-			}
-
-			if (type == ClipboardItemType.Text)
-				_lastTextContent = textContent;
-			else if (type == ClipboardItemType.File)
-				_lastFileContent = textContent;
-
-			if (!_form.IsDisposed)
-			{
-				_form.MessageAdd(item);
-			}
-
-			if (_clipboardCache.Count > SettingsLoader.Current.MaxHistoryCount)
-			{
-				var oldestItem = _clipboardCache[0];
-
-				if (oldestItem.IsPinned)
-				{
-					// Pinned kalemleri atlamadan en eski pinlenmeyen öğeyi bul
-					var removable = _clipboardCache.FirstOrDefault(i => !i.IsPinned);
-					if (removable == null)
-						return;
-					oldestItem = removable;
-				}
-
-				if (oldestItem.ContentHash != null)
-				{
-					_clipboardHashPool.Remove(oldestItem.ContentHash);
-
-					if (SettingsLoader.Current.EnableClipboardHistory)
-					{
-						historyHelper.DeleteItemFromFile(oldestItem.ContentHash);
-					}
-				}
-
-				_form.RemoveOldestMessage();
-				_clipboardCache.RemoveAt(0);
-			}
-		}
-
-		public IReadOnlyList<ClipboardItem> GetClipboardCache()
-		{
-			return _clipboardCache.AsReadOnly();
-		}
-
-		#endregion
-
-		public async void StartAutoUpdateCheck()
-		{
-			if (_updateChecksStarted)
-				return;
-			_updateChecksStarted = true;
-			while (SettingsLoader.Current.CheckUpdates)
-			{
-				try
-				{
-					var now = DateTime.UtcNow;
-					var last = TempConfigLoader.Current.LastUpdateCheck;
-					if (last == default || (now - last) >= Constants.ApplicationUpdateInterval)
-					{
-						await DoUpdateCheck();
-						TempConfigLoader.Current.LastUpdateCheck = DateTime.UtcNow;
-						TempConfigLoader.Save();
-					}
-					var remaining = Constants.ApplicationUpdateInterval - (now - last);
-					if (remaining < TimeSpan.Zero)
-						remaining = TimeSpan.Zero;
-					await Task.Delay(remaining);
-				}
-				catch
-				{
-				}
-			}
-			_updateChecksStarted = false;
-		}
-
-		private async Task DoUpdateCheck()
-		{
-			var update = await UpdateService.CheckForUpdateAsync(Application.ProductVersion, true);
-			if (update != null)
-			{
-				if (!_form.IsDisposed)
-					_form.UpdateCheckUpdateNowBtnText("Update Now");
-				_trayIcon.BalloonTipTitle = $"{Constants.AppName} Update";
-				_trayIcon.BalloonTipText = "A new version is available. Click \"Update Now\".";
-				_trayIcon.BalloonTipIcon = ToolTipIcon.Info;
-				_trayIcon.ShowBalloonTip(5000);
-				_trayIcon.BalloonTipClicked -= TrayIcon_BalloonTipClicked;
-				_trayIcon.BalloonTipClicked += TrayIcon_BalloonTipClicked;
-			}
-			else
-			{
-				if (!_form.IsDisposed)
-					_form.UpdateCheckUpdateNowBtnText("Check Update");
-			}
-		}
-
-		#region TRAY HANDLING
-		private void TrayIcon_BalloonTipClicked(object sender, EventArgs e)
-		{
-			ShowMainWindow();
-		}
-
-		public void ShowMainWindow()
-		{
-			if (_form.InvokeRequired)
-			{
-				_form.Invoke(new MethodInvoker(ShowMainWindow));
-				return;
-			}
-			if (_form.IsDisposed)
-			{
-				_form = new MainForm(this);
-				if (!_form.IsHandleCreated)
-				{
-					var handle = _form.Handle;
-				}
-			}
-			_form.Show();
-			_form.WindowState = FormWindowState.Normal;
-
-			_form.ShowInTaskbar = SettingsLoader.Current.ShowInTaskbar;
-
-			_form.Activate();
-			_form.BringToFront();
-			_form.FocusSearchBox();
-		}
-
-		public void HideMainWindow()
-		{
-			if (_form == null)
-				return;
-
-			_form.CloseDetailFormIfAvaible();
-
-			foreach (Form owned in _form.OwnedForms)
-			{
-				if (owned != null && !owned.IsDisposed)
-				{
-					try { owned.Close(); } catch { }
-				}
-			}
-
-			_form.Hide();
-			if (!_trayMinimizedNotifyShown)
-			{
-				_trayIcon.ShowBalloonTip(1000, $"{Constants.AppName}", "Application minimized to tray.", ToolTipIcon.Info);
-				_trayMinimizedNotifyShown = true;
-			}
-		}
+		#region Lifecycle & Helpers
 
 		public void ExitApplication()
 		{
 			if (ApplicationExiting) return;
 			ApplicationExiting = true;
 
+			_updateService.StopPeriodicCheck();
+			_hotkeyService.Dispose();
+			_privacyService.Disable();
+			_trayManager.Dispose();
+
 			if (_form != null && !_form.IsDisposed)
 			{
 				_form.Close();
 				_form.Dispose();
 			}
-
-			_hotkeyService.Dispose(); // Kısayolu çözer ve pencereyi kapatır.
-			_privacyService.Disable();
-			_trayIcon.Visible = false;
-			_trayIcon.Dispose();
 			ExitThread();
 		}
 
-		public void RefreshPrivacyMenuLabel()
+		private void RunOnUI(Action action)
 		{
-			UpdatePrivacyMenuText();
+			if (_form != null && !_form.IsDisposed && _form.InvokeRequired) _form.Invoke(action);
+			else action();
 		}
 
-		private int GetPrivacyDurationMinutes()
-		{
-			int minutes = SettingsLoader.Current?.PrivacyModeDurationMinutes ?? 10;
-			if (minutes < 1)
-				minutes = 10;
-			if (minutes > 99)
-				minutes = 99;
-			return minutes;
-		}
+		// Public Getters
+		public UpdateService GetUpdateService() => _updateService;
+		public IReadOnlyList<ClipboardItem> GetClipboardCache() => _clipboardMonitor.GetCache();
+		public void SuppressClipboardEvents(bool value) => _clipboardMonitor.SuppressEvents(value);
+		public void RefreshPrivacyMenuLabel() => UpdatePrivacyMenuText();
 
 		#endregion
 	}
-
 }

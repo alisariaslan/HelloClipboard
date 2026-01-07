@@ -34,6 +34,7 @@ namespace HelloClipboard
 				Application.EnableVisualStyles();
 				Application.SetCompatibleTextRenderingDefault(false);
 				Task.Run(() => StartPipeServer());
+				SettingsLoader.LoadSettings();
 				Application.Run(new TrayApplicationContext());
 			}
 		}
