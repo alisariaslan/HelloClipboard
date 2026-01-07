@@ -1,11 +1,11 @@
 ﻿using HelloClipboard.Html;
+using HelloClipboard.Services;
 using HelloClipboard.Utils;
 using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace HelloClipboard
@@ -15,20 +15,9 @@ namespace HelloClipboard
 		private readonly TrayApplicationContext _trayApplicationContext;
 		private readonly MainFormViewModel _viewModel;
 		private bool _isLoaded = false;
-		private Form _openDetailForm;
-		private ClipDetailText _detailTextForm;
-		private ClipDetailImage _detailImageForm;
 		private FormWindowState _previousWindowState = FormWindowState.Normal;
-
-
+		private DetailWindowManager _detailManager;
 		private string _currentSearchTerm = string.Empty;
-
-
-		[DllImport("user32.dll")]
-		private static extern IntPtr GetForegroundWindow();
-
-		[DllImport("user32.dll")]
-		private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
 		public MainForm(TrayApplicationContext trayApplicationContext)
 		{
@@ -53,6 +42,8 @@ namespace HelloClipboard
 			MessagesListBox.SelectedIndexChanged += MessagesListBox_SelectedIndexChanged;
 			textBox1_search.KeyDown += textBox1_search_KeyDown;
 			textBox1_search.KeyPress += textBox1_search_KeyPress;
+
+			_detailManager = new DetailWindowManager(this, MainForm_Deactivate);
 		}
 
 		#region FORM EVENTS
@@ -252,8 +243,6 @@ namespace HelloClipboard
 			}
 		}
 
-
-
 		public void RefreshCacheView()
 		{
 			MessagesListBox.BeginUpdate();
@@ -268,11 +257,6 @@ namespace HelloClipboard
 			MessagesListBox.EndUpdate();
 		}
 
-
-
-
-
-
 		public void CopyClicked()
 		{
 			if (MessagesListBox.SelectedIndices.Count == 0)
@@ -286,55 +270,13 @@ namespace HelloClipboard
 		private void OpenDetailForIndex(int index)
 		{
 			if (index < 0) return;
-
 			MessagesListBox.SelectedIndex = index;
 
-			if (!(MessagesListBox.SelectedItem is ClipboardItem selectedItem))
-				return;
-
-			Rectangle previousBounds = _openDetailForm != null && !_openDetailForm.IsDisposed ? _openDetailForm.Bounds : Rectangle.Empty;
-
-			if (selectedItem.ItemType == ClipboardItemType.Image)
+			if (MessagesListBox.SelectedItem is ClipboardItem selectedItem)
 			{
-				if (_detailImageForm == null || _detailImageForm.IsDisposed)
-				{
-					_detailImageForm = new ClipDetailImage(this, selectedItem);
-					_detailImageForm.Deactivate += MainForm_Deactivate;
-					_detailImageForm.Owner = this;
-				}
-				else
-				{
-					_detailImageForm.UpdateItem(selectedItem);
-				}
-
-				EnsureDetailPosition(_detailImageForm, previousBounds);
-				ShowDetailForm(_detailImageForm);
-
-				if (_detailTextForm != null && !_detailTextForm.IsDisposed)
-					_detailTextForm.Hide();
-
-				_openDetailForm = _detailImageForm;
-			}
-			else
-			{
-				if (_detailTextForm == null || _detailTextForm.IsDisposed)
-				{
-					_detailTextForm = new ClipDetailText(this, selectedItem);
-					_detailTextForm.Deactivate += MainForm_Deactivate;
-					_detailTextForm.Owner = this;
-				}
-				else
-				{
-					_detailTextForm.UpdateItem(selectedItem);
-				}
-
-				EnsureDetailPosition(_detailTextForm, previousBounds);
-				ShowDetailForm(_detailTextForm);
-
-				if (_detailImageForm != null && !_detailImageForm.IsDisposed)
-					_detailImageForm.Hide();
-
-				_openDetailForm = _detailTextForm;
+				// Manager her şeyi hallediyor
+				Rectangle currentBounds = _detailManager.GetActiveForm()?.Bounds ?? Rectangle.Empty;
+				_detailManager.ShowDetail(selectedItem, currentBounds);
 			}
 		}
 
@@ -402,12 +344,9 @@ namespace HelloClipboard
 
 		public void CloseDetailFormIfAvaible()
 		{
-			if (_detailTextForm != null && !_detailTextForm.IsDisposed)
-				_detailTextForm.Hide();
-			if (_detailImageForm != null && !_detailImageForm.IsDisposed)
-				_detailImageForm.Hide();
-			_openDetailForm = null;
+			_detailManager.CloseAll();
 		}
+
 		private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			CloseDetailFormIfAvaible();
@@ -417,32 +356,29 @@ namespace HelloClipboard
 		private async void MainForm_Resize(object sender, EventArgs e)
 		{
 			_SaveFormPosition();
-			if (_isLoaded && this.WindowState == FormWindowState.Normal &&
-		_previousWindowState == FormWindowState.Maximized)
+			if (_isLoaded && this.WindowState == FormWindowState.Normal && _previousWindowState == FormWindowState.Maximized)
 			{
 				await System.Threading.Tasks.Task.Delay(10);
-				var cfg = TempConfigLoader.Current;
-				if (cfg.MainFormX >= 0 && cfg.MainFormY >= 0)
-				{
-					this.Location = new Point(cfg.MainFormX, cfg.MainFormY);
-				}
+				FormPersistence.ApplyStoredGeometry(this);
 			}
 			_previousWindowState = this.WindowState;
 
-			if (_openDetailForm != null && !_openDetailForm.IsDisposed && _openDetailForm.Visible)
+			// Manager üzerinden kontrol et ve konumlandır
+			if (_detailManager.IsAnyVisible())
 			{
-				EnsureDetailPosition(_openDetailForm, Rectangle.Empty);
-				ShowDetailForm(_openDetailForm);
+				_detailManager.PositionFormNextToOwner(_detailManager.GetActiveForm());
 			}
 		}
 
 		private void MainForm_Move(object sender, EventArgs e)
 		{
-			// Utils içindeki yeni metodu çağırdık
 			this.Location = WindowHelper.GetSnappedLocation(this);
 
-			if (_openDetailForm != null && !_openDetailForm.IsDisposed)
-				PositionDetailForm(_openDetailForm);
+			// Eğer bir detay formu açıksa, onu ana formun yanına hizala
+			if (_detailManager.IsAnyVisible())
+			{
+				_detailManager.PositionFormNextToOwner(_detailManager.GetActiveForm());
+			}
 		}
 
 
@@ -460,66 +396,6 @@ namespace HelloClipboard
 				f.StartPosition = FormStartPosition.CenterParent;
 				f.ShowDialog(this);
 			}
-		}
-
-		private void PositionDetailForm(Form detailForm)
-		{
-			var mainRect = this.Bounds;
-			var screen = Screen.FromControl(this).WorkingArea;
-			int padding = 1;
-			Point location = new Point();
-			if (mainRect.Right + detailForm.Width + padding <= screen.Right)
-			{
-				location = new Point(mainRect.Right + padding, mainRect.Top);
-			}
-			else if (mainRect.Left - detailForm.Width - padding >= screen.Left)
-			{
-				location = new Point(mainRect.Left - detailForm.Width - padding, mainRect.Top);
-			}
-			else if (mainRect.Bottom + detailForm.Height + padding <= screen.Bottom)
-			{
-				location = new Point(mainRect.Left, mainRect.Bottom + padding);
-			}
-			else if (mainRect.Top - detailForm.Height - padding >= screen.Top)
-			{
-				location = new Point(mainRect.Left, mainRect.Top - detailForm.Height - padding);
-			}
-			else
-			{
-				location = new Point(
-					Math.Max(screen.Left, screen.Left + (screen.Width - detailForm.Width) / 2),
-					Math.Max(screen.Top, screen.Top + (screen.Height - detailForm.Height) / 2)
-				);
-			}
-			detailForm.StartPosition = FormStartPosition.Manual;
-			detailForm.Location = location;
-		}
-
-		private void EnsureDetailPosition(Form detailForm, Rectangle previousBounds)
-		{
-			if (!previousBounds.IsEmpty)
-			{
-				detailForm.StartPosition = FormStartPosition.Manual;
-				detailForm.Bounds = previousBounds;
-			}
-			else
-			{
-				PositionDetailForm(detailForm);
-			}
-		}
-
-		private void ShowDetailForm(Form detailForm)
-		{
-			if (detailForm == null || detailForm.IsDisposed)
-				return;
-
-			detailForm.TopMost = this.TopMost;
-			if (!detailForm.Visible)
-			{
-				detailForm.Show();
-			}
-			detailForm.BringToFront();
-			detailForm.Activate();
 		}
 
 		private void phoneSyncToolStripMenuItem_Click(object sender, EventArgs e)

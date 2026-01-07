@@ -156,6 +156,7 @@
     <Compile Include="Models\SaveFileInfo.cs" />
     <Compile Include="Services\ClipboardMonitor.cs" />
     <Compile Include="Services\ClipboardService.cs" />
+    <Compile Include="Services\DetailWindowManager.cs" />
     <Compile Include="Services\HotkeyService.cs" />
     <Compile Include="Services\PrivacyService.cs" />
     <Compile Include="Services\TrayIconManager.cs" />
