@@ -153,6 +153,8 @@
     <Compile Include="Loaders\SettingsLoader.cs" />
     <Compile Include="Loaders\TempConfigLoader.cs" />
     <Compile Include="MainForm.vm.cs" />
+    <Compile Include="Services\ClipboardService.cs" />
+    <Compile Include="Services\HotkeyService.cs" />
     <Compile Include="SettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>

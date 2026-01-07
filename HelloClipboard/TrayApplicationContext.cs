@@ -9,6 +9,7 @@ using System.Drawing.Imaging;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using HelloClipboard.Services;
 
 namespace HelloClipboard
 {
@@ -28,29 +29,19 @@ namespace HelloClipboard
 		private string _lastTextContent;
 		private string _lastFileContent;
 		private string _lastImageHash;
-		private HotkeyWindow _hotkeyWindow;
-		private bool _hotkeyRegistered;
-		public bool HotkeyRegistered => _hotkeyRegistered;
 		private bool _privacyModeActive;
 		private DateTime _privacyModeUntil;
 		private ToolStripMenuItem _trayPrivacyMenuItem;
 
 		private const int ClipboardMaxAttempts = 4;
 		private const int ClipboardFastRetryDelayMs = 25;
-		private const int HotkeyId = 1001;
 
-		internal const int WM_HOTKEY = 0x0312;
-		private const uint MOD_ALT = 0x0001;
-		private const uint MOD_CONTROL = 0x0002;
-		private const uint MOD_SHIFT = 0x0004;
-		private const uint MOD_WIN = 0x0008;
+		private readonly ClipboardService _clipboardService = new ClipboardService();
+		private readonly HotkeyService _hotkeyService = new HotkeyService();
 
 		[DllImport("user32.dll")]
 		private static extern uint GetClipboardSequenceNumber();
-		[DllImport("user32.dll", SetLastError = true)]
-		private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
-		[DllImport("user32.dll", SetLastError = true)]
-		private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+
 
 		public TrayApplicationContext()
 		{
@@ -139,6 +130,35 @@ namespace HelloClipboard
 			ClipboardNotification.ClipboardUpdate += OnClipboardUpdate;
 		}
 
+
+		#region HOTKEY & PRIVACY
+
+		public bool ReloadGlobalHotkey() => TryRegisterGlobalHotkey();
+
+		private bool TryRegisterGlobalHotkey()
+		{
+			if (!SettingsLoader.Current.EnableGlobalHotkey || SettingsLoader.Current.HotkeyKey == Keys.None)
+				return false;
+
+			_hotkeyService.HotkeyPressed -= ToggleMainWindowFromHotkey;
+			_hotkeyService.HotkeyPressed += ToggleMainWindowFromHotkey;
+
+			return _hotkeyService.Register(
+				SettingsLoader.Current.HotkeyModifiers,
+				SettingsLoader.Current.HotkeyKey
+			);
+		}
+
+		private void ToggleMainWindowFromHotkey()
+		{
+			if (ApplicationExiting) return;
+			if (_form != null && !_form.IsDisposed && _form.Visible) HideMainWindow();
+			else ShowMainWindow();
+		}
+
+		// Privacy Mode metotları buraya gelecek (Enable/Disable/Toggle)...
+		#endregion
+
 		private void ResetFormPositionAndSize()
 		{
 			if (_form == null || _form.IsDisposed)
@@ -217,63 +237,10 @@ namespace HelloClipboard
 			_suppressClipboardEvents = value;
 		}
 
-		public bool ReloadGlobalHotkey()
-		{
-			UnregisterGlobalHotkey();
-			return TryRegisterGlobalHotkey();
-		}
 
-		private bool TryRegisterGlobalHotkey()
-		{
-			if (!SettingsLoader.Current.EnableGlobalHotkey)
-				return false;
 
-			if (SettingsLoader.Current.HotkeyKey == Keys.None)
-				return false;
 
-			if (_hotkeyWindow == null)
-			{
-				_hotkeyWindow = new HotkeyWindow(ToggleMainWindowFromHotkey);
-			}
-
-			UnregisterGlobalHotkey();
-
-			uint modifiers = BuildModifierFlags(SettingsLoader.Current.HotkeyModifiers);
-			uint key = (uint)SettingsLoader.Current.HotkeyKey;
-
-			bool ok = RegisterHotKey(_hotkeyWindow.Handle, HotkeyId, modifiers, key);
-			_hotkeyRegistered = ok;
-#if DEBUG
-			if (!ok)
-			{
-				System.Diagnostics.Debug.WriteLine("Global hotkey registration failed.");
-			}
-#endif
-			return ok;
-		}
-
-		private void UnregisterGlobalHotkey()
-		{
-			if (_hotkeyWindow == null || !_hotkeyRegistered)
-				return;
-			try
-			{
-				UnregisterHotKey(_hotkeyWindow.Handle, HotkeyId);
-			}
-			catch { }
-			_hotkeyRegistered = false;
-		}
-
-		private uint BuildModifierFlags(Keys modifiers)
-		{
-			uint mods = 0;
-			if (modifiers.HasFlag(Keys.Control)) mods |= MOD_CONTROL;
-			if (modifiers.HasFlag(Keys.Alt)) mods |= MOD_ALT;
-			if (modifiers.HasFlag(Keys.Shift)) mods |= MOD_SHIFT;
-			if (modifiers.HasFlag(Keys.LWin) || modifiers.HasFlag(Keys.RWin)) mods |= MOD_WIN;
-			return mods;
-		}
-
+	
 		private void TogglePrivacyMode()
 		{
 			if (_privacyModeActive)
@@ -325,21 +292,6 @@ namespace HelloClipboard
 			else
 			{
 				_trayPrivacyMenuItem.Text = $"Enable Private Mode ({GetPrivacyDurationMinutes()} min)";
-			}
-		}
-
-		private void ToggleMainWindowFromHotkey()
-		{
-			if (ApplicationExiting)
-				return;
-
-			if (_form != null && !_form.IsDisposed && _form.Visible)
-			{
-				HideMainWindow();
-			}
-			else
-			{
-				ShowMainWindow();
 			}
 		}
 
@@ -686,16 +638,16 @@ namespace HelloClipboard
 
 		public void ExitApplication()
 		{
-			if (ApplicationExiting)
-				return;
+			if (ApplicationExiting) return;
 			ApplicationExiting = true;
+
 			if (_form != null && !_form.IsDisposed)
 			{
 				_form.Close();
 				_form.Dispose();
 			}
-			UnregisterGlobalHotkey();
-			_hotkeyWindow?.Dispose();
+
+			_hotkeyService.Dispose(); // Kısayolu çözer ve pencereyi kapatır.
 			_trayIcon.Visible = false;
 			_trayIcon.Dispose();
 			ExitThread();
@@ -724,28 +676,4 @@ namespace HelloClipboard
 		#endregion
 	}
 
-	internal class HotkeyWindow : NativeWindow, IDisposable
-	{
-		private readonly Action _onHotkey;
-
-		public HotkeyWindow(Action onHotkey)
-		{
-			_onHotkey = onHotkey;
-			CreateHandle(new CreateParams());
-		}
-
-		protected override void WndProc(ref Message m)
-		{
-			if (m.Msg == TrayApplicationContext.WM_HOTKEY)
-			{
-				_onHotkey?.Invoke();
-			}
-			base.WndProc(ref m);
-		}
-
-		public void Dispose()
-		{
-			DestroyHandle();
-		}
-	}
 }
