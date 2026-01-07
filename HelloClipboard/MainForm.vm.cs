@@ -27,8 +27,6 @@ namespace HelloClipboard
 			_trayApplicationContext = trayApplicationContext;
 		}
 
-		public void LoadSettings() => SettingsLoader.LoadSettings();
-
 		public void SetSearchOptions(bool useRegex, bool caseSensitive)
 		{
 			_useRegexSearch = useRegex;

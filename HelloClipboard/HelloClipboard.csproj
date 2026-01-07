@@ -157,6 +157,7 @@
     <Compile Include="Services\ClipboardMonitor.cs" />
     <Compile Include="Services\ClipboardService.cs" />
     <Compile Include="Services\DetailWindowManager.cs" />
+    <Compile Include="Services\FormLayoutManager.cs" />
     <Compile Include="Services\HotkeyService.cs" />
     <Compile Include="Services\PrivacyService.cs" />
     <Compile Include="Services\TrayIconManager.cs" />
@@ -185,6 +186,7 @@
     <Compile Include="Utils\HashHelper.cs" />
     <Compile Include="Utils\HistoryHelper.cs" />
     <Compile Include="Utils\ImageAnalyzer.cs" />
+    <Compile Include="Utils\ListBoxExtensions.cs" />
     <Compile Include="Utils\NativeMethods.cs" />
     <Compile Include="Utils\PriviligesHelper.cs" />
     <Compile Include="Utils\ScreenHelper.cs" />

@@ -14,9 +14,8 @@ namespace HelloClipboard
 	{
 		private readonly TrayApplicationContext _trayApplicationContext;
 		private readonly MainFormViewModel _viewModel;
-		private bool _isLoaded = false;
-		private FormWindowState _previousWindowState = FormWindowState.Normal;
-		private DetailWindowManager _detailManager;
+		private DetailWindowManager _detailManager; 
+		private FormLayoutManager _layoutManager;
 		private string _currentSearchTerm = string.Empty;
 
 		public MainForm(TrayApplicationContext trayApplicationContext)
@@ -24,151 +23,101 @@ namespace HelloClipboard
 			InitializeComponent();
 
 			this.Text = Application.ProductName + " v" + Application.ProductVersion;
-
 			_trayApplicationContext = trayApplicationContext;
 			_viewModel = new MainFormViewModel(trayApplicationContext);
 
-			_viewModel.LoadSettings();
+			// Form Eventleri
+			this.Load += MainForm_Load;
+			this.Shown += MainForm_Shown;
+			this.FormClosing += MainForm_FormClosing;
+			this.Resize += MainForm_Resize;
+			this.Move += MainForm_Move;
+			this.Deactivate += (s, e) => MainFormDeactivated();
 
+			// ListBox Eventleri
 			MessagesListBox.DisplayMember = "Title";
 			MessagesListBox.DrawMode = DrawMode.OwnerDrawFixed;
 			MessagesListBox.DrawItem += MessagesListBox_DrawItem;
-			MessagesListBox.Resize += (s, e) => MessagesListBox.Invalidate(); // force redraw so ellipsis reflows after resize
-
-			var enableClipboardHistory = SettingsLoader.Current.EnableClipboardHistory;
-
-			this.Deactivate += MainForm_Deactivate;
-
+			MessagesListBox.Resize += (s, e) => MessagesListBox.Invalidate();
 			MessagesListBox.SelectedIndexChanged += MessagesListBox_SelectedIndexChanged;
+			MessagesListBox.MouseClick += MessagesListBox_MouseClick;
+
+			// Search Box Eventleri
 			textBox1_search.KeyDown += textBox1_search_KeyDown;
 			textBox1_search.KeyPress += textBox1_search_KeyPress;
+			textBox1_search.TextChanged += textBox1_search_TextChanged;
 
-			_detailManager = new DetailWindowManager(this, MainForm_Deactivate);
+			// Diğer bileşenler
+			_detailManager = new DetailWindowManager(this, (s, e) => MainFormDeactivated());
+			_layoutManager = new FormLayoutManager(this, _detailManager);
 		}
 
 		#region FORM EVENTS
-		private void MainForm_Deactivate(object sender, EventArgs e)
+
+		private void MainForm_Load(object sender, EventArgs e)
 		{
-			MainFormDeactivated();
+			_layoutManager.OnLoad();
+			CheckAndUpdateTopMostImage();
+		}
+
+		private void MainForm_Shown(object sender, EventArgs e)
+		{
+			_layoutManager.OnShown();
+			RefreshCacheView();
+		}
+
+		private void MainForm_Resize(object sender, EventArgs e)
+		{
+			_layoutManager?.OnResize();
+		}
+
+		private void MainForm_Move(object sender, EventArgs e)
+		{
+			_layoutManager?.OnMove();
+		}
+
+		private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+		{
+			// OnFormClosing override metodu ile çakışmaması için mantığı buraya veya oraya toplayın
+			_layoutManager.OnClosing();
 		}
 
 		private void textBox1_search_KeyDown(object sender, KeyEventArgs e)
 		{
-			TextBoxSearchKeydown(e);
+			// 1. Kelime silme işlemlerini extension metot üzerinden hallet
+			if (textBox1_search.HandleWordDeletion(e))
+			{
+				e.SuppressKeyPress = true;
+				return;
+			}
+
+			// 2. Liste navigasyonu (ListBox extension kullanımı)
+			if (MessagesListBox.Items.Count > 0)
+			{
+				switch (e.KeyCode)
+				{
+					case Keys.Down:
+						MessagesListBox.MoveSelection(1);
+						e.Handled = e.SuppressKeyPress = true;
+						break;
+
+					case Keys.Up:
+						MessagesListBox.MoveSelection(-1);
+						e.Handled = e.SuppressKeyPress = true;
+						break;
+
+					case Keys.Enter:
+						if (MessagesListBox.SelectedItem is ClipboardItem selectedItem)
+						{
+							_viewModel.CopyClicked(selectedItem);
+							_trayApplicationContext.HideMainWindow();
+						}
+						e.Handled = e.SuppressKeyPress = true;
+						break;
+				}
+			}
 		}
 		private void MessagesListBox_SelectedIndexChanged(object sender, EventArgs e)
-		{
-			MessagesListBoxSelectedIndexChanged();
-		}
-		private void MainForm_Shown(object sender, EventArgs e)
-		{
-			RefreshCacheView();
-		}
-		public void UpdateCheckUpdateNowBtnText(string newString)
-		{
-			checkUpdateToolStripMenuItem.Text = newString;
-		}
-		private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			using (var dlg = new InfoDialog(AboutHtml.GetTitle(), AboutHtml.GetHtml()))
-			{
-				dlg.ShowDialog(this);
-			}
-		}
-		private void helpToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			using (var dlg = new InfoDialog(HelpHtml.GetTitle(), HelpHtml.GetHtml()))
-			{
-				dlg.ShowDialog(this);
-			}
-		}
-		private void ShowUnderDevelopmentDialog(string featureName)
-		{
-			using (var dlg = new InfoDialog(UnderDevelopmentHtml.GetTitle(), UnderDevelopmentHtml.GetHtml(featureName)))
-			{
-				dlg.ShowDialog(this);
-			}
-		}
-		public void copyToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			CopyClicked();
-		}
-
-		private void contextMenuStrip1_Opening(object sender, CancelEventArgs e)
-		{
-			ContextMenuStrip1Opening(e);
-		}
-		protected override void OnFormClosing(FormClosingEventArgs e)
-		{
-			if (_trayApplicationContext.ApplicationExiting)
-			{
-				base.OnFormClosing(e);
-				return;
-			}
-			if (!SettingsLoader.Current.HideToTray || TempConfigLoader.Current.AdminPriviligesRequested)
-			{
-				_trayApplicationContext.ExitApplication();
-			}
-			else
-			{
-				e.Cancel = true;
-				_trayApplicationContext.HideMainWindow();
-			}
-		}
-		#endregion
-
-		void TextBoxSearchKeydown(KeyEventArgs e)
-		{
-			if (e.Control && e.KeyCode == Keys.Back)
-			{
-				textBox1_search.DeletePreviousWord(); 
-				e.SuppressKeyPress = true;
-				return;
-			}
-			if (e.Control && e.KeyCode == Keys.Delete)
-			{
-				textBox1_search.DeleteNextWord(); 
-				e.SuppressKeyPress = true;
-				return;
-			}
-			if (MessagesListBox.Items.Count == 0) return;
-
-			int currentIndex = MessagesListBox.SelectedIndex;
-
-			if (e.KeyCode == Keys.Down)
-			{
-				// Bir alt satıra geç (liste sonundaysa başa dönme veya durma tercihi sana ait)
-				if (currentIndex < MessagesListBox.Items.Count - 1)
-					MessagesListBox.SelectedIndex = currentIndex + 1;
-
-				e.Handled = true; // Windows'un bip sesini ve imleç hareketini engeller
-				e.SuppressKeyPress = true;
-			}
-			else if (e.KeyCode == Keys.Up)
-			{
-				// Bir üst satıra geç
-				if (currentIndex > 0)
-					MessagesListBox.SelectedIndex = currentIndex - 1;
-				else if (currentIndex == -1 && MessagesListBox.Items.Count > 0)
-					MessagesListBox.SelectedIndex = 0;
-
-				e.Handled = true;
-				e.SuppressKeyPress = true;
-			}
-			else if (e.KeyCode == Keys.Enter)
-			{
-				// Enter'a basıldığında seçili öğeyi kopyala ve kapat
-				if (MessagesListBox.SelectedItem is ClipboardItem selectedItem)
-				{
-					_viewModel.CopyClicked(selectedItem);
-					_trayApplicationContext.HideMainWindow();
-				}
-				e.Handled = true;
-				e.SuppressKeyPress = true;
-			}
-		}
-
-		void MessagesListBoxSelectedIndexChanged()
 		{
 			if (MessagesListBox.SelectedIndex >= 0)
 			{
@@ -178,17 +127,57 @@ namespace HelloClipboard
 				// Odağı tekrar arama kutusuna çek (Detay formu odağı çalmasın diye)
 				textBox1_search.Focus();
 
-				if (MessagesListBox.SelectedItem is ClipboardItem selected)
-				{
-					pinToolStripMenuItem.Checked = selected.IsPinned;
-					pinToolStripMenuItem.Text = selected.IsPinned ? "Unpin" : "Pin";
-				}
+				UpdateMenuStates();
 			}
 		}
+	
+		public void UpdateCheckUpdateNowBtnText(string newString)
+		{
+			checkUpdateToolStripMenuItem.Text = newString;
+		}
+	
+
+		public void copyToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			if (MessagesListBox.SelectedIndices.Count == 0)
+				return;
+			CloseDetailFormIfAvaible();
+			ClipboardItem selectedItem = MessagesListBox.SelectedItem as ClipboardItem;
+			_viewModel.CopyClicked(selectedItem);
+		}
+
+		private void contextMenuStrip1_Opening(object sender, CancelEventArgs e)
+		{
+			var pos = MessagesListBox.PointToClient(Cursor.Position);
+			int index = MessagesListBox.IndexFromPoint(pos);
+			if (index < 0)
+			{
+				e.Cancel = true;
+				return;
+			}
+			OpenDetailForIndex(index);
+			UpdateMenuStates();
+		}
+		protected override void OnFormClosing(FormClosingEventArgs e)
+		{
+			if (_trayApplicationContext.ApplicationExiting) return;
+
+			if (!SettingsLoader.Current.HideToTray || TempConfigLoader.Current.AdminPriviligesRequested)
+			{
+				_trayApplicationContext.ExitApplication();
+			}
+			else
+			{
+				e.Cancel = true;
+				_layoutManager.OnClosing(); // LayoutManager'ı burada çağır
+				_trayApplicationContext.HideMainWindow();
+			}
+		}
+		#endregion
 
 		void MainFormDeactivated()
 		{
-			if (!SettingsLoader.Current.AutoHideWhenUnfocus || !_isLoaded)
+			if (!SettingsLoader.Current.AutoHideWhenUnfocus || !_layoutManager.IsLoaded)
 				return;
 
 			BeginInvoke(new MethodInvoker(async () =>
@@ -256,14 +245,16 @@ namespace HelloClipboard
 			}
 			MessagesListBox.EndUpdate();
 		}
+		private void aboutToolStripMenuItem_Click(object sender, EventArgs e) => ShowHtmlDialog(AboutHtml.GetTitle(), AboutHtml.GetHtml());
+		private void helpToolStripMenuItem_Click(object sender, EventArgs e) => ShowHtmlDialog(HelpHtml.GetTitle(), HelpHtml.GetHtml());
+		private void ShowUnderDevelopmentDialog(string featureName) => ShowHtmlDialog(UnderDevelopmentHtml.GetTitle(), UnderDevelopmentHtml.GetHtml(featureName));
 
-		public void CopyClicked()
+		private void ShowHtmlDialog(string title, string html)
 		{
-			if (MessagesListBox.SelectedIndices.Count == 0)
-				return;
-			CloseDetailFormIfAvaible();
-			ClipboardItem selectedItem = MessagesListBox.SelectedItem as ClipboardItem;
-			_viewModel.CopyClicked(selectedItem);
+			using (var dlg = new InfoDialog(title, html))
+			{
+				dlg.ShowDialog(this);
+			}
 		}
 
 
@@ -280,30 +271,6 @@ namespace HelloClipboard
 			}
 		}
 
-
-		void ContextMenuStrip1Opening(CancelEventArgs e)
-		{
-			var pos = MessagesListBox.PointToClient(Cursor.Position);
-			int index = MessagesListBox.IndexFromPoint(pos);
-			if (index < 0)
-			{
-				e.Cancel = true;
-				return;
-			}
-			OpenDetailForIndex(index);
-			if (MessagesListBox.SelectedItem is ClipboardItem selected)
-			{
-				pinToolStripMenuItem.Checked = selected.IsPinned;
-				pinToolStripMenuItem.Text = selected.IsPinned ? "Unpin" : "Pin";
-
-				var isUrl = selected.ItemType == ClipboardItemType.Text && UrlHelper.IsValidUrl(selected.Content);
-				openUrlToolStripMenuItem.Visible = isUrl;
-
-				var fileExists = selected.ItemType != ClipboardItemType.File || (!string.IsNullOrWhiteSpace(selected.Content) && File.Exists(selected.Content));
-				saveToFileToolStripMenuItem.Enabled = fileExists;
-			}
-		}
-
 		private void MessagesListBox_MouseClick(object sender, MouseEventArgs e)
 		{
 			if (e.Button != MouseButtons.Left) return;
@@ -315,31 +282,11 @@ namespace HelloClipboard
 			textBox1_search.Focus();
 		}
 
-		private void MainForm_Load(object sender, EventArgs e)
-		{
-			FormPersistence.ApplyStoredGeometry(this); // Utils kullanıldı
 
-			if (SettingsLoader.Current.AlwaysTopMost)
-			{
-				this.TopMost = true;
-			}
-			CheckAndUpdateTopMostImage();
-
-			this.ShowInTaskbar = SettingsLoader.Current.ShowInTaskbar;
-			_isLoaded = true;
-		}
 
 		public void UpdateTaskbarVisibility(bool visible)
 		{
 			this.ShowInTaskbar = visible;
-		}
-
-		private void _SaveFormPosition()
-		{
-			if (_isLoaded)
-			{
-				FormPersistence.SaveGeometry(this); // Utils kullanıldı
-			}
 		}
 
 		public void CloseDetailFormIfAvaible()
@@ -347,46 +294,9 @@ namespace HelloClipboard
 			_detailManager.CloseAll();
 		}
 
-		private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
-		{
-			CloseDetailFormIfAvaible();
-			_SaveFormPosition();
-		}
-
-		private async void MainForm_Resize(object sender, EventArgs e)
-		{
-			_SaveFormPosition();
-			if (_isLoaded && this.WindowState == FormWindowState.Normal && _previousWindowState == FormWindowState.Maximized)
-			{
-				await System.Threading.Tasks.Task.Delay(10);
-				FormPersistence.ApplyStoredGeometry(this);
-			}
-			_previousWindowState = this.WindowState;
-
-			// Manager üzerinden kontrol et ve konumlandır
-			if (_detailManager.IsAnyVisible())
-			{
-				_detailManager.PositionFormNextToOwner(_detailManager.GetActiveForm());
-			}
-		}
-
-		private void MainForm_Move(object sender, EventArgs e)
-		{
-			this.Location = WindowHelper.GetSnappedLocation(this);
-
-			// Eğer bir detay formu açıksa, onu ana formun yanına hizala
-			if (_detailManager.IsAnyVisible())
-			{
-				_detailManager.PositionFormNextToOwner(_detailManager.GetActiveForm());
-			}
-		}
-
-
 		public void ResetFormPositionAndSize()
 		{
-			Size = new Size(480, 720);
-			StartPosition = FormStartPosition.CenterScreen;
-			WindowState = FormWindowState.Normal;
+			_layoutManager.ResetToDefault();
 		}
 
 		private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -548,6 +458,23 @@ namespace HelloClipboard
 
 			checkUpdateToolStripMenuItem.Enabled = true;
 		}
+		private void UpdateMenuStates()
+		{
+			if (!(MessagesListBox.SelectedItem is ClipboardItem selected)) return;
+
+			// Pin Durumu
+			pinToolStripMenuItem.Checked = selected.IsPinned;
+			pinToolStripMenuItem.Text = selected.IsPinned ? "Unpin" : "Pin";
+
+			// URL Durumu
+			var isUrl = selected.ItemType == ClipboardItemType.Text && UrlHelper.IsValidUrl(selected.Content);
+			openUrlToolStripMenuItem.Visible = isUrl;
+
+			// Kaydetme Durumu
+			var fileExists = selected.ItemType != ClipboardItemType.File ||
+							 (!string.IsNullOrWhiteSpace(selected.Content) && File.Exists(selected.Content));
+			saveToFileToolStripMenuItem.Enabled = fileExists;
+		}
 
 		public void CheckAndUpdateTopMostImage()
 		{
@@ -577,26 +504,9 @@ namespace HelloClipboard
 
 		private void MessagesListBox_DrawItem(object sender, DrawItemEventArgs e)
 		{
-			e.DrawBackground();
-			if (e.Index < 0 || e.Index >= MessagesListBox.Items.Count)
-				return;
-
-			var item = MessagesListBox.Items[e.Index] as ClipboardItem;
-			if (item == null)
-				return;
-
-			bool selected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
-			Color textColor = selected ? SystemColors.HighlightText : SystemColors.ControlText;
-			var bounds = e.Bounds;
-
-			string displayText = item.Title ?? string.Empty;
-			if (item.IsPinned)
-				displayText = "[PIN] " + displayText;
-
-			DrawingHelper.DrawTextWithHighlight(e.Graphics, displayText, e.Font, textColor, bounds, selected, _currentSearchTerm, _viewModel.GetHighlightRegex(_currentSearchTerm), _viewModel.CaseSensitive);
-
-			e.DrawFocusRectangle();
+			DrawingHelper.RenderClipboardItem(e,MessagesListBox, _currentSearchTerm, _viewModel);
 		}
+
 
 	}
 }

@@ -8,6 +8,33 @@ namespace HelloClipboard.Utils
 {
 	public static class DrawingHelper
 	{
+		public static void RenderClipboardItem(
+	DrawItemEventArgs e,
+	ListBox listBox,
+	string searchTerm,
+	MainFormViewModel viewModel)
+		{
+			e.DrawBackground();
+			if (e.Index < 0 || e.Index >= listBox.Items.Count)
+				return;
+
+			var item = listBox.Items[e.Index] as ClipboardItem;
+			if (item == null)
+				return;
+
+			bool selected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+			Color textColor = selected ? SystemColors.HighlightText : SystemColors.ControlText;
+			var bounds = e.Bounds;
+
+			string displayText = item.Title ?? string.Empty;
+			if (item.IsPinned)
+				displayText = "[PIN] " + displayText;
+
+			DrawingHelper.DrawTextWithHighlight(e.Graphics, displayText, e.Font, textColor, bounds, selected, searchTerm, viewModel.GetHighlightRegex(searchTerm), viewModel.CaseSensitive);
+
+			e.DrawFocusRectangle();
+		}
+
 		public static void DrawTextWithHighlight(
 			Graphics g,
 			string text,

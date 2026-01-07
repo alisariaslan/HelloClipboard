@@ -52,5 +52,23 @@ namespace HelloClipboard.Utils
 			tb.Text = text.Remove(pos, length);
 			tb.SelectionStart = pos;
 		}
+
+		/// <summary>
+		/// TextBox için Ctrl+Back ve Ctrl+Delete (kelime silme) mantığını yönetir.
+		/// </summary>
+		public static bool HandleWordDeletion(this TextBox textBox, KeyEventArgs e)
+		{
+			if (e.Control && e.KeyCode == Keys.Back)
+			{
+				textBox.DeletePreviousWord(); // Mevcut metodunuza çağrı
+				return true;
+			}
+			if (e.Control && e.KeyCode == Keys.Delete)
+			{
+				textBox.DeleteNextWord(); // Mevcut metodunuza çağrı
+				return true;
+			}
+			return false;
+		}
 	}
 }
