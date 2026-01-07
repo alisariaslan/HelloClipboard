@@ -25,6 +25,10 @@ namespace HelloClipboard.Services
 
 		public void OnLoad()
 		{
+			// KRİTİK: Eğer designer'da CenterScreen vb. seçiliyse koordinatları ezer. 
+			// Bu yüzden önce Manual yapmalıyız.
+			_form.StartPosition = FormStartPosition.Manual;
+
 			FormPersistence.ApplyStoredGeometry(_form);
 
 			_form.ShowInTaskbar = SettingsLoader.Current.ShowInTaskbar;
@@ -78,7 +82,12 @@ namespace HelloClipboard.Services
 			if (!_isLoaded)
 				return;
 
+			// Snapping (mıknatıslanma) işlemini yap
 			_form.Location = WindowHelper.GetSnappedLocation(_form);
+
+			// Konum değiştiği için kaydetmeliyiz (Önemli!)
+			FormPersistence.SaveGeometry(_form);
+
 			RepositionDetailIfNeeded();
 		}
 
