@@ -155,6 +155,7 @@
     <Compile Include="MainForm.vm.cs" />
     <Compile Include="Services\ClipboardService.cs" />
     <Compile Include="Services\HotkeyService.cs" />
+    <Compile Include="Services\PrivacyService.cs" />
     <Compile Include="SettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>

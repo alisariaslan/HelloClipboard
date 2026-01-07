@@ -1,15 +1,14 @@
-﻿using HelloClipboard.Utils;
+﻿using HelloClipboard.Services;
+using HelloClipboard.Utils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Drawing.Imaging;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using HelloClipboard.Services;
 
 namespace HelloClipboard
 {
@@ -29,8 +28,6 @@ namespace HelloClipboard
 		private string _lastTextContent;
 		private string _lastFileContent;
 		private string _lastImageHash;
-		private bool _privacyModeActive;
-		private DateTime _privacyModeUntil;
 		private ToolStripMenuItem _trayPrivacyMenuItem;
 
 		private const int ClipboardMaxAttempts = 4;
@@ -38,6 +35,7 @@ namespace HelloClipboard
 
 		private readonly ClipboardService _clipboardService = new ClipboardService();
 		private readonly HotkeyService _hotkeyService = new HotkeyService();
+		private readonly PrivacyService _privacyService = new PrivacyService();
 
 		[DllImport("user32.dll")]
 		private static extern uint GetClipboardSequenceNumber();
@@ -123,6 +121,9 @@ namespace HelloClipboard
 				StartAutoUpdateCheck();
 			}
 
+			_privacyService.StateChanged += OnPrivacyStateChanged;
+			_privacyService.Tick += () => UpdatePrivacyMenuText();
+
 			TryRegisterGlobalHotkey();
 
 			TempConfigLoader.Current.AdminPriviligesRequested = false;
@@ -132,6 +133,41 @@ namespace HelloClipboard
 
 
 		#region HOTKEY & PRIVACY
+
+		private void OnPrivacyStateChanged(bool active)
+		{
+			UpdatePrivacyMenuText();
+			string status = active ? "enabled" : "disabled";
+			_trayIcon.ShowBalloonTip(2000, Constants.AppName, $"Private Mode {status}.", ToolTipIcon.Info);
+		}
+
+		private void TogglePrivacyMode()
+		{
+			_privacyService.Toggle(GetPrivacyDurationMinutes());
+		}
+
+		private void UpdatePrivacyMenuText()
+		{
+			if (_trayPrivacyMenuItem == null) return;
+
+			// UI Thread kontrolü
+			if (_trayIcon.ContextMenuStrip.InvokeRequired)
+			{
+				_trayIcon.ContextMenuStrip.Invoke(new Action(UpdatePrivacyMenuText));
+				return;
+			}
+
+			if (_privacyService.IsActive)
+			{
+				var remaining = _privacyService.Until - DateTime.UtcNow;
+				var min = Math.Max(0, Math.Ceiling(remaining.TotalMinutes));
+				_trayPrivacyMenuItem.Text = $"Disable Private Mode ({min} min left)";
+			}
+			else
+			{
+				_trayPrivacyMenuItem.Text = $"Enable Private Mode ({GetPrivacyDurationMinutes()} min)";
+			}
+		}
 
 		public bool ReloadGlobalHotkey() => TryRegisterGlobalHotkey();
 
@@ -156,7 +192,6 @@ namespace HelloClipboard
 			else ShowMainWindow();
 		}
 
-		// Privacy Mode metotları buraya gelecek (Enable/Disable/Toggle)...
 		#endregion
 
 		private void ResetFormPositionAndSize()
@@ -237,80 +272,12 @@ namespace HelloClipboard
 			_suppressClipboardEvents = value;
 		}
 
-
-
-
-	
-		private void TogglePrivacyMode()
-		{
-			if (_privacyModeActive)
-			{
-				DisablePrivacyMode();
-			}
-			else
-			{
-				EnablePrivacyMode(GetPrivacyDuration());
-			}
-		}
-
-		private void EnablePrivacyMode(TimeSpan duration)
-		{
-			_privacyModeActive = true;
-			_privacyModeUntil = DateTime.UtcNow.Add(duration);
-			UpdatePrivacyMenuText();
-			_trayIcon.ShowBalloonTip(2000, $"{Constants.AppName}", $"Private Mode enabled for {duration.TotalMinutes} minutes.", ToolTipIcon.Info);
-			Task.Run(async () =>
-			{
-				while (_privacyModeActive && DateTime.UtcNow < _privacyModeUntil)
-				{
-					await Task.Delay(TimeSpan.FromSeconds(10));
-				}
-				if (_privacyModeActive && DateTime.UtcNow >= _privacyModeUntil)
-				{
-					DisablePrivacyMode();
-				}
-			});
-		}
-
-		private void DisablePrivacyMode()
-		{
-			_privacyModeActive = false;
-			UpdatePrivacyMenuText();
-			_trayIcon.ShowBalloonTip(2000, $"{Constants.AppName}", "Private Mode disabled.", ToolTipIcon.Info);
-		}
-
-		private void UpdatePrivacyMenuText()
-		{
-			if (_trayPrivacyMenuItem == null)
-				return;
-			if (_privacyModeActive)
-			{
-				var remaining = _privacyModeUntil - DateTime.UtcNow;
-				if (remaining < TimeSpan.Zero) remaining = TimeSpan.Zero;
-				_trayPrivacyMenuItem.Text = $"Disable Private Mode ({Math.Ceiling(remaining.TotalMinutes)} min left)";
-			}
-			else
-			{
-				_trayPrivacyMenuItem.Text = $"Enable Private Mode ({GetPrivacyDurationMinutes()} min)";
-			}
-		}
-
 		private async void OnClipboardUpdate(object sender, EventArgs e)
 		{
-			if (_suppressClipboardEvents)
+			if (_suppressClipboardEvents || _privacyService.IsActive)
 				return;
 
-			if (_privacyModeActive)
-			{
-				if (DateTime.UtcNow >= _privacyModeUntil)
-				{
-					DisablePrivacyMode();
-				}
-				else
-				{
-					return;
-				}
-			}
+		
 
 			// Yinelenen olayları atla
 			uint seq = GetClipboardSequenceNumber();
@@ -648,6 +615,7 @@ namespace HelloClipboard
 			}
 
 			_hotkeyService.Dispose(); // Kısayolu çözer ve pencereyi kapatır.
+			_privacyService.Disable();
 			_trayIcon.Visible = false;
 			_trayIcon.Dispose();
 			ExitThread();
@@ -656,11 +624,6 @@ namespace HelloClipboard
 		public void RefreshPrivacyMenuLabel()
 		{
 			UpdatePrivacyMenuText();
-		}
-
-		private TimeSpan GetPrivacyDuration()
-		{
-			return TimeSpan.FromMinutes(GetPrivacyDurationMinutes());
 		}
 
 		private int GetPrivacyDurationMinutes()
