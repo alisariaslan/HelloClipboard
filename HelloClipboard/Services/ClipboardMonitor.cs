@@ -28,10 +28,10 @@ namespace HelloClipboard.Services
 		private readonly HistoryHelper _historyHelper;
 		private readonly PrivacyService _privacyService;
 
-		// UI'ın yeni bir öğe eklendiğini veya listenin temizlendiğini bilmesi için event'ler
+		// Events to notify the UI when items are added, updated, or cleared
 		public event Action<ClipboardItem> ItemCaptured;
-		public event Action<ClipboardItem> ItemUpdated; // Duplication durumunda yer değiştirme için
-		public event Action ItemRemoved; // Max limit aşımında en eskiyi silmek için
+		public event Action<ClipboardItem> ItemUpdated; // Triggered for re-ordering on duplication
+		public event Action ItemRemoved; // Triggered when the oldest item is removed due to capacity limit
 		public event Action ClipboardCleared;
 
 		[DllImport("user32.dll")]
@@ -42,7 +42,7 @@ namespace HelloClipboard.Services
 			_historyHelper = historyHelper;
 			_privacyService = privacyService;
 
-			// Başlangıçta geçmişi yükle
+			// Load saved history on initialization
 			LoadInitialHistory();
 		}
 
@@ -92,7 +92,7 @@ namespace HelloClipboard.Services
 					var dataObj = Clipboard.GetDataObject();
 					if (dataObj == null) return;
 
-					// TEXT
+					// Handle TEXT content
 					if (dataObj.GetDataPresent(DataFormats.UnicodeText, true))
 					{
 						if (dataObj.GetData(DataFormats.UnicodeText, true) is string text && !string.IsNullOrEmpty(text))
@@ -102,7 +102,7 @@ namespace HelloClipboard.Services
 						}
 					}
 
-					// FILE
+					// Handle FILE content
 					if (dataObj.GetDataPresent(DataFormats.FileDrop))
 					{
 						if (dataObj.GetData(DataFormats.FileDrop) is string[] files && files.Length > 0)
@@ -112,7 +112,7 @@ namespace HelloClipboard.Services
 						}
 					}
 
-					// IMAGE
+					// Handle IMAGE content
 					if (dataObj.GetDataPresent(DataFormats.Bitmap))
 					{
 						var image = Clipboard.GetImage();
@@ -139,7 +139,7 @@ namespace HelloClipboard.Services
 
 			bool preventDuplication = SettingsLoader.Current.PreventClipboardDuplication;
 
-			// Hızlı Duplication Kontrolü
+			// Quick duplication check against last known content
 			if (preventDuplication)
 			{
 				if (type == ClipboardItemType.Text && textContent == _lastTextContent) return;
@@ -149,14 +149,14 @@ namespace HelloClipboard.Services
 			string imageHash = (type == ClipboardItemType.Image && imageContent != null) ? HashHelper.HashImageBytes(imageContent) : null;
 			if (preventDuplication && type == ClipboardItemType.Image && !string.IsNullOrEmpty(imageHash) && imageHash == _lastImageHash) return;
 
-			// Hash Hesaplama
+			// Calculate Hash for comparison
 			string calculatedHash = null;
 			if (preventDuplication)
 			{
 				calculatedHash = (type == ClipboardItemType.Image) ? imageHash : HashHelper.CalculateMd5Hash(textContent);
 			}
 
-			// Havuzda varsa (Daha önce kopyalanmışsa) başa çek
+			// If item already exists in pool (previously copied), move it to the top
 			if (calculatedHash != null && _clipboardHashPool.Contains(calculatedHash))
 			{
 				var existingItem = _clipboardCache.FirstOrDefault(i => i.ContentHash == calculatedHash);
@@ -169,21 +169,21 @@ namespace HelloClipboard.Services
 				return;
 			}
 
-			// Yeni Başlık Oluşturma
+			// Generate a display title for the item
 			string newTitle = GenerateTitle(type, textContent);
 			var item = new ClipboardItem(_clipboardCache.Count, type, textContent, newTitle, imageContent, calculatedHash);
 
 			if (item.ContentHash != null && TempConfigLoader.Current.PinnedHashes.Contains(item.ContentHash))
 				item.IsPinned = true;
 
-			// History Kaydı
+			// Save to history storage
 			if (SettingsLoader.Current.EnableClipboardHistory && item.ContentHash != null)
 				Task.Run(() => _historyHelper.SaveItemToHistoryFile(item));
 
-			// Cache'e Ekleme (Pin mantığı ile)
+			// Add to cache with pinning logic
 			InsertToCache(item);
 
-			// Son değerleri güncelle
+			// Update state with last captured values
 			if (type == ClipboardItemType.Text) _lastTextContent = textContent;
 			else if (type == ClipboardItemType.File) _lastFileContent = textContent;
 			else if (type == ClipboardItemType.Image) _lastImageHash = imageHash;
@@ -200,6 +200,7 @@ namespace HelloClipboard.Services
 			}
 			else
 			{
+				// New unpinned items are inserted after the block of pinned items
 				var insertIndex = _clipboardCache.TakeWhile(i => i.IsPinned).Count();
 				_clipboardCache.Insert(insertIndex, item);
 			}
@@ -211,6 +212,7 @@ namespace HelloClipboard.Services
 		{
 			if (_clipboardCache.Count > SettingsLoader.Current.MaxHistoryCount)
 			{
+				// Find the oldest item that isn't pinned; fall back to the very first item if all are pinned
 				var oldestItem = _clipboardCache.FirstOrDefault(i => !i.IsPinned) ?? _clipboardCache[0];
 
 				if (oldestItem.ContentHash != null)
@@ -229,11 +231,12 @@ namespace HelloClipboard.Services
 		{
 			if (type == ClipboardItemType.Text)
 			{
+				// Sanitize text by removing newlines and tabs for UI display
 				string cleaned = Regex.Replace(content.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' '), @"\s+", " ").Trim();
 				return cleaned.Length > 1024 ? cleaned.Substring(0, 1024) + "..." : cleaned;
 			}
 			if (type == ClipboardItemType.File) return $"{Path.GetFileName(content)} -> {content}";
-			return content; // Image title
+			return content; // Return content as is for Image titles
 		}
 
 		public void ClearAll()

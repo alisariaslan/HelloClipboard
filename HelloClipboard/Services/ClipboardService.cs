@@ -14,6 +14,10 @@ namespace HelloClipboard.Services
 		private const int MaxAttempts = 4;
 		private const int RetryDelayMs = 25;
 
+		/// <summary>
+		/// Attempts to read the current clipboard content with a retry mechanism.
+		/// This handles cases where the clipboard might be locked by another process.
+		/// </summary>
 		public async Task<ClipboardDataPackage> TryReadClipboardAsync()
 		{
 			for (int attempt = 0; attempt < MaxAttempts; attempt++)
@@ -23,7 +27,7 @@ namespace HelloClipboard.Services
 					IDataObject dataObj = Clipboard.GetDataObject();
 					if (dataObj == null) return null;
 
-					// 1. Metin Kontrolü
+					// 1. Check for Text content
 					if (dataObj.GetDataPresent(DataFormats.UnicodeText, true))
 					{
 						string text = dataObj.GetData(DataFormats.UnicodeText, true) as string;
@@ -31,15 +35,16 @@ namespace HelloClipboard.Services
 							return CreatePackage(ClipboardItemType.Text, text);
 					}
 
-					// 2. Dosya Kontrolü
+					// 2. Check for File/Folder drops
 					if (dataObj.GetDataPresent(DataFormats.FileDrop))
 					{
 						string[] files = dataObj.GetData(DataFormats.FileDrop) as string[];
 						if (files != null && files.Length > 0)
-							return CreatePackage(ClipboardItemType.File, files[0]); // İlk dosyayı alıyoruz
+							// Capture the first file path as the representative content
+							return CreatePackage(ClipboardItemType.File, files[0]);
 					}
 
-					// 3. Görsel Kontrolü
+					// 3. Check for Image/Bitmap content
 					if (dataObj.GetDataPresent(DataFormats.Bitmap))
 					{
 						Image img = Clipboard.GetImage();
@@ -49,6 +54,7 @@ namespace HelloClipboard.Services
 				}
 				catch (ExternalException)
 				{
+					// Clipboard is likely being accessed by another application; retry after delay
 					if (attempt < MaxAttempts - 1) await Task.Delay(RetryDelayMs);
 				}
 				catch (Exception ex)
@@ -71,12 +77,14 @@ namespace HelloClipboard.Services
 					hash = HashHelper.CalculateMd5Hash(content);
 					break;
 				case ClipboardItemType.File:
+					// Format title to show filename and full path
 					title = $"{Path.GetFileName(content)} -> {content}";
 					hash = HashHelper.CalculateMd5Hash(content);
 					break;
 				case ClipboardItemType.Image:
 					hash = HashHelper.HashImageBytes(image);
-					title = $"[IMAGE]"; // Daha sonra TrayApplicationContext'te sayı eklenebilir
+					// Generic title, index/count can be appended in TrayApplicationContext if needed
+					title = $"[IMAGE]";
 					break;
 			}
 
@@ -93,12 +101,16 @@ namespace HelloClipboard.Services
 		private string GenerateTextTitle(string text)
 		{
 			if (string.IsNullOrWhiteSpace(text)) return string.Empty;
+
+			// Sanitize text: replace newlines/tabs with spaces and collapse multiple spaces for a clean UI title
 			string cleaned = Regex.Replace(text.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' '), @"\s+", " ").Trim();
 			return cleaned.Length > 1024 ? cleaned.Substring(0, 1024) + "..." : cleaned;
 		}
 	}
 
-	// Veri transfer nesnesi (DTO)
+	/// <summary>
+	/// Data Transfer Object (DTO) for passing captured clipboard data between services.
+	/// </summary>
 	public class ClipboardDataPackage
 	{
 		public ClipboardItemType Type { get; set; }

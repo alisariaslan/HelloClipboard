@@ -6,6 +6,10 @@ using System.Windows.Forms;
 
 namespace HelloClipboard.Services
 {
+	/// <summary>
+	/// Manages the layout, persistence, and behavior of the main form.
+	/// Handles window geometry, snapping, and synchronization with detail windows.
+	/// </summary>
 	public class FormLayoutManager
 	{
 		private readonly Form _form;
@@ -25,10 +29,11 @@ namespace HelloClipboard.Services
 
 		public void OnLoad()
 		{
-			// KRİTİK: Eğer designer'da CenterScreen vb. seçiliyse koordinatları ezer. 
-			// Bu yüzden önce Manual yapmalıyız.
+			// CRITICAL: Designer settings like CenterScreen will override stored coordinates.
+			// To ensure persistence works, we must force the StartPosition to Manual first.
 			_form.StartPosition = FormStartPosition.Manual;
 
+			// Apply previously saved window size and location
 			FormPersistence.ApplyStoredGeometry(_form);
 
 			_form.ShowInTaskbar = SettingsLoader.Current.ShowInTaskbar;
@@ -41,16 +46,18 @@ namespace HelloClipboard.Services
 
 		public void OnShown()
 		{
-			// Şu an boş ama ileride genişletilebilir
+			// Placeholder for future logic upon form display
 		}
 
 		public void OnClosing()
 		{
 			if (_isLoaded)
 			{
+				// Save current window geometry before closing
 				FormPersistence.SaveGeometry(_form);
 			}
 
+			// Ensure all child/detail windows are closed
 			_detailManager?.CloseAll();
 		}
 
@@ -65,6 +72,7 @@ namespace HelloClipboard.Services
 
 			FormPersistence.SaveGeometry(_form);
 
+			// Special handling for restoring from a Maximized state to ensure coordinates are applied correctly
 			if (_form.WindowState == FormWindowState.Normal &&
 				_previousWindowState == FormWindowState.Maximized)
 			{
@@ -82,10 +90,10 @@ namespace HelloClipboard.Services
 			if (!_isLoaded)
 				return;
 
-			// Snapping (mıknatıslanma) işlemini yap
+			// Handle window snapping (magnet effect) to screen edges
 			_form.Location = WindowHelper.GetSnappedLocation(_form);
 
-			// Konum değiştiği için kaydetmeliyiz (Önemli!)
+			// Persist the new location immediately (Crucial for unexpected shutdowns/crashes)
 			FormPersistence.SaveGeometry(_form);
 
 			RepositionDetailIfNeeded();
@@ -95,6 +103,9 @@ namespace HelloClipboard.Services
 
 		#region Helpers
 
+		/// <summary>
+		/// Ensures that the active detail window follows the main window's position during movement or resizing.
+		/// </summary>
 		private void RepositionDetailIfNeeded()
 		{
 			if (_detailManager != null && _detailManager.IsAnyVisible())
@@ -105,6 +116,9 @@ namespace HelloClipboard.Services
 			}
 		}
 
+		/// <summary>
+		/// Resets the main window to its factory default size and position.
+		/// </summary>
 		public void ResetToDefault()
 		{
 			_form.Size = new Size(480, 720);
