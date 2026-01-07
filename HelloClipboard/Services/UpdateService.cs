@@ -24,14 +24,15 @@ namespace HelloClipboard
 		{
 			UpdateDownloadUrl = "https://github.com/alisariaslan/HelloClipboard/releases/download/latest/HelloClipboard_Installer.exe";
 		}
-		// Olay Tanımı: Güncelleme bulunduğunda UI'ı haberdar eder
+
+		// Event Definition: Notifies the UI when an update is found
 		public event EventHandler<UpdateInfo> UpdateAvailable;
 
 		private static CancellationTokenSource _cts;
 		private bool _isChecking;
 
 		/// <summary>
-		/// Arka planda periyodik kontrolü başlatır.
+		/// Starts the periodic update check in the background.
 		/// </summary>
 		public void StartPeriodicCheck(string currentVersion)
 		{
@@ -45,22 +46,24 @@ namespace HelloClipboard
 				{
 					while (!_cts.Token.IsCancellationRequested)
 					{
-						// Ayar kontrolü
+						// Check if the "Check Updates" setting is enabled
 						if (SettingsLoader.Current.CheckUpdates)
 						{
 							var now = DateTime.UtcNow;
 							var last = TempConfigLoader.Current.LastUpdateCheck;
+
+							// Check if enough time has passed since the last check
 							if (last == default || (now - last) >= Constants.ApplicationUpdateInterval)
 							{
-								await CheckForUpdateAsync(currentVersion, true);
-								// Not: CheckForUpdateAsync zaten başarılı olursa event fırlatmalı 
-								// veya burada sonucu kontrol edip fırlatmalısın.
-								// Mevcut CheckForUpdateAsync içinde event fırlatma yoksa ekleyebiliriz.
 								var update = await CheckForUpdateAsync(currentVersion, true);
-								if (update != null) UpdateAvailable?.Invoke(this, update);
+
+								// If an update is found, trigger the event
+								if (update != null)
+									UpdateAvailable?.Invoke(this, update);
 							}
 						}
-						await Task.Delay(TimeSpan.FromMinutes(5), _cts.Token); // 5 dakikada bir uyanıp kontrol et
+						// Wake up and check every 5 minutes
+						await Task.Delay(TimeSpan.FromMinutes(5), _cts.Token);
 					}
 				}
 				catch (OperationCanceledException) { }
@@ -68,12 +71,15 @@ namespace HelloClipboard
 			}, _cts.Token);
 		}
 
-		public void StopPeriodicCheck() // static kaldırıldı
+		public void StopPeriodicCheck()
 		{
 			_cts?.Cancel();
 			_cts?.Dispose();
 		}
 
+		/// <summary>
+		/// Fetches the latest version info from GitHub and compares it with the current version.
+		/// </summary>
 		public async Task<UpdateInfo> CheckForUpdateAsync(string currentVersion, bool silent)
 		{
 			try
@@ -88,6 +94,7 @@ namespace HelloClipboard
 					Version latest = new Version(info.Version);
 					Version current = new Version(currentVersion);
 
+					// Update and save the last check timestamp
 					TempConfigLoader.Current.LastUpdateCheck = DateTime.UtcNow;
 					TempConfigLoader.Save();
 
@@ -102,10 +109,14 @@ namespace HelloClipboard
 			return null;
 		}
 
+		/// <summary>
+		/// Downloads the installer and executes it, then closes the current application.
+		/// </summary>
 		public async Task DownloadAndRunUpdateAsync()
 		{
 			try
 			{
+				// Antivirus warning for the user
 				MessageBox.Show(
 					"Before proceeding, please temporarily disable your antivirus software.\n" +
 					"Some antivirus programs may falsely block the update installer.",
@@ -117,9 +128,9 @@ namespace HelloClipboard
 				using (HttpClient client = new HttpClient())
 				{
 					var bytes = await client.GetByteArrayAsync(UpdateDownloadUrl);
-
 					string fileName = Path.GetFileName(new Uri(UpdateDownloadUrl).LocalPath);
 
+					// Target the user's Downloads folder
 					string downloadsPath = Path.Combine(
 						Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
 						"Downloads"
@@ -135,12 +146,14 @@ namespace HelloClipboard
 						MessageBoxIcon.Information
 					);
 
+					// Launch the installer
 					Process.Start(new ProcessStartInfo
 					{
 						FileName = targetPath,
 						UseShellExecute = true
 					});
 
+					// Shutdown the current app instance
 					TrayApplicationContext.Instance?.ExitApplication();
 				}
 			}

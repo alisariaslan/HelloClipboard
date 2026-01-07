@@ -6,6 +6,9 @@ using System.Windows.Forms;
 
 namespace HelloClipboard
 {
+	/// <summary>
+	/// Manages the application lifecycle, background services, and system tray integration.
+	/// </summary>
 	public class TrayApplicationContext : ApplicationContext
 	{
 		public static TrayApplicationContext Instance { get; private set; }
@@ -25,12 +28,12 @@ namespace HelloClipboard
 		{
 			Instance = this;
 
-			// 1. Servisleri Başlat
+			// 1. Initialize Services
 			_clipboardMonitor = new ClipboardMonitor(_historyHelper, _privacyService);
 			BindEvents();
 			_clipboardMonitor.Start();
 
-			// 2. UI Bileşenlerini Hazırla
+			// 2. Prepare UI Components
 			_form = new MainForm(this);
 			_trayManager = new TrayIconManager(
 				onShow: ShowMainWindow,
@@ -40,7 +43,7 @@ namespace HelloClipboard
 				onExit: ExitApplication
 			);
 
-			// 3. Ayarları Uygula
+			// 3. Apply Settings
 			if (SettingsLoader.Current.CheckUpdates)
 				_updateService.StartPeriodicCheck(Application.ProductVersion);
 
@@ -53,7 +56,7 @@ namespace HelloClipboard
 
 		private void BindEvents()
 		{
-			// Clipboard Olayları
+			// Clipboard Events
 			_clipboardMonitor.ItemCaptured += (item) => RunOnUI(() => _form.MessageAdd(item));
 			_clipboardMonitor.ItemUpdated += (item) => RunOnUI(() => {
 				_form.MessageRemoveItem(item);
@@ -65,7 +68,7 @@ namespace HelloClipboard
 				_form.ClearSearchBox();
 			});
 
-			// Servis Olayları
+			// Service Events
 			_updateService.UpdateAvailable += OnUpdateAvailable;
 			_privacyService.StateChanged += OnPrivacyStateChanged;
 			_privacyService.Tick += UpdatePrivacyMenuText;
@@ -73,6 +76,7 @@ namespace HelloClipboard
 
 		private void HandleInitialVisibility()
 		{
+			// Logic to determine if the app should start minimized or visible
 			if (SettingsLoader.Current.HideToTray && !TempConfigLoader.Current.AdminPriviligesRequested)
 				HideMainWindow();
 			else
@@ -104,6 +108,7 @@ namespace HelloClipboard
 			if (_form == null) return;
 			RunOnUI(() => {
 				_form.CloseDetailFormIfAvaible();
+				// Close any child/owned forms before hiding the main window
 				foreach (Form owned in _form.OwnedForms)
 					if (owned != null && !owned.IsDisposed) try { owned.Close(); } catch { }
 
@@ -205,6 +210,7 @@ namespace HelloClipboard
 			if (ApplicationExiting) return;
 			ApplicationExiting = true;
 
+			// Cleanup services and resources
 			_updateService.StopPeriodicCheck();
 			_hotkeyService.Dispose();
 			_privacyService.Disable();
@@ -218,6 +224,9 @@ namespace HelloClipboard
 			ExitThread();
 		}
 
+		/// <summary>
+		/// Ensures the given action is executed on the UI thread.
+		/// </summary>
 		private void RunOnUI(Action action)
 		{
 			if (_form != null && !_form.IsDisposed && _form.InvokeRequired) _form.Invoke(action);

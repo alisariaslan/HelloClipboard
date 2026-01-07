@@ -5,7 +5,7 @@ namespace HelloClipboard.Utils
 	public static class TextBoxExtensions
 	{
 		/// <summary>
-		/// İmleçten önceki kelimeyi siler (Ctrl + Backspace davranışı).
+		/// Deletes the word before the cursor (Ctrl + Backspace behavior).
 		/// </summary>
 		public static void DeletePreviousWord(this TextBox tb)
 		{
@@ -15,10 +15,10 @@ namespace HelloClipboard.Utils
 			string text = tb.Text;
 			int start = pos;
 
-			// Önce boşlukları geç
+			// First skip whitespaces
 			while (start > 0 && char.IsWhiteSpace(text[start - 1]))
 				start--;
-			// Sonra kelimeyi geç
+			// Then skip the word
 			while (start > 0 && !char.IsWhiteSpace(text[start - 1]))
 				start--;
 
@@ -30,7 +30,7 @@ namespace HelloClipboard.Utils
 		}
 
 		/// <summary>
-		/// İmleçten sonraki kelimeyi siler (Ctrl + Delete davranışı).
+		/// Deletes the word after the cursor (Ctrl + Delete behavior).
 		/// </summary>
 		public static void DeleteNextWord(this TextBox tb)
 		{
@@ -39,10 +39,10 @@ namespace HelloClipboard.Utils
 			if (pos >= text.Length) return;
 
 			int end = pos;
-			// Önce boşlukları geç
+			// First skip whitespaces
 			while (end < text.Length && char.IsWhiteSpace(text[end]))
 				end++;
-			// Sonra kelimeyi geç
+			// Then skip the word
 			while (end < text.Length && !char.IsWhiteSpace(text[end]))
 				end++;
 
@@ -54,18 +54,18 @@ namespace HelloClipboard.Utils
 		}
 
 		/// <summary>
-		/// TextBox için Ctrl+Back ve Ctrl+Delete (kelime silme) mantığını yönetir.
+		/// Handles Ctrl+Backspace and Ctrl+Delete (word deletion) logic for the TextBox.
 		/// </summary>
 		public static bool HandleWordDeletion(this TextBox textBox, KeyEventArgs e)
 		{
 			if (e.Control && e.KeyCode == Keys.Back)
 			{
-				textBox.DeletePreviousWord(); // Mevcut metodunuza çağrı
+				textBox.DeletePreviousWord(); // Call the deletion method
 				return true;
 			}
 			if (e.Control && e.KeyCode == Keys.Delete)
 			{
-				textBox.DeleteNextWord(); // Mevcut metodunuza çağrı
+				textBox.DeleteNextWord(); // Call the deletion method
 				return true;
 			}
 			return false;

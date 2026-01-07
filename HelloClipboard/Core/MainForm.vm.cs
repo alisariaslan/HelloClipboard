@@ -19,7 +19,7 @@ namespace HelloClipboard
 		private bool _useRegexSearch;
 		private bool _caseSensitiveSearch;
 
-		// Form'un çizim yaparken bilmesi gereken özellikler
+		// Properties the Form needs to reference while rendering/drawing
 		public bool CaseSensitive => _caseSensitiveSearch;
 
 		public MainFormViewModel(TrayApplicationContext trayApplicationContext)
@@ -27,12 +27,18 @@ namespace HelloClipboard
 			_trayApplicationContext = trayApplicationContext;
 		}
 
+		/// <summary>
+		/// Configures the search behavior.
+		/// </summary>
 		public void SetSearchOptions(bool useRegex, bool caseSensitive)
 		{
 			_useRegexSearch = useRegex;
 			_caseSensitiveSearch = caseSensitive;
 		}
 
+		/// <summary>
+		/// Returns a filtered list of clipboard items based on the search term.
+		/// </summary>
 		public IEnumerable<ClipboardItem> GetFilteredItems(string searchTerm)
 		{
 			var cache = _trayApplicationContext.GetClipboardCache();
@@ -53,6 +59,9 @@ namespace HelloClipboard
 			return cache.Where(i => i.Content != null && i.Content.IndexOf(searchTerm, comparison) >= 0);
 		}
 
+		/// <summary>
+		/// Generates a Regex object to be used for text highlighting in the UI.
+		/// </summary>
 		public Regex GetHighlightRegex(string searchTerm)
 		{
 			if (!_useRegexSearch || string.IsNullOrWhiteSpace(searchTerm)) return null;
@@ -63,36 +72,54 @@ namespace HelloClipboard
 			catch { return null; }
 		}
 
+		/// <summary>
+		/// Handles the logic when an item is selected to be copied back to the system clipboard.
+		/// </summary>
 		public void CopyClicked(ClipboardItem selectedItem)
 		{
 			if (selectedItem == null) return;
+
+			// Suppress monitor events to prevent re-capturing the same item
 			_trayApplicationContext.SuppressClipboardEvents(true);
 			try
 			{
-				if (selectedItem.ItemType == ClipboardItemType.Image) Clipboard.SetImage(selectedItem.ImageContent);
-				else if (!string.IsNullOrEmpty(selectedItem.Content)) Clipboard.SetText(selectedItem.Content);
+				if (selectedItem.ItemType == ClipboardItemType.Image)
+					Clipboard.SetImage(selectedItem.ImageContent);
+				else if (!string.IsNullOrEmpty(selectedItem.Content))
+					Clipboard.SetText(selectedItem.Content);
 			}
 			finally
 			{
+				// Brief delay before re-enabling monitor to ensure OS clipboard operations complete
 				Task.Delay(150).ContinueWith(_ => _trayApplicationContext.SuppressClipboardEvents(false));
 			}
 		}
 
+		/// <summary>
+		/// Toggles the pinned status of an item and persists the change to configuration.
+		/// </summary>
 		public bool TogglePin(ClipboardItem item)
 		{
 			if (item == null || item.ContentHash == null) return false;
 			item.IsPinned = !item.IsPinned;
+
 			if (item.IsPinned)
 			{
 				if (!TempConfigLoader.Current.PinnedHashes.Contains(item.ContentHash))
 					TempConfigLoader.Current.PinnedHashes.Add(item.ContentHash);
 			}
-			else TempConfigLoader.Current.PinnedHashes.Remove(item.ContentHash);
+			else
+			{
+				TempConfigLoader.Current.PinnedHashes.Remove(item.ContentHash);
+			}
 
 			TempConfigLoader.Save();
 			return item.IsPinned;
 		}
 
+		/// <summary>
+		/// Saves the clipboard item content (Image, File, or Text) to a specific disk location.
+		/// </summary>
 		public void SaveItemToDisk(ClipboardItem item, string targetPath)
 		{
 			if (item == null || string.IsNullOrEmpty(targetPath)) return;
@@ -100,7 +127,7 @@ namespace HelloClipboard
 			if (item.ItemType == ClipboardItemType.Image && item.ImageContent != null)
 			{
 				var ext = Path.GetExtension(targetPath)?.ToLowerInvariant();
-				var format = ImageFormat.Png; // Varsayılan
+				var format = ImageFormat.Png; // Default format
 				if (ext == ".jpg" || ext == ".jpeg") format = ImageFormat.Jpeg;
 				else if (ext == ".bmp") format = ImageFormat.Bmp;
 
@@ -113,21 +140,24 @@ namespace HelloClipboard
 					File.Copy(item.Content, targetPath, true);
 				}
 			}
-			else // Text
+			else // Text items
 			{
 				File.WriteAllText(targetPath, item.Content ?? string.Empty, Encoding.UTF8);
 			}
 		}
 
+		/// <summary>
+		/// Calculates the correct UI insertion index based on pinning and sort order settings.
+		/// </summary>
 		public int GetInsertionIndex(ClipboardItem item, int currentItemCount, Func<int, ClipboardItem> getItemAt)
 		{
 			bool invert = SettingsLoader.Current.InvertClipboardHistoryListing;
 
 			if (invert)
 			{
-				if (item.IsPinned) return 0; // En başa
+				if (item.IsPinned) return 0; // Insert at the very top
 
-				// Pinlenmiş öğelerin hemen arkasına ekle
+				// Insert immediately after the group of pinned items
 				int offset = 0;
 				for (int i = 0; i < currentItemCount; i++)
 				{
@@ -150,9 +180,10 @@ namespace HelloClipboard
 			}
 		}
 
-		
-
-		// 1 & 3. Silme ve Ekleme Index Hesabı
+		// 1 & 3. Index Calculation for Deletion and Insertion
+		/// <summary>
+		/// Determines which unpinned item should be removed when the history limit is reached.
+		/// </summary>
 		public int GetIndexToRemove(IEnumerable<ClipboardItem> currentItems)
 		{
 			var items = currentItems.ToList();
@@ -160,7 +191,7 @@ namespace HelloClipboard
 
 			if (SettingsLoader.Current.InvertClipboardHistoryListing)
 			{
-				// Tersten listelemede (yeni en üstte), en alttaki unpinned öğeyi bul
+				// For inverted listing (newest on top), find the last (oldest) unpinned item
 				for (int i = items.Count - 1; i >= 0; i--)
 				{
 					if (!items[i].IsPinned) return i;
@@ -168,7 +199,7 @@ namespace HelloClipboard
 			}
 			else
 			{
-				// Normal listelemede ilk unpinned öğeyi bul
+				// For normal listing, find the first unpinned item
 				for (int i = 0; i < items.Count; i++)
 				{
 					if (!items[i].IsPinned) return i;
@@ -177,13 +208,16 @@ namespace HelloClipboard
 			return -1;
 		}
 
-		// 2. URL ve Menu Durum Kontrolü
+		// 2. URL and Menu State Validation
 		public bool IsValidUrl(string content)
 		{
 			return !string.IsNullOrWhiteSpace(content) && UrlHelper.IsValidUrl(content);
 		}
 
-		// 5. SaveDialog Dosya Adı ve Filtre Üretme
+		// 5. SaveDialog Filename and Filter Generation
+		/// <summary>
+		/// Prepares metadata for the Save File Dialog based on the item type.
+		/// </summary>
 		public SaveFileInfo GetSaveFileInfo(ClipboardItem item)
 		{
 			var info = new SaveFileInfo();
@@ -210,7 +244,7 @@ namespace HelloClipboard
 
 		public void Dispose()
 		{
-			// Empty for now
+			// Clean up resources if necessary
 		}
 	}
 }

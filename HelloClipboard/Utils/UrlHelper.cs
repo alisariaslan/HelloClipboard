@@ -4,7 +4,10 @@ using System.Diagnostics;
 namespace HelloClipboard.Utils
 {
 	public static class UrlHelper
-	{ 
+	{
+		/// <summary>
+		/// Validates if the provided string is a valid HTTP or HTTPS URL.
+		/// </summary>
 		public static bool IsValidUrl(string text)
 		{
 			if (string.IsNullOrWhiteSpace(text)) return false;
@@ -17,6 +20,9 @@ namespace HelloClipboard.Utils
 			return false;
 		}
 
+		/// <summary>
+		/// Opens the specified URL using the system's default browser.
+		/// </summary>
 		public static void OpenUrl(string url)
 		{
 			if (!IsValidUrl(url)) return;
@@ -31,8 +37,8 @@ namespace HelloClipboard.Utils
 			}
 			catch (Exception ex)
 			{
-				// Hata durumunda Form'a bilgi fırlatabiliriz veya burada loglayabiliriz
-				throw new Exception($"URL açılırken hata oluştu: {ex.Message}");
+				// Re-throw with an English error message or log the exception
+				throw new Exception($"An error occurred while opening the URL: {ex.Message}");
 			}
 		}
 	}

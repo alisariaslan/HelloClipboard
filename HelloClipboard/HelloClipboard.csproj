@@ -126,33 +126,33 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ClipboardItem.cs" />
-    <Compile Include="ClipboardNotification.cs" />
-    <Compile Include="ClipDetailImage.cs">
+    <Compile Include="Models\ClipboardItem.cs" />
+    <Compile Include="Utils\ClipboardNotification.cs" />
+    <Compile Include="Views\ClipDetailImage.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ClipDetailImage.Designer.cs">
+    <Compile Include="Views\ClipDetailImage.Designer.cs">
       <DependentUpon>ClipDetailImage.cs</DependentUpon>
     </Compile>
-    <Compile Include="ClipDetailText.cs">
+    <Compile Include="Views\ClipDetailText.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ClipDetailText.Designer.cs">
+    <Compile Include="Views\ClipDetailText.Designer.cs">
       <DependentUpon>ClipDetailText.cs</DependentUpon>
     </Compile>
-    <Compile Include="Constants.cs" />
+    <Compile Include="Constants\Constants.cs" />
     <Compile Include="Html\AboutHtml.cs" />
     <Compile Include="Html\HelpHtml.cs" />
     <Compile Include="Html\UnderDevelopmentHtml.cs" />
-    <Compile Include="InfoDialog.cs">
+    <Compile Include="Views\InfoDialog.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="InfoDialog.Designer.cs">
+    <Compile Include="Views\InfoDialog.Designer.cs">
       <DependentUpon>InfoDialog.cs</DependentUpon>
     </Compile>
     <Compile Include="Loaders\SettingsLoader.cs" />
     <Compile Include="Loaders\TempConfigLoader.cs" />
-    <Compile Include="MainForm.vm.cs" />
+    <Compile Include="Core\MainForm.vm.cs" />
     <Compile Include="Models\SaveFileInfo.cs" />
     <Compile Include="Services\ClipboardMonitor.cs" />
     <Compile Include="Services\ClipboardService.cs" />
@@ -161,22 +161,22 @@
     <Compile Include="Services\HotkeyService.cs" />
     <Compile Include="Services\PrivacyService.cs" />
     <Compile Include="Services\TrayIconManager.cs" />
-    <Compile Include="SettingsForm.cs">
+    <Compile Include="Views\SettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="SettingsForm.Designer.cs">
+    <Compile Include="Views\SettingsForm.Designer.cs">
       <DependentUpon>SettingsForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="UpdateService.cs" />
-    <Compile Include="MainForm.cs">
+    <Compile Include="Services\UpdateService.cs" />
+    <Compile Include="Views\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MainForm.Designer.cs">
+    <Compile Include="Views\MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TrayApplicationContext.cs" />
+    <Compile Include="Core\TrayApplicationContext.cs" />
     <Compile Include="Utils\CharHelper.cs" />
     <Compile Include="Utils\CyptoHelper.cs" />
     <Compile Include="Utils\DrawingHelper.cs" />
@@ -194,16 +194,16 @@
     <Compile Include="Utils\TextBoxExtensions.cs" />
     <Compile Include="Utils\UrlHelper.cs" />
     <Compile Include="Utils\WindowHelper.cs" />
-    <EmbeddedResource Include="ClipDetailImage.resx">
+    <EmbeddedResource Include="Views\ClipDetailImage.resx">
       <DependentUpon>ClipDetailImage.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ClipDetailText.resx">
+    <EmbeddedResource Include="Views\ClipDetailText.resx">
       <DependentUpon>ClipDetailText.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="InfoDialog.resx">
+    <EmbeddedResource Include="Views\InfoDialog.resx">
       <DependentUpon>InfoDialog.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="MainForm.resx">
+    <EmbeddedResource Include="Views\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -216,7 +216,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="SettingsForm.resx">
+    <EmbeddedResource Include="Views\SettingsForm.resx">
       <DependentUpon>SettingsForm.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="app.manifest" />
@@ -267,5 +267,6 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

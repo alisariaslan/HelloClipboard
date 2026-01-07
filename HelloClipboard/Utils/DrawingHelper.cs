@@ -9,10 +9,10 @@ namespace HelloClipboard.Utils
 	public static class DrawingHelper
 	{
 		public static void RenderClipboardItem(
-	DrawItemEventArgs e,
-	ListBox listBox,
-	string searchTerm,
-	MainFormViewModel viewModel)
+			DrawItemEventArgs e,
+			ListBox listBox,
+			string searchTerm,
+			MainFormViewModel viewModel)
 		{
 			e.DrawBackground();
 			if (e.Index < 0 || e.Index >= listBox.Items.Count)
@@ -30,7 +30,16 @@ namespace HelloClipboard.Utils
 			if (item.IsPinned)
 				displayText = "[PIN] " + displayText;
 
-			DrawingHelper.DrawTextWithHighlight(e.Graphics, displayText, e.Font, textColor, bounds, selected, searchTerm, viewModel.GetHighlightRegex(searchTerm), viewModel.CaseSensitive);
+			DrawingHelper.DrawTextWithHighlight(
+				e.Graphics,
+				displayText,
+				e.Font,
+				textColor,
+				bounds,
+				selected,
+				searchTerm,
+				viewModel.GetHighlightRegex(searchTerm),
+				viewModel.CaseSensitive);
 
 			e.DrawFocusRectangle();
 		}
@@ -51,7 +60,7 @@ namespace HelloClipboard.Utils
 
 			var format = TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis;
 
-			// Arama terimi yoksa normal çizim yap
+			// If there is no search term, perform normal drawing
 			if (string.IsNullOrWhiteSpace(searchTerm))
 			{
 				TextRenderer.DrawText(g, text, font, bounds, textColor, format);
@@ -60,7 +69,7 @@ namespace HelloClipboard.Utils
 
 			List<(string part, bool highlight)> parts = new List<(string, bool)>();
 
-			// Regex varsa Regex ile parçala
+			// If a Regex is provided, split the text using Regex
 			if (highlightRegex != null)
 			{
 				int lastIndex = 0;
@@ -76,7 +85,7 @@ namespace HelloClipboard.Utils
 				if (lastIndex < text.Length)
 					parts.Add((text.Substring(lastIndex), false));
 			}
-			// Regex yoksa normal string IndexOf ile parçala
+			// If no Regex is provided, split using standard string IndexOf
 			else
 			{
 				StringComparison comp = caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
@@ -99,7 +108,7 @@ namespace HelloClipboard.Utils
 				}
 			}
 
-			// Parçaları yan yana çiz
+			// Draw the parts side-by-side
 			int x = bounds.Left;
 			foreach (var (part, highlight) in parts)
 			{
@@ -111,6 +120,7 @@ namespace HelloClipboard.Utils
 
 				if (highlight)
 				{
+					// Use Gold for selected items and Yellow for unselected items for better visibility
 					Color back = selected ? Color.Gold : Color.Yellow;
 					using (var brush = new SolidBrush(back))
 					{
@@ -121,7 +131,7 @@ namespace HelloClipboard.Utils
 				TextRenderer.DrawText(g, part, font, rect, textColor, format);
 				x += size.Width;
 
-				// Sınır dışına çıktıysa daha fazla çizme (Performans ve Ellipsis için)
+				// Stop drawing if the text exceeds bounds (for performance and Ellipsis handling)
 				if (x > bounds.Right)
 					break;
 			}

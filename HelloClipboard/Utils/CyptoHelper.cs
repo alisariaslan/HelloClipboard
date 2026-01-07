@@ -9,15 +9,15 @@ namespace HelloClipboard.Utils
 	{
 		private static byte[] _masterKey;
 
-		// Master Key'i Registry'den yükle veya yoksa oluşturup Registry'e yaz
+		// Load the Master Key from the Registry or create and save it if it doesn't exist
 		private static byte[] GetMasterKey()
 		{
 			if (_masterKey != null) return _masterKey;
 
-			// 1. ADIM: Registry'den okumayı dene
+			// STEP 1: Attempt to read from the Registry
 			try
 			{
-				// HKCU (HKEY_CURRENT_USER) altına bakıyoruz. Yönetici izni gerektirmez.
+				// Looking under HKCU (HKEY_CURRENT_USER). This does not require administrator privileges.
 				using (RegistryKey key = Registry.CurrentUser.OpenSubKey(Constants.RegistryKeyPath))
 				{
 					if (key != null)
@@ -25,7 +25,7 @@ namespace HelloClipboard.Utils
 						object value = key.GetValue(Constants.RegistryKeyValueName);
 						if (value != null && value is byte[] encryptedKey)
 						{
-							// DPAPI kullanarak şifreyi çöz (Sadece bu Windows kullanıcısı çözebilir)
+							// Decrypt using DPAPI (Only the current Windows user can decrypt this)
 							_masterKey = ProtectedData.Unprotect(encryptedKey, null, DataProtectionScope.CurrentUser);
 							return _masterKey;
 						}
@@ -37,22 +37,22 @@ namespace HelloClipboard.Utils
 #if DEBUG
 				System.Diagnostics.Debug.WriteLine($"Registry Read Error: {ex.Message}");
 #endif
-				// Okuma hatası veya şifre çözme hatası olursa (bozuk data), aşağıda yenisini oluşturacağız.
+				// If a reading or decryption error occurs (corrupted data), a new key will be generated below.
 			}
 
-			// 2. ADIM: Anahtar yoksa veya bozuksa YENİSİNİ OLUŞTUR
+			// STEP 2: Create a NEW key if it doesn't exist or is corrupted
 			byte[] newKey = new byte[32]; // 256-bit
 			using (var rng = new RNGCryptoServiceProvider())
 			{
 				rng.GetBytes(newKey);
 			}
 
-			// 3. ADIM: Yeni anahtarı DPAPI ile şifrele ve Registry'e kaydet
+			// STEP 3: Encrypt the new key with DPAPI and save it to the Registry
 			try
 			{
 				byte[] keyToSave = ProtectedData.Protect(newKey, null, DataProtectionScope.CurrentUser);
 
-				// CreateSubKey: Anahtar yoksa oluşturur, varsa açar (Yazma modunda)
+				// CreateSubKey: Creates the key if it doesn't exist, or opens it if it does (in Write mode)
 				using (RegistryKey key = Registry.CurrentUser.CreateSubKey(Constants.RegistryKeyPath))
 				{
 					if (key != null)
@@ -66,8 +66,8 @@ namespace HelloClipboard.Utils
 #if DEBUG
 				System.Diagnostics.Debug.WriteLine($"Registry Write Error: {ex.Message}");
 #endif
-				// Registry'e yazamazsak bile hafızadaki (newKey) ile o anlık çalışmaya devam edebiliriz,
-				// ama program kapanınca anahtar kaybolur. Bu yüzden burası kritiktir.
+				// Even if writing to the Registry fails, we can continue using the key in memory (newKey) for the current session.
+				// However, the key will be lost when the application closes; therefore, this step is critical.
 			}
 
 			_masterKey = newKey;
@@ -83,12 +83,12 @@ namespace HelloClipboard.Utils
 				using (var aes = Aes.Create())
 				{
 					aes.Key = GetMasterKey();
-					aes.GenerateIV(); // Her şifreleme için rastgele IV
+					aes.GenerateIV(); // Random IV for each encryption session
 
 					using (var encryptor = aes.CreateEncryptor(aes.Key, aes.IV))
 					using (var ms = new MemoryStream())
 					{
-						// IV'yi verinin başına ekle
+						// Prepend the IV to the beginning of the data
 						ms.Write(aes.IV, 0, aes.IV.Length);
 
 						using (var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
@@ -116,12 +116,12 @@ namespace HelloClipboard.Utils
 				{
 					aes.Key = GetMasterKey();
 
-					// IV boyutunu al (Genelde 16 byte)
+					// Get the IV size (usually 16 bytes)
 					byte[] iv = new byte[aes.BlockSize / 8];
 
-					if (data.Length < iv.Length) return null; // Veri çok kısa, şifreli olamaz
+					if (data.Length < iv.Length) return null; // Data is too short, cannot be encrypted
 
-					// IV'yi verinin başından ayır
+					// Extract the IV from the beginning of the data
 					Array.Copy(data, 0, iv, 0, iv.Length);
 					aes.IV = iv;
 
@@ -130,7 +130,7 @@ namespace HelloClipboard.Utils
 					{
 						using (var cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Write))
 						{
-							// IV'den sonraki kısmı (şifreli asıl veriyi) çöz
+							// Decrypt the part after the IV (the actual encrypted content)
 							cs.Write(data, iv.Length, data.Length - iv.Length);
 							cs.FlushFinalBlock();
 						}
@@ -140,8 +140,8 @@ namespace HelloClipboard.Utils
 			}
 			catch (CryptographicException)
 			{
-				// Eğer şifre çözülemezse (eski versiyondan kalan şifresiz dosya ise)
-				// olduğu gibi döndür (Geriye uyumluluk)
+				// If decryption fails (e.g., an unencrypted file from an older version),
+				// return the data as-is for backward compatibility.
 				return data;
 			}
 			catch

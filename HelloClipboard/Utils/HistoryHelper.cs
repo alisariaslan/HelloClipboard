@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text; // Encoding için gerekli
+using System.Text;
 using System.Text.RegularExpressions;
 using HelloClipboard.Utils;
 
@@ -39,7 +39,7 @@ namespace HelloClipboard
 				return;
 			}
 
-			// Dosya uzantısını belirle (yine de şifreli olacak ama dosya tipini anlamak için tutuyoruz)
+			// Determine the file extension (the file will be encrypted, but we keep the extension to identify the content type)
 			string extension = FileExtensionHelper.GetFileExtension(item.ItemType);
 			string filePath = Path.Combine(historyDir, item.ContentHash + extension);
 
@@ -52,12 +52,12 @@ namespace HelloClipboard
 
 				if (item.ItemType == ClipboardItemType.Text || item.ItemType == ClipboardItemType.File)
 				{
-					// Metni UTF8 byte dizisine çevir
+					// Convert text to UTF-8 byte array
 					rawData = Encoding.UTF8.GetBytes(item.Content);
 				}
 				else if (item.ItemType == ClipboardItemType.Image && item.ImageContent != null)
 				{
-					// Resmi MemoryStream ile byte dizisine çevir
+					// Convert image to byte array using MemoryStream
 					using (var ms = new MemoryStream())
 					{
 						item.ImageContent.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
@@ -65,7 +65,7 @@ namespace HelloClipboard
 					}
 				}
 
-				// Veriyi şifrele ve diske yaz
+				// Encrypt the data and write it to disk
 				if (rawData != null)
 				{
 					byte[] encryptedData = CryptoHelper.Encrypt(rawData);
@@ -82,7 +82,7 @@ namespace HelloClipboard
 
 		public void DeleteItemFromFile(string hash)
 		{
-			// Bu metod değişmedi, dosya silme işlemi aynıdır.
+			// This method remains unchanged; the file deletion process is the same
 			if (string.IsNullOrWhiteSpace(hash))
 				return;
 
@@ -110,7 +110,7 @@ namespace HelloClipboard
 			if (!Directory.Exists(historyDir))
 				return loadedCache;
 
-			// secret.key dosyasını listeye almamak için filtreleme yapalım veya hata yönetimini kullanalım
+			// Filter out files like 'secret.key' or use error handling to prevent loading non-history files
 			var files = Directory.GetFiles(historyDir)
 								 .Select(f => new FileInfo(f))
 								 .OrderBy(f => f.LastWriteTime)
@@ -122,6 +122,7 @@ namespace HelloClipboard
 			{
 				if (count >= _maxHistoryCount)
 				{
+					// Delete excess history files to maintain the limit
 					try { File.Delete(fileInfo.FullName); } catch { }
 					continue;
 				}
@@ -137,26 +138,29 @@ namespace HelloClipboard
 					Image imageContent = null;
 					string newTitle = "";
 
-					// 1. Dosyayı binary olarak oku
+					// 1. Read file as binary
 					byte[] fileBytes = File.ReadAllBytes(fileInfo.FullName);
 
-					// 2. Şifreyi çöz
+					// 2. Decrypt the data
 					byte[] decryptedBytes = CryptoHelper.Decrypt(fileBytes);
 
-					if (decryptedBytes == null) continue; // Şifre çözülemediyse atla
+					if (decryptedBytes == null) continue; // Skip if decryption fails
 
 					if (type == ClipboardItemType.Text || type == ClipboardItemType.File)
 					{
-						// Byte dizisini tekrar stringe çevir
+						// Convert byte array back to string
 						content = Encoding.UTF8.GetString(decryptedBytes);
 
 						if (type == ClipboardItemType.Text)
 						{
+							// Sanitize text by replacing control characters with spaces
 							string replacedNewlines = content.Replace('\r', ' ')
 													 .Replace('\n', ' ')
 													 .Replace('\t', ' ');
+							// Collapse multiple whitespaces into a single space
 							string cleanedWhitespace = Regex.Replace(replacedNewlines, @"\s+", " ");
 							newTitle = cleanedWhitespace.Trim();
+
 							if (newTitle.Length > 1024)
 							{
 								newTitle = newTitle.Substring(0, 1024) + "...";
@@ -169,7 +173,7 @@ namespace HelloClipboard
 					}
 					else if (type == ClipboardItemType.Image)
 					{
-						// Decrypted byte array'den resim oluştur
+						// Create image from decrypted byte array
 						using (var ms = new MemoryStream(decryptedBytes))
 						{
 							imageContent = Image.FromStream(ms);
@@ -189,7 +193,7 @@ namespace HelloClipboard
 #if DEBUG
 					System.Diagnostics.Debug.WriteLine($"Error loading clipboard history file {fileInfo.Name}: {ex.Message}");
 #endif
-					// Bozuk dosyaları sil
+					// Delete corrupted files
 					try { File.Delete(fileInfo.FullName); } catch { }
 				}
 			}

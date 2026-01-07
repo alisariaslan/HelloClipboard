@@ -5,7 +5,7 @@ namespace HelloClipboard.Utils
 	public static class ListBoxExtensions
 	{
 		/// <summary>
-		/// ListBox içerisinde seçimi yukarı veya aşağı kaydırır.
+		/// Moves the selection within the ListBox up or down.
 		/// </summary>
 		public static void MoveSelection(this ListBox listBox, int direction)
 		{
@@ -14,19 +14,18 @@ namespace HelloClipboard.Utils
 			int currentIndex = listBox.SelectedIndex;
 			int newIndex = currentIndex + direction;
 
-			// Eğer hiçbir şey seçili değilse ve yukarı/aşağı basıldıysa ilk öğeyi seç
+			// If nothing is selected and up/down is pressed, select the first item
 			if (currentIndex == -1)
 			{
 				listBox.SelectedIndex = 0;
 				return;
 			}
 
-			// Sınır kontrolü
+			// Bounds check
 			if (newIndex >= 0 && newIndex < listBox.Items.Count)
 			{
 				listBox.SelectedIndex = newIndex;
 			}
 		}
-
 	}
 }
