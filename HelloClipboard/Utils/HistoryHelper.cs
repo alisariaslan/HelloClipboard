@@ -5,7 +5,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace HelloClipboard
 {
@@ -36,7 +35,7 @@ namespace HelloClipboard
 			}
 			catch (Exception ex)
 			{
-				System.Diagnostics.Debug.WriteLine($"History dosyaları silinirken hata: {ex.Message}");
+				System.Diagnostics.Debug.WriteLine($"Error occured when cleaning history files: {ex.Message}");
 			}
 
 		}
@@ -95,6 +94,7 @@ namespace HelloClipboard
 			EnforceDiskLimitOnDisk(historyDir);
 
 			var loadedCache = new List<ClipboardItem>();
+		
 
 			var files = Directory.GetFiles(historyDir)
 							 .Select(f => new FileInfo(f))
@@ -103,7 +103,7 @@ namespace HelloClipboard
 
 			foreach (var fileInfo in files)
 			{
-				if (fileInfo.Name.Equals("secret.key")) continue;
+				if (fileInfo.Name.Equals("secret.key", StringComparison.OrdinalIgnoreCase)) continue;
 
 				string fileName = Path.GetFileNameWithoutExtension(fileInfo.Name);
 				string extension = Path.GetExtension(fileInfo.Name);
@@ -116,35 +116,32 @@ namespace HelloClipboard
 
 					string content = null;
 					Image imageContent = null;
-					string newTitle = "";
 
 					if (type == ClipboardItemType.Text || type == ClipboardItemType.File)
 					{
 						content = Encoding.UTF8.GetString(decryptedBytes);
-						newTitle = type == ClipboardItemType.Text ? GenerateTitle(content) : $"{Path.GetFileName(content)} -> {content}";
 					}
 					else
 					{
 						using (var ms = new MemoryStream(decryptedBytes)) imageContent = Image.FromStream(ms);
-						newTitle = "[IMAGE]";
 					}
+
+
+					string newTitle = TitleHelper.Generate(type, content);
 
 					string hashPart = fileName.Contains("_") ? fileName.Split('_')[1] : fileName;
 
 					var item = new ClipboardItem(type, content, newTitle, imageContent, hashPart);
-					item.Id = fileName; 
-					item.Timestamp = fileInfo.LastWriteTime; 
+					item.Id = fileName;
+					item.Timestamp = fileInfo.LastWriteTime;
 					loadedCache.Add(item);
 				}
 				catch { try { File.Delete(fileInfo.FullName); } catch { } }
 			}
 			return loadedCache;
-
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
+
 		private void EnforceDiskLimitOnDisk(string historyDir)
 		{
 			try
@@ -174,18 +171,11 @@ namespace HelloClipboard
 			}
 			catch (Exception ex)
 			{
-				System.Diagnostics.Debug.WriteLine($"Açılış temizliği sırasında hata: {ex.Message}");
+				System.Diagnostics.Debug.WriteLine($"Error occured when startup cleaning: {ex.Message}");
 			}
 		}
 
-		private string GenerateTitle(string content)
-		{
-			if (string.IsNullOrWhiteSpace(content)) return string.Empty;
-
-			string cleaned = Regex.Replace(content.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' '), @"\s+", " ").Trim();
-
-			return cleaned.Length > 1024 ? cleaned.Substring(0, 1024) + "..." : cleaned;
-		}
+	
 
 	
 

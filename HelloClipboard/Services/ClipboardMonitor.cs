@@ -2,10 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -185,7 +183,9 @@ namespace HelloClipboard.Services
 				}
 			}
 
-			var item = new ClipboardItem(type, textContent, GenerateTitle(type, textContent), imageContent, calculatedHash);
+			string title = TitleHelper.Generate(type, textContent);
+
+			var item = new ClipboardItem(type, textContent, title, imageContent, calculatedHash);
 
 			if (item.ContentHash != null && TempConfigLoader.Current.PinnedHashes.Contains(item.ContentHash))
 				item.IsPinned = true;
@@ -208,16 +208,15 @@ namespace HelloClipboard.Services
 			else if (type == ClipboardItemType.File) _lastFileContent = text;
 			else if (type == ClipboardItemType.Image) _lastImageHash = imgHash;
 
-			_lastCaptureTime = captureTime; // Zamanı kaydet
+			_lastCaptureTime = captureTime; 
 		}
 
 		private void CheckHistoryLimit()
 		{
-			// Sabitlenmemiş (IsPinned = false) öğelerin sayısını kontrol et
-			// Pinned öğeler bu sınıra dahil değildir ve asla silinmez.
+		
 			while (_clipboardCache.Count(i => !i.IsPinned) > SettingsLoader.Current.MaxHistoryCount)
 			{
-				// Sabitlenmemişler arasında en eski (Timestamp'i en küçük) olanı bul
+			
 				var oldestUnpinned = _clipboardCache
 					.Where(i => !i.IsPinned)
 					.OrderBy(i => i.Timestamp)
@@ -225,41 +224,26 @@ namespace HelloClipboard.Services
 
 				if (oldestUnpinned != null)
 				{
-					// 1. ADIM: Diskten sil (Id üzerinden)
+				
 					_historyHelper.DeleteItemFromFile(oldestUnpinned.Id);
 
-					// 2. ADIM: RAM'deki Cache'den sil
 					_clipboardCache.Remove(oldestUnpinned);
 
-					// 3. ADIM: Hash havuzundan (duplication check) temizle 
-					// (Eğer aynı içeriğe sahip başka bir öğe kalmadıysa)
+					
 					if (!_clipboardCache.Any(i => i.ContentHash == oldestUnpinned.ContentHash))
 					{
 						_clipboardHashPool.Remove(oldestUnpinned.ContentHash);
 					}
 
-					// 4. ADIM: UI'ya öğenin silindiğini bildir (ListBox güncellemesi için)
+				
 					ItemRemoved?.Invoke();
 				}
 				else
 				{
-					// Silecek unpinned öğe kalmadıysa döngüden çık
+				
 					break;
 				}
 			}
-		}
-
-
-		private string GenerateTitle(ClipboardItemType type, string content)
-		{
-			if (type == ClipboardItemType.Text)
-			{
-				// Sanitize text by removing newlines and tabs for UI display
-				string cleaned = Regex.Replace(content.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' '), @"\s+", " ").Trim();
-				return cleaned.Length > 1024 ? cleaned.Substring(0, 1024) + "..." : cleaned;
-			}
-			if (type == ClipboardItemType.File) return $"{Path.GetFileName(content)} -> {content}";
-			return content; // Return content as is for Image titles
 		}
 
 		public void ClearAll()

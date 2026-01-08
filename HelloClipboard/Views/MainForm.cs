@@ -2,7 +2,6 @@
 using HelloClipboard.Services;
 using HelloClipboard.Utils;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
@@ -123,7 +122,6 @@ namespace HelloClipboard
 
 		public void MessageAdd(ClipboardItem item)
 		{
-			// ViewModel'den doğru indexi al
 			int index = _viewModel.GetInsertionIndex(
 				item,
 				MessagesListBox.Items.Count,
@@ -132,9 +130,6 @@ namespace HelloClipboard
 
 			MessagesListBox.Items.Insert(index, item);
 
-			// --- OTOMATİK SCROLL ---
-			// Invert aktifse (Yeni üstte), en tepeye kaydır. 
-			// Invert pasifse (Yeni altta), en aşağı kaydır.
 			if (SettingsLoader.Current.InvertClipboardHistoryListing)
 			{
 				MessagesListBox.TopIndex = 0;
@@ -165,7 +160,6 @@ namespace HelloClipboard
 			}
 		}
 
-		// MainForm.cs
 		public void RefreshCacheView()
 		{
 			if (MessagesListBox.InvokeRequired)
@@ -189,7 +183,6 @@ namespace HelloClipboard
 				MessagesListBox.EndUpdate();
 			}
 
-			// Sıralama değişiminde kullanıcıyı listenin "aktif" ucuna götür
 			if (MessagesListBox.Items.Count > 0)
 			{
 				MessagesListBox.TopIndex = SettingsLoader.Current.InvertClipboardHistoryListing
@@ -339,19 +332,17 @@ namespace HelloClipboard
 		{
 			if (MessagesListBox.SelectedItem is ClipboardItem selected)
 			{
-				// Cache'deki sırayı bozmadan sadece Pinned özelliğini değiştir
+			
 				bool isPinned = _viewModel.TogglePin(selected);
 
-				// UI Güncelleme
+			
 				MessagesListBox.BeginUpdate();
 
-				// Elemanı mevcut görsel yerinden çıkar
+		
 				MessagesListBox.Items.Remove(selected);
 
-				// ViewModel'e "ListBox'ta nereye koymalıyım?" diye sor
 				int targetVisualIndex = _viewModel.GetVisualInsertionIndex(selected, MessagesListBox.Items);
 
-				// Sadece ListBox içine re-insert et
 				MessagesListBox.Items.Insert(targetVisualIndex, selected);
 				MessagesListBox.SelectedIndex = targetVisualIndex;
 

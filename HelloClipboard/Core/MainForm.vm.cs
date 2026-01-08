@@ -100,20 +100,17 @@ namespace HelloClipboard
 		/// </summary>
 		public bool TogglePin(ClipboardItem item)
 		{
-			// Id kontrolü yapıyoruz (Hash değil)
 			if (item == null || string.IsNullOrEmpty(item.Id)) return false;
 
 			item.IsPinned = !item.IsPinned;
 
 			if (item.IsPinned)
 			{
-				// PinnedHashes listesine artık Id ekliyoruz
 				if (!TempConfigLoader.Current.PinnedHashes.Contains(item.Id))
 					TempConfigLoader.Current.PinnedHashes.Add(item.Id);
 			}
 			else
 			{
-				// Listeden Id'yi çıkarıyoruz
 				TempConfigLoader.Current.PinnedHashes.Remove(item.Id);
 			}
 
@@ -157,18 +154,13 @@ namespace HelloClipboard
 		{
 			bool invert = SettingsLoader.Current.InvertClipboardHistoryListing;
 
-			// --- DURUM A: ÖĞE PİNNED OLUYORSA ---
 			if (item.IsPinned)
 			{
-				if (invert) return 0; // En yeni üstte: Pinned bloğunun en tepesi
+				if (invert) return 0; 
 
-				// En yeni altta: Pinned bloğunun en sonu (tüm listenin sonu)
 				return currentItemCount;
 			}
 
-			// --- DURUM B: ÖĞE UNPINNED OLUYORSA (ESKİ YERİNE GİTME MANTIĞI) ---
-
-			// 1. Önce Pinned bloğunun nerede bittiğini (veya başladığını) bulalım
 			int pinnedCount = 0;
 			List<ClipboardItem> unpinnedItems = new List<ClipboardItem>();
 
@@ -181,37 +173,30 @@ namespace HelloClipboard
 				else unpinnedItems.Add(current);
 			}
 
-			// 2. Unpinned öğeler arasında doğru kronolojik yeri bul
 			int indexInUnpinned = 0;
 			foreach (var existingUnpinned in unpinnedItems)
 			{
 				if (invert)
 				{
-					// En yeni üstte: Mevcut öğe, kendisinden daha eski birini bulana kadar ilerler
 					if (item.Timestamp > existingUnpinned.Timestamp) break;
 				}
 				else
 				{
-					// En yeni altta: Mevcut öğe, kendisinden daha yeni birini bulana kadar ilerler
 					if (item.Timestamp < existingUnpinned.Timestamp) break;
 				}
 				indexInUnpinned++;
 			}
 
-			// 3. Nihai ListBox indeksini hesapla
 			if (invert)
 			{
-				// [Pinned Bloğu] + [Bulunan İndeks]
 				return pinnedCount + indexInUnpinned;
 			}
 			else
 			{
-				// [Bulunan İndeks] (Çünkü unpinned öğeler listenin başında, pinned'lar sonunda)
 				return indexInUnpinned;
 			}
 		}
 
-		// Pinleme veya Duplication güncellemesinde kullanılan görsel index hesaplayıcı
 		public int GetVisualInsertionIndex(ClipboardItem item, ListBox.ObjectCollection items)
 		{
 			// Pin'leme işlemi değiştiğinde elemanın yeni yerini bulur

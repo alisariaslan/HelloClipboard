@@ -241,17 +241,14 @@ namespace HelloClipboard
 		{
 			if (_form == null || _form.IsDisposed) return;
 
-			// ÖNEMLİ: Eğer handle henüz oluşturulmamışsa InvokeRequired her zaman false döner!
-			// Bu yüzden handle'ın oluşturulduğundan emin olmalıyız.
 			if (!_form.IsHandleCreated)
 			{
-				// Handle yoksa, zorla oluştur (bu sayede Invoke düzgün çalışır)
 				IntPtr dummy = _form.Handle;
 			}
 
 			if (_form.InvokeRequired)
 			{
-				_form.BeginInvoke(action); // Invoke yerine BeginInvoke daha akıcıdır
+				_form.BeginInvoke(action);
 			}
 			else
 			{
