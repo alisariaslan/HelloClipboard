@@ -1,4 +1,4 @@
 {
-    "Version": "1.1.0.8",
-    "Notes": "🚀 v1.1.0.8 Highlights: Pin items to keep them at the top and safe from auto-clean. Private Mode pauses clipboard capture for 10 minutes via tray menu. Search upgrades: regex + case-sensitive toggle with inline highlight. Detail pane is faster and no longer flickers when switching items."
+  "Version": "1.1.1.9",
+  "Notes": "🚀 v1.1.1.9 | ⚠️ After updating, please clear your clipboard using the brush icon in the app. ✨ Improvements: Core refactor, UI simplification, improved detail window & search focus, Hotkey and Privacy services separated. 🐞 Fixes: Image count, PIN order, ID issues fixed, improved image hash handling."
 }
