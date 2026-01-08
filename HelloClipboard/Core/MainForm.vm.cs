@@ -100,17 +100,21 @@ namespace HelloClipboard
 		/// </summary>
 		public bool TogglePin(ClipboardItem item)
 		{
-			if (item == null || item.ContentHash == null) return false;
+			// Id kontrolü yapıyoruz (Hash değil)
+			if (item == null || string.IsNullOrEmpty(item.Id)) return false;
+
 			item.IsPinned = !item.IsPinned;
 
 			if (item.IsPinned)
 			{
-				if (!TempConfigLoader.Current.PinnedHashes.Contains(item.ContentHash))
-					TempConfigLoader.Current.PinnedHashes.Add(item.ContentHash);
+				// PinnedHashes listesine artık Id ekliyoruz
+				if (!TempConfigLoader.Current.PinnedHashes.Contains(item.Id))
+					TempConfigLoader.Current.PinnedHashes.Add(item.Id);
 			}
 			else
 			{
-				TempConfigLoader.Current.PinnedHashes.Remove(item.ContentHash);
+				// Listeden Id'yi çıkarıyoruz
+				TempConfigLoader.Current.PinnedHashes.Remove(item.Id);
 			}
 
 			TempConfigLoader.Save();
@@ -155,30 +159,39 @@ namespace HelloClipboard
 
 			if (invert)
 			{
-				if (item.IsPinned) return 0; // Insert at the very top
+				// En yeni üstte: Pinned ise 0, değilse pinned bloğunun hemen altına
+				if (item.IsPinned) return 0;
 
-				// Insert immediately after the group of pinned items
-				int offset = 0;
+				int pinnedCount = 0;
 				for (int i = 0; i < currentItemCount; i++)
 				{
-					if (getItemAt(i)?.IsPinned == true) offset++;
+					if (getItemAt(i)?.IsPinned == true) pinnedCount++;
 					else break;
 				}
-				return offset;
+				return pinnedCount;
 			}
 			else
 			{
-				if (item.IsPinned) return 0;
+				// En yeni altta: Pinned ise son index, değilse unpinned bloğunun sonu (yani pinned'ların hemen üstü)
+				if (item.IsPinned) return currentItemCount;
 
-				int offset = 0;
+				int unpinnedCount = 0;
 				for (int i = 0; i < currentItemCount; i++)
 				{
-					if (getItemAt(i)?.IsPinned == true) offset++;
+					if (getItemAt(i)?.IsPinned == false) unpinnedCount++;
 					else break;
 				}
-				return offset;
+				return unpinnedCount;
 			}
 		}
+
+		// Pinleme veya Duplication güncellemesinde kullanılan görsel index hesaplayıcı
+		public int GetVisualInsertionIndex(ClipboardItem item, ListBox.ObjectCollection items)
+		{
+			// Pin'leme işlemi değiştiğinde elemanın yeni yerini bulur
+			return GetInsertionIndex(item, items.Count, (i) => items[i] as ClipboardItem);
+		}
+
 
 		// 1 & 3. Index Calculation for Deletion and Insertion
 		/// <summary>
@@ -240,6 +253,39 @@ namespace HelloClipboard
 					break;
 			}
 			return info;
+		}
+
+		public IEnumerable<ClipboardItem> GetDisplayList(string searchTerm = "")
+		{
+			var cache = _trayApplicationContext.GetClipboardCache();
+			bool invert = SettingsLoader.Current.InvertClipboardHistoryListing;
+
+			var filtered = string.IsNullOrWhiteSpace(searchTerm)
+				? cache
+				: GetFilteredItems(searchTerm);
+
+			// Sabitlenenler ve Sabitlenmeyenleri ayır
+			var pinned = filtered.Where(i => i.IsPinned);
+			var unpinned = filtered.Where(i => !i.IsPinned);
+
+			if (invert)
+			{
+				// TERS LİSTE (En yeni en üstte)
+				// Pinned: En yeni en başta | Unpinned: En yeni en başta
+				// Düzen: [Pinned] -> [Unpinned]
+				var pinnedSorted = pinned.OrderByDescending(i => i.Timestamp);
+				var unpinnedSorted = unpinned.OrderByDescending(i => i.Timestamp);
+				return pinnedSorted.Concat(unpinnedSorted);
+			}
+			else
+			{
+				// NORMAL LİSTE (En yeni en altta)
+				// Pinned: En yeni en sonda | Unpinned: En yeni en sonda
+				// Düzen: [Unpinned] -> [Pinned]
+				var pinnedSorted = pinned.OrderBy(i => i.Timestamp);
+				var unpinnedSorted = unpinned.OrderBy(i => i.Timestamp);
+				return unpinnedSorted.Concat(pinnedSorted);
+			}
 		}
 
 		public void Dispose()

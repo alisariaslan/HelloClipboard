@@ -53,7 +53,8 @@ namespace HelloClipboard.Services
 				var loadedItems = _historyHelper.LoadHistoryFromFiles();
 				foreach (var item in loadedItems)
 				{
-					if (item.ContentHash != null && TempConfigLoader.Current.PinnedHashes.Contains(item.ContentHash))
+					// Kontrolü Id üzerinden yapıyoruz
+					if (!string.IsNullOrEmpty(item.Id) && TempConfigLoader.Current.PinnedHashes.Contains(item.Id))
 					{
 						item.IsPinned = true;
 					}
@@ -133,99 +134,108 @@ namespace HelloClipboard.Services
 			}
 		}
 
+		// ClipboardMonitor.cs içine eklenecek alan (field)
+		private DateTime _lastCaptureTime = DateTime.MinValue;
+
 		private void AddToCache(ClipboardItemType type, string textContent, Image imageContent = null)
 		{
 			if (string.IsNullOrWhiteSpace(textContent) && imageContent == null) return;
 
+			var now = DateTime.Now;
+			var timeDiff = (now - _lastCaptureTime).TotalMilliseconds;
+
+			string imageHash = (type == ClipboardItemType.Image && imageContent != null)
+				? HashHelper.HashImageBytes(imageContent)
+				: null;
+
+			bool isSameAsLast = (type == ClipboardItemType.Text && textContent == _lastTextContent) ||
+								(type == ClipboardItemType.File && textContent == _lastFileContent) ||
+								(type == ClipboardItemType.Image && !string.IsNullOrEmpty(imageHash) && imageHash == _lastImageHash);
+
+			if (isSameAsLast && timeDiff < 500) return;
+
+			string calculatedHash = (type == ClipboardItemType.Image) ? imageHash : HashHelper.CalculateMd5Hash(textContent);
 			bool preventDuplication = SettingsLoader.Current.PreventClipboardDuplication;
 
-			// Quick duplication check against last known content
-			if (preventDuplication)
-			{
-				if (type == ClipboardItemType.Text && textContent == _lastTextContent) return;
-				if (type == ClipboardItemType.File && textContent == _lastFileContent) return;
-			}
-
-			string imageHash = (type == ClipboardItemType.Image && imageContent != null) ? HashHelper.HashImageBytes(imageContent) : null;
-			if (preventDuplication && type == ClipboardItemType.Image && !string.IsNullOrEmpty(imageHash) && imageHash == _lastImageHash) return;
-
-			// Calculate Hash for comparison
-			string calculatedHash = null;
-			if (preventDuplication)
-			{
-				calculatedHash = (type == ClipboardItemType.Image) ? imageHash : HashHelper.CalculateMd5Hash(textContent);
-			}
-
-			// If item already exists in pool (previously copied), move it to the top
-			if (calculatedHash != null && _clipboardHashPool.Contains(calculatedHash))
+			// --- 2. PREVENT DUPLICATION (Mükerrerleri Birleştirme) ---
+			if (preventDuplication && _clipboardHashPool.Contains(calculatedHash))
 			{
 				var existingItem = _clipboardCache.FirstOrDefault(i => i.ContentHash == calculatedHash);
 				if (existingItem != null)
 				{
+					string oldId = existingItem.Id; // Eski Id'yi yedekle
+					_historyHelper.DeleteItemFromFile(oldId);
+
+					existingItem.Timestamp = now;
+					existingItem.Id = now.Ticks.ToString() + "_" + calculatedHash; // Yeni Id oluşturuldu
+
+					// EĞER ÖĞE PİNLİYDİYE, LİSTEDEKİ ID'Yİ GÜNCELLE
+					if (existingItem.IsPinned)
+					{
+						TempConfigLoader.Current.PinnedHashes.Remove(oldId);
+						TempConfigLoader.Current.PinnedHashes.Add(existingItem.Id);
+						TempConfigLoader.Save();
+					}
+
 					_clipboardCache.Remove(existingItem);
 					_clipboardCache.Add(existingItem);
+
+					if (SettingsLoader.Current.EnableClipboardHistory)
+						Task.Run(() => _historyHelper.SaveItemToHistoryFile(existingItem));
+
+					UpdateLastCaptureInfo(type, textContent, imageHash, now);
 					ItemUpdated?.Invoke(existingItem);
+					return;
 				}
-				return;
 			}
 
-			// Generate a display title for the item
-			string newTitle = GenerateTitle(type, textContent);
-			var item = new ClipboardItem(_clipboardCache.Count, type, textContent, newTitle, imageContent, calculatedHash);
+			// --- 3. YENİ ÖĞE EKLEME --- (Sadece içerik gerçekten yeniyse veya Duplication kapalıysa çalışır)
+			var item = new ClipboardItem(type, textContent, GenerateTitle(type, textContent), imageContent, calculatedHash);
 
 			if (item.ContentHash != null && TempConfigLoader.Current.PinnedHashes.Contains(item.ContentHash))
 				item.IsPinned = true;
 
-			// Save to history storage
 			if (SettingsLoader.Current.EnableClipboardHistory && item.ContentHash != null)
 				Task.Run(() => _historyHelper.SaveItemToHistoryFile(item));
 
-			// Add to cache with pinning logic
-			InsertToCache(item);
+			_clipboardCache.Add(item);
+			_clipboardHashPool.Add(calculatedHash);
 
-			// Update state with last captured values
-			if (type == ClipboardItemType.Text) _lastTextContent = textContent;
-			else if (type == ClipboardItemType.File) _lastFileContent = textContent;
-			else if (type == ClipboardItemType.Image) _lastImageHash = imageHash;
+			UpdateLastCaptureInfo(type, textContent, imageHash, now);
 
 			ItemCaptured?.Invoke(item);
 			CheckHistoryLimit();
 		}
 
-		private void InsertToCache(ClipboardItem item)
+		private void UpdateLastCaptureInfo(ClipboardItemType type, string text, string imgHash, DateTime captureTime)
 		{
-			if (item.IsPinned)
-			{
-				_clipboardCache.Add(item);
-			}
-			else
-			{
-				// New unpinned items are inserted after the block of pinned items
-				var insertIndex = _clipboardCache.TakeWhile(i => i.IsPinned).Count();
-				_clipboardCache.Insert(insertIndex, item);
-			}
+			if (type == ClipboardItemType.Text) _lastTextContent = text;
+			else if (type == ClipboardItemType.File) _lastFileContent = text;
+			else if (type == ClipboardItemType.Image) _lastImageHash = imgHash;
 
-			if (item.ContentHash != null) _clipboardHashPool.Add(item.ContentHash);
+			_lastCaptureTime = captureTime; // Zamanı kaydet
 		}
 
 		private void CheckHistoryLimit()
 		{
 			if (_clipboardCache.Count > SettingsLoader.Current.MaxHistoryCount)
 			{
-				// Find the oldest item that isn't pinned; fall back to the very first item if all are pinned
-				var oldestItem = _clipboardCache.FirstOrDefault(i => !i.IsPinned) ?? _clipboardCache[0];
-
-				if (oldestItem.ContentHash != null)
+				var oldestItem = _clipboardCache.Where(i => !i.IsPinned).OrderBy(i => i.Timestamp).FirstOrDefault();
+				if (oldestItem != null)
 				{
-					_clipboardHashPool.Remove(oldestItem.ContentHash);
-					if (SettingsLoader.Current.EnableClipboardHistory)
-						_historyHelper.DeleteItemFromFile(oldestItem.ContentHash);
-				}
+					// Silerken mutlaka Id kullanıyoruz!
+					_historyHelper.DeleteItemFromFile(oldestItem.Id);
+					_clipboardCache.Remove(oldestItem);
 
-				_clipboardCache.Remove(oldestItem);
-				ItemRemoved?.Invoke();
+					// Eğer pool'da bu hash'e sahip başka öğe yoksa pool'dan temizle
+					if (!_clipboardCache.Any(i => i.ContentHash == oldestItem.ContentHash))
+						_clipboardHashPool.Remove(oldestItem.ContentHash);
+
+					ItemRemoved?.Invoke();
+				}
 			}
 		}
+
 
 		private string GenerateTitle(ClipboardItemType type, string content)
 		{
@@ -243,6 +253,7 @@ namespace HelloClipboard.Services
 		{
 			_clipboardCache.Clear();
 			_clipboardHashPool.Clear();
+			_historyHelper.ClearAllHistoryFiles();
 			ClipboardCleared?.Invoke();
 		}
 

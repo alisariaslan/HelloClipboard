@@ -2,6 +2,7 @@
 using HelloClipboard.Services;
 using HelloClipboard.Utils;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
@@ -122,6 +123,7 @@ namespace HelloClipboard
 
 		public void MessageAdd(ClipboardItem item)
 		{
+			// ViewModel'den doğru indexi al
 			int index = _viewModel.GetInsertionIndex(
 				item,
 				MessagesListBox.Items.Count,
@@ -130,10 +132,17 @@ namespace HelloClipboard
 
 			MessagesListBox.Items.Insert(index, item);
 
+			// --- OTOMATİK SCROLL ---
+			// Invert aktifse (Yeni üstte), en tepeye kaydır. 
+			// Invert pasifse (Yeni altta), en aşağı kaydır.
 			if (SettingsLoader.Current.InvertClipboardHistoryListing)
-				MessagesListBox.TopIndex = index;
+			{
+				MessagesListBox.TopIndex = 0;
+			}
 			else
+			{
 				MessagesListBox.TopIndex = MessagesListBox.Items.Count - 1;
+			}
 		}
 
 		public void RemoveOldestMessage()
@@ -156,16 +165,39 @@ namespace HelloClipboard
 			}
 		}
 
+		// MainForm.cs
 		public void RefreshCacheView()
 		{
-			MessagesListBox.BeginUpdate();
-			MessagesListBox.Items.Clear();
-			var cache = _trayApplicationContext.GetClipboardCache();
-			foreach (var item in cache)
+			if (MessagesListBox.InvokeRequired)
 			{
-				MessageAdd(item);
+				MessagesListBox.Invoke(new Action(RefreshCacheView));
+				return;
 			}
-			MessagesListBox.EndUpdate();
+
+			MessagesListBox.BeginUpdate();
+			try
+			{
+				MessagesListBox.Items.Clear();
+				var displayList = _viewModel.GetDisplayList(_currentSearchTerm);
+				foreach (var item in displayList)
+				{
+					MessagesListBox.Items.Add(item);
+				}
+			}
+			finally
+			{
+				MessagesListBox.EndUpdate();
+			}
+
+			// Sıralama değişiminde kullanıcıyı listenin "aktif" ucuna götür
+			if (MessagesListBox.Items.Count > 0)
+			{
+				MessagesListBox.TopIndex = SettingsLoader.Current.InvertClipboardHistoryListing
+					? 0
+					: MessagesListBox.Items.Count - 1;
+			}
+
+			MessagesListBox.Refresh();
 		}
 
 		private void MessagesListBox_SelectedIndexChanged(object sender, EventArgs e)
@@ -201,6 +233,8 @@ namespace HelloClipboard
 				_detailManager.ShowDetail(selectedItem, currentBounds);
 			}
 		}
+
+	
 
 		#endregion
 
@@ -305,20 +339,25 @@ namespace HelloClipboard
 		{
 			if (MessagesListBox.SelectedItem is ClipboardItem selected)
 			{
+				// Cache'deki sırayı bozmadan sadece Pinned özelliğini değiştir
 				bool isPinned = _viewModel.TogglePin(selected);
+
+				// UI Güncelleme
 				MessagesListBox.BeginUpdate();
+
+				// Elemanı mevcut görsel yerinden çıkar
 				MessagesListBox.Items.Remove(selected);
-				if (isPinned)
-					MessagesListBox.Items.Insert(0, selected);
-				else
-				{
-					int offset = MessagesListBox.Items.Cast<object>().TakeWhile(i => (i as ClipboardItem)?.IsPinned == true).Count();
-					MessagesListBox.Items.Insert(offset, selected);
-				}
+
+				// ViewModel'e "ListBox'ta nereye koymalıyım?" diye sor
+				int targetVisualIndex = _viewModel.GetVisualInsertionIndex(selected, MessagesListBox.Items);
+
+				// Sadece ListBox içine re-insert et
+				MessagesListBox.Items.Insert(targetVisualIndex, selected);
+				MessagesListBox.SelectedIndex = targetVisualIndex;
+
 				MessagesListBox.EndUpdate();
-				MessagesListBox.Refresh();
+
 				pinToolStripMenuItem.Checked = isPinned;
-				pinToolStripMenuItem.Text = isPinned ? "Unpin" : "Pin";
 			}
 		}
 

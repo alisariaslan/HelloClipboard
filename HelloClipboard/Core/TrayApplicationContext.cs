@@ -35,6 +35,7 @@ namespace HelloClipboard
 
 			// 2. Prepare UI Components
 			_form = new MainForm(this);
+			var forceHandleCreation = _form.Handle;
 			_trayManager = new TrayIconManager(
 				onShow: ShowMainWindow,
 				onHide: HideMainWindow,
@@ -143,9 +144,25 @@ namespace HelloClipboard
 			_clipboardMonitor.SuppressEvents(true);
 			try
 			{
+				// 1. Windows sistem clipboard'ını temizle
 				Clipboard.Clear();
+
+				// 2. RAM'deki cache'i ve diskteki history dosyalarını temizle
+				// (ClipboardMonitor.ClearAll zaten HistoryHelper.ClearAllHistoryFiles'ı çağırıyor)
 				_clipboardMonitor.ClearAll();
-				MessageBox.Show("Clipboard cleared.", "Success", MessageBoxButtons.OK);
+
+				// --- 3. ESKİ FORMATLI PİNLERİ AYIKLA (YENİ EKLEDİĞİMİZ KISIM) ---
+				// Yeni sistemde ID'ler "Ticks_Hash" formatında (yani içinde '_' var).
+				// İçinde '_' olmayan her şey eski sistemden kalma bir Hash'tir ve artık geçersizdir.
+				int legacyCount = TempConfigLoader.Current.PinnedHashes.RemoveAll(h => !h.Contains("_"));
+
+				// Eğer silinen eski kayıt varsa ayarları kaydet
+				if (legacyCount > 0)
+				{
+					TempConfigLoader.Save();
+				}
+
+				MessageBox.Show($"Clipboard cleared and {legacyCount} legacy pin records cleaned.", "Success", MessageBoxButtons.OK);
 			}
 			catch (Exception ex)
 			{
@@ -229,8 +246,24 @@ namespace HelloClipboard
 		/// </summary>
 		private void RunOnUI(Action action)
 		{
-			if (_form != null && !_form.IsDisposed && _form.InvokeRequired) _form.Invoke(action);
-			else action();
+			if (_form == null || _form.IsDisposed) return;
+
+			// ÖNEMLİ: Eğer handle henüz oluşturulmamışsa InvokeRequired her zaman false döner!
+			// Bu yüzden handle'ın oluşturulduğundan emin olmalıyız.
+			if (!_form.IsHandleCreated)
+			{
+				// Handle yoksa, zorla oluştur (bu sayede Invoke düzgün çalışır)
+				IntPtr dummy = _form.Handle;
+			}
+
+			if (_form.InvokeRequired)
+			{
+				_form.BeginInvoke(action); // Invoke yerine BeginInvoke daha akıcıdır
+			}
+			else
+			{
+				action();
+			}
 		}
 
 		// Public Getters

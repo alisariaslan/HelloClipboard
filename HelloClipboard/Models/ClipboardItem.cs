@@ -12,17 +12,18 @@ namespace HelloClipboard
 
 	public class ClipboardItem
 	{
+		public string Id { get; set; }
 		public ClipboardItemType ItemType { get; set; }
 		public string Title { get; set; }
 		public string Content { get; set; }
 		public Image ImageContent { get; set; }
 		public DateTime Timestamp { get; set; }
-		public int Index { get; set; }
 		public string ContentHash { get; set; }
 		public bool IsPinned { get; set; }
-		public ClipboardItem(int index,ClipboardItemType type ,string text, string title, Image image = null, string contentHash = null, bool isPinned = false)
+
+		public ClipboardItem(ClipboardItemType type, string text, string title, Image image = null, string contentHash = null, bool isPinned = false)
 		{
-			Index = index;
+			Id = DateTime.Now.Ticks.ToString() + "_" + (contentHash ?? Guid.NewGuid().ToString().Substring(0, 8));
 			ItemType = type;
 			Content = text;
 			Timestamp = DateTime.Now;
