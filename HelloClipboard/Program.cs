@@ -1,5 +1,4 @@
-﻿using HelloClipboard;
-using System;
+﻿using System;
 using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,7 +6,6 @@ using System.Windows.Forms;
 
 namespace HelloClipboard
 {
-
 	internal static class Program
 	{
 		[STAThread]
@@ -34,6 +32,7 @@ namespace HelloClipboard
 				Application.EnableVisualStyles();
 				Application.SetCompatibleTextRenderingDefault(false);
 				Task.Run(() => StartPipeServer());
+				SettingsLoader.LoadSettings();
 				Application.Run(new TrayApplicationContext());
 			}
 		}

@@ -74,7 +74,6 @@
 			this.MessagesListBox.Name = "MessagesListBox";
 			this.MessagesListBox.Size = new System.Drawing.Size(464, 609);
 			this.MessagesListBox.TabIndex = 2;
-			this.MessagesListBox.MouseClick += new System.Windows.Forms.MouseEventHandler(this.MessagesListBox_MouseClick);
 			// 
 			// contextMenuStrip1
 			// 
@@ -290,11 +289,6 @@
 			this.Name = "MainForm";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "HelloClipboard";
-			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
-			this.Load += new System.EventHandler(this.MainForm_Load);
-			this.Shown += new System.EventHandler(this.MainForm_Shown);
-			this.Move += new System.EventHandler(this.MainForm_Move);
-			this.Resize += new System.EventHandler(this.MainForm_Resize);
 			this.contextMenuStrip1.ResumeLayout(false);
 			this.menuStrip1.ResumeLayout(false);
 			this.menuStrip1.PerformLayout();

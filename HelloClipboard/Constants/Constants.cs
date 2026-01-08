@@ -17,7 +17,7 @@ namespace HelloClipboard
 
 		public static readonly string RegistryKeyValueName = "AppSecret";
 
-		public static readonly TimeSpan ApplicationUpdateInterval = TimeSpan.FromHours(6);
+		public static readonly TimeSpan ApplicationUpdateInterval = TimeSpan.FromHours(2);
 		
 		public const int MaxDetailFormTitleLength = 15;
 

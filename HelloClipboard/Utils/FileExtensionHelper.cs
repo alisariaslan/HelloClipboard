@@ -2,7 +2,7 @@
 {
 	public static class FileExtensionHelper
 	{
-		public static  string GetFileExtension(ClipboardItemType type)
+		public static string GetFileExtension(ClipboardItemType type)
 		{
 			switch (type)
 			{
