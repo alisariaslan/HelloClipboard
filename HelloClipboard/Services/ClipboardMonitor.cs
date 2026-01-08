@@ -53,7 +53,6 @@ namespace HelloClipboard.Services
 				var loadedItems = _historyHelper.LoadHistoryFromFiles();
 				foreach (var item in loadedItems)
 				{
-					// Kontrolü Id üzerinden yapıyoruz
 					if (!string.IsNullOrEmpty(item.Id) && TempConfigLoader.Current.PinnedHashes.Contains(item.Id))
 					{
 						item.IsPinned = true;
@@ -134,7 +133,6 @@ namespace HelloClipboard.Services
 			}
 		}
 
-		// ClipboardMonitor.cs içine eklenecek alan (field)
 		private DateTime _lastCaptureTime = DateTime.MinValue;
 
 		private void AddToCache(ClipboardItemType type, string textContent, Image imageContent = null)
@@ -157,19 +155,17 @@ namespace HelloClipboard.Services
 			string calculatedHash = (type == ClipboardItemType.Image) ? imageHash : HashHelper.CalculateMd5Hash(textContent);
 			bool preventDuplication = SettingsLoader.Current.PreventClipboardDuplication;
 
-			// --- 2. PREVENT DUPLICATION (Mükerrerleri Birleştirme) ---
 			if (preventDuplication && _clipboardHashPool.Contains(calculatedHash))
 			{
 				var existingItem = _clipboardCache.FirstOrDefault(i => i.ContentHash == calculatedHash);
 				if (existingItem != null)
 				{
-					string oldId = existingItem.Id; // Eski Id'yi yedekle
+					string oldId = existingItem.Id; 
 					_historyHelper.DeleteItemFromFile(oldId);
 
 					existingItem.Timestamp = now;
-					existingItem.Id = now.Ticks.ToString() + "_" + calculatedHash; // Yeni Id oluşturuldu
+					existingItem.Id = now.Ticks.ToString() + "_" + calculatedHash; 
 
-					// EĞER ÖĞE PİNLİYDİYE, LİSTEDEKİ ID'Yİ GÜNCELLE
 					if (existingItem.IsPinned)
 					{
 						TempConfigLoader.Current.PinnedHashes.Remove(oldId);
@@ -189,7 +185,6 @@ namespace HelloClipboard.Services
 				}
 			}
 
-			// --- 3. YENİ ÖĞE EKLEME --- (Sadece içerik gerçekten yeniyse veya Duplication kapalıysa çalışır)
 			var item = new ClipboardItem(type, textContent, GenerateTitle(type, textContent), imageContent, calculatedHash);
 
 			if (item.ContentHash != null && TempConfigLoader.Current.PinnedHashes.Contains(item.ContentHash))
@@ -218,20 +213,38 @@ namespace HelloClipboard.Services
 
 		private void CheckHistoryLimit()
 		{
-			if (_clipboardCache.Count > SettingsLoader.Current.MaxHistoryCount)
+			// Sabitlenmemiş (IsPinned = false) öğelerin sayısını kontrol et
+			// Pinned öğeler bu sınıra dahil değildir ve asla silinmez.
+			while (_clipboardCache.Count(i => !i.IsPinned) > SettingsLoader.Current.MaxHistoryCount)
 			{
-				var oldestItem = _clipboardCache.Where(i => !i.IsPinned).OrderBy(i => i.Timestamp).FirstOrDefault();
-				if (oldestItem != null)
+				// Sabitlenmemişler arasında en eski (Timestamp'i en küçük) olanı bul
+				var oldestUnpinned = _clipboardCache
+					.Where(i => !i.IsPinned)
+					.OrderBy(i => i.Timestamp)
+					.FirstOrDefault();
+
+				if (oldestUnpinned != null)
 				{
-					// Silerken mutlaka Id kullanıyoruz!
-					_historyHelper.DeleteItemFromFile(oldestItem.Id);
-					_clipboardCache.Remove(oldestItem);
+					// 1. ADIM: Diskten sil (Id üzerinden)
+					_historyHelper.DeleteItemFromFile(oldestUnpinned.Id);
 
-					// Eğer pool'da bu hash'e sahip başka öğe yoksa pool'dan temizle
-					if (!_clipboardCache.Any(i => i.ContentHash == oldestItem.ContentHash))
-						_clipboardHashPool.Remove(oldestItem.ContentHash);
+					// 2. ADIM: RAM'deki Cache'den sil
+					_clipboardCache.Remove(oldestUnpinned);
 
+					// 3. ADIM: Hash havuzundan (duplication check) temizle 
+					// (Eğer aynı içeriğe sahip başka bir öğe kalmadıysa)
+					if (!_clipboardCache.Any(i => i.ContentHash == oldestUnpinned.ContentHash))
+					{
+						_clipboardHashPool.Remove(oldestUnpinned.ContentHash);
+					}
+
+					// 4. ADIM: UI'ya öğenin silindiğini bildir (ListBox güncellemesi için)
 					ItemRemoved?.Invoke();
+				}
+				else
+				{
+					// Silecek unpinned öğe kalmadıysa döngüden çık
+					break;
 				}
 			}
 		}

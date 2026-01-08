@@ -144,19 +144,12 @@ namespace HelloClipboard
 			_clipboardMonitor.SuppressEvents(true);
 			try
 			{
-				// 1. Windows sistem clipboard'ını temizle
 				Clipboard.Clear();
 
-				// 2. RAM'deki cache'i ve diskteki history dosyalarını temizle
-				// (ClipboardMonitor.ClearAll zaten HistoryHelper.ClearAllHistoryFiles'ı çağırıyor)
 				_clipboardMonitor.ClearAll();
 
-				// --- 3. ESKİ FORMATLI PİNLERİ AYIKLA (YENİ EKLEDİĞİMİZ KISIM) ---
-				// Yeni sistemde ID'ler "Ticks_Hash" formatında (yani içinde '_' var).
-				// İçinde '_' olmayan her şey eski sistemden kalma bir Hash'tir ve artık geçersizdir.
 				int legacyCount = TempConfigLoader.Current.PinnedHashes.RemoveAll(h => !h.Contains("_"));
 
-				// Eğer silinen eski kayıt varsa ayarları kaydet
 				if (legacyCount > 0)
 				{
 					TempConfigLoader.Save();
