@@ -280,7 +280,7 @@ namespace HelloClipboard
 		/// </summary>
 		public SaveFileInfo GetSaveFileInfo(ClipboardItem item)
 		{
-			var title = GetOrCreateTempPath(item);
+			var title = GetOrCreateTempPath(item,true);
 
 			var info = new SaveFileInfo();
 			switch (item.ItemType)
@@ -304,7 +304,7 @@ namespace HelloClipboard
 			return info;
 		}
 
-		public string GetOrCreateTempPath(ClipboardItem item)
+		public string GetOrCreateTempPath(ClipboardItem item,bool isSaveOperation = false)
 		{
 			string folder = Path.GetTempPath();
 			string prefix = item.ItemType == ClipboardItemType.Image ? "IMG" : "TXT";
@@ -317,7 +317,10 @@ namespace HelloClipboard
 
 			// Format: HC_{Prefix}_{SafeTitle}_{Ticks}.ext
 			string fileName = $"HC_{prefix}_{safeTitle}_{DateTime.Now.Ticks}{extension}";
-			return Path.Combine(folder, fileName);
+			if (isSaveOperation)
+				return fileName;
+			else 
+				return Path.Combine(folder, fileName);
 		}
 
 		public IEnumerable<ClipboardItem> GetDisplayList(string searchTerm = "")
