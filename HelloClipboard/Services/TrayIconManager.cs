@@ -14,7 +14,6 @@ namespace HelloClipboard
 
 		public TrayIconManager(Action onShow, Action onHide, Action onReset, Action onTogglePrivacy, Action onExit)
 		{
-			// Initialize the privacy menu item as a class field to update its text dynamically
 			_privacyMenuItem = new ToolStripMenuItem(string.Empty, null, (s, e) => onTogglePrivacy());
 
 			var trayMenu = new ContextMenuStrip();
@@ -22,8 +21,9 @@ namespace HelloClipboard
 			trayMenu.Items.Add("Hide", null, (s, e) => onHide());
 			trayMenu.Items.Add(new ToolStripMenuItem("Reset Window", null, (s, e) => onReset()));
 			trayMenu.Items.Add(_privacyMenuItem);
-			trayMenu.Items.Add("-"); // Separator
+			trayMenu.Items.Add("-");
 			trayMenu.Items.Add("Exit", null, (s, e) => onExit());
+			trayMenu.Items.Add("Cancel", null, (s, e) => trayMenu.Close());
 
 			_trayIcon = new NotifyIcon
 			{
@@ -33,10 +33,28 @@ namespace HelloClipboard
 				ContextMenuStrip = trayMenu
 			};
 
-			// Handle Double-Click to show the main window
+
+			_trayIcon.MouseUp += (s, e) => {
+				if (e.Button == MouseButtons.Right)
+				{
+					System.Drawing.Size menuSize = trayMenu.PreferredSize;
+
+					var workingArea = Screen.PrimaryScreen.WorkingArea;
+
+					int x = Cursor.Position.X - (menuSize.Width / 2);
+					if (x + menuSize.Width > workingArea.Right) x = workingArea.Right - menuSize.Width;
+					if (x < workingArea.Left) x = workingArea.Left;
+
+					int y = workingArea.Bottom - menuSize.Height;
+
+					if (y < workingArea.Top) y = workingArea.Top;
+
+					trayMenu.Show(new System.Drawing.Point(x, y));
+				}
+			};
+
 			_trayIcon.DoubleClick += (s, e) => onShow();
 
-			// Handle Single-Click based on user preferences
 			_trayIcon.MouseClick += (s, e) => {
 				if (e.Button == MouseButtons.Left && SettingsLoader.Current.OpenWithSingleClick)
 					onShow();
