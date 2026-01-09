@@ -1,4 +1,4 @@
 {
-  "Version": "1.1.1.9",
-  "Notes": "🚀 v1.1.1.9 | ⚠️ After updating, please clear your clipboard using the brush icon in the app. ✨ Improvements: Core refactor, UI simplification, improved detail window & search focus, Hotkey and Privacy services separated. 🐞 Fixes: Image count, PIN order, ID issues fixed, improved image hash handling."
+  "Version": "1.2.0.10",
+  "Notes": "🚀 v1.2.0.10 | ✨ New Features: Image editing support added, file size calculation added, extended details for selected and total text, file & folder image status labels added for better visibility. 🛠 Improvements & Fixes: System tray issues fixed and overall stability improved. ⚠️ Note: After updating, please clear your clipboard using the brush icon in the app."
 }
