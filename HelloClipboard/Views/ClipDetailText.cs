@@ -1,365 +1,342 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
-using System.Runtime.InteropServices;
+using System.Linq;
+using System.Text;
 using System.Windows.Forms;
+using System.Reflection;
 
 namespace HelloClipboard
 {
 	public partial class ClipDetailText : Form
 	{
 		private readonly MainForm _mainForm;
-
-		private float _textZoom = 1.0f;
+		private List<string> _lines = new List<string>();
 		private string _fullText = string.Empty;
-		private bool _fullyLoaded = false;
-		private int _loadedUntilIndex = 0;
-		private const int LinesPerChunk = 1000;
-		private const int PreloadThresholdLines = 50;
+		private float _baseFontSize = 0.9f;
+
+		private float _textZoom = 0.9f;
+		private const int LinePadding = 4;
+		private Font _drawFont;
+		private SolidBrush _selectionBrush = new SolidBrush(Color.FromArgb(100, Color.LightBlue));
+		private SolidBrush _lineNumBrush = new SolidBrush(Color.DimGray);
+
+		private int _maxLineWidth = 0;
+		private int _selStartLine = -1, _selStartChar = -1;
+		private int _selEndLine = -1, _selEndChar = -1;
+		private bool _isSelecting = false;
+
+		private Timer _autoScrollTimer;
 
 		public ClipDetailText(MainForm mainForm, ClipboardItem item)
 		{
 			InitializeComponent();
-
 			_mainForm = mainForm;
-			string shortTitle = item.Title.Length > Constants.MaxDetailFormTitleLength ? item.Title.Substring(0, Constants.MaxDetailFormTitleLength) + "…" : item.Title;
-			this.Text = $"{shortTitle} - {Constants.AppName}";
 
-			this.MouseWheel += ClipDetail_MouseWheel;
-			richTextBox1.MouseWheel += ClipDetail_MouseWheel;
-			richTextBox1.DetectUrls = false;
-			richTextBox1.ReadOnly = true;
-			richTextBox1.VScroll += RichTextBox1_VScroll;
-			richTextBox1.Resize += RichTextBox1_Resize;
-			richTextBox1.ContextMenuStrip = contextMenuStrip1;
-			richTextBox1.SelectionChanged += RichTextBox1_SelectionChanged;
-			contextMenuStrip1.Opening += ContextMenuStrip1_Opening;
-			InitializeLineNumbers();
+			EnableDoubleBuffer(textDrawPanel);
+			this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
+
+			_autoScrollTimer = new Timer();
+			_autoScrollTimer.Interval = 30;
+			_autoScrollTimer.Tick += AutoScrollTimer_Tick;
+
+			vScrollBar1.Scroll += (s, e) => textDrawPanel.Invalidate();
+			hScrollBar1.Scroll += (s, e) => textDrawPanel.Invalidate();
+			textDrawPanel.MouseWheel += TextDrawPanel_MouseWheel;
+			textDrawPanel.MouseDown += TextDrawPanel_MouseDown;
+			textDrawPanel.MouseMove += TextDrawPanel_MouseMove;
+			textDrawPanel.MouseUp += TextDrawPanel_MouseUp;
+			textDrawPanel.Paint += textDrawPanel_Paint;
+
 			SetupTextMode(item.Content);
 		}
 
-		private void RichTextBox1_SelectionChanged(object sender, EventArgs e)
+		// --- KLAVYE KISAYOLLARI (Ctrl+A, Ctrl+C) ---
+		protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
 		{
+			if (keyData == (Keys.Control | Keys.A))
+			{
+				SelectAll();
+				return true;
+			}
+			if (keyData == (Keys.Control | Keys.C))
+			{
+				CopySelection();
+				return true;
+			}
+			return base.ProcessCmdKey(ref msg, keyData);
+		}
+
+		private void SelectAll()
+		{
+			if (_lines.Count == 0) return;
+
+			_selStartLine = 0;
+			_selStartChar = 0;
+			_selEndLine = _lines.Count - 1;
+			_selEndChar = _lines[_selEndLine].Length;
+
 			UpdateStatusLabel();
+			textDrawPanel.Invalidate();
 		}
 
-		private void UpdateStatusLabel()
+		private void CopySelection()
 		{
-			if (toolStripStatusLabel1 == null) return;
-
-			// 1. Satır Bilgileri
-			int totalLines = _fullText.Split('\n').Length;
-			int index = richTextBox1.SelectionStart;
-			int line = richTextBox1.GetLineFromCharIndex(index);
-			int firstCharOfLine = richTextBox1.GetFirstCharIndexFromLine(line);
-			int column = index - firstCharOfLine;
-
-			// 2. Boyut Hesaplama (Seçiliyse seçim, değilse tamamı)
-			long sizeInBytes;
-			bool isSelection = richTextBox1.SelectionLength > 0;
-
-			if (isSelection)
+			string text = GetSelectedText();
+			if (!string.IsNullOrEmpty(text))
 			{
-				// Seçili metnin UTF8 byte karşılığı
-				sizeInBytes = System.Text.Encoding.UTF8.GetByteCount(richTextBox1.SelectedText);
+				Clipboard.SetText(text);
 			}
-			else
-			{
-				// Tüm metnin UTF8 byte karşılığı
-				sizeInBytes = System.Text.Encoding.UTF8.GetByteCount(_fullText);
-			}
-
-			string sizeText = FormatByteSize(sizeInBytes);
-
-			// 3. Status Text Oluşturma
-			// Format: Lines: 150 | Ln: 5, Col: 10 | Size: 1.2 KB (Total)
-			string statusText = $"Lines: {totalLines} | Ln: {line + 1}, Col: {column + 1} | Size: {sizeText}";
-
-			if (isSelection)
-			{
-				int selectedLines = 0;
-				int startLine = richTextBox1.GetLineFromCharIndex(richTextBox1.SelectionStart);
-				int endLine = richTextBox1.GetLineFromCharIndex(richTextBox1.SelectionStart + richTextBox1.SelectionLength);
-				selectedLines = (endLine - startLine) + 1;
-
-				statusText += $" (Selected: {selectedLines} line(s))";
-			}
-			else
-			{
-				statusText += " (Total)";
-			}
-
-			toolStripStatusLabel1.Text = statusText;
 		}
 
-		// ---------------- TEXT MODE ----------------
+		private void AutoScrollTimer_Tick(object sender, EventArgs e)
+		{
+			if (!_isSelecting) return;
+			Point clientMouse = textDrawPanel.PointToClient(Cursor.Position);
+			bool moved = false;
+
+			if (clientMouse.Y < 0)
+			{
+				if (vScrollBar1.Value > vScrollBar1.Minimum) { vScrollBar1.Value -= 1; moved = true; }
+			}
+			else if (clientMouse.Y > textDrawPanel.Height)
+			{
+				if (vScrollBar1.Value < vScrollBar1.Maximum - vScrollBar1.LargeChange + 1) { vScrollBar1.Value += 1; moved = true; }
+			}
+
+			if (clientMouse.X < 0)
+			{
+				if (hScrollBar1.Value > hScrollBar1.Minimum) { hScrollBar1.Value = Math.Max(hScrollBar1.Minimum, hScrollBar1.Value - 20); moved = true; }
+			}
+			else if (clientMouse.X > textDrawPanel.Width)
+			{
+				if (hScrollBar1.Value < hScrollBar1.Maximum - hScrollBar1.LargeChange + 1) { hScrollBar1.Value = Math.Min(hScrollBar1.Maximum - hScrollBar1.LargeChange + 1, hScrollBar1.Value + 20); moved = true; }
+			}
+
+			if (moved)
+			{
+				var c = GetCharCoordsFromMouse(clientMouse);
+				_selEndLine = c.line;
+				_selEndChar = c.ch;
+				UpdateStatusLabel();
+				textDrawPanel.Invalidate();
+			}
+		}
+
+		private void EnableDoubleBuffer(Control control)
+		{
+			typeof(Control).InvokeMember("DoubleBuffered", BindingFlags.SetProperty | BindingFlags.Instance | BindingFlags.NonPublic, null, control, new object[] { true });
+		}
+
 		private void SetupTextMode(string text)
 		{
 			_fullText = text ?? string.Empty;
-			_fullyLoaded = false;
-			_loadedUntilIndex = 0;
+			_lines = _fullText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None).ToList();
 
-			richTextBox1.Visible = true;
-			richTextBox1.WordWrap = false;
-			richTextBox1.ScrollBars = RichTextBoxScrollBars.Both;
-			LoadNextChunk(reset: true);
+			_textZoom = 0.9f;
+			vScrollBar1.Value = 0;
+			hScrollBar1.Value = 0;
+			_selStartLine = _selEndLine = -1;
+			_selStartChar = _selEndChar = -1;
 
-			float baseFontSize = 12;
-
-			_textZoom = 0.8f;
-
-			richTextBox1.Font = new Font(richTextBox1.Font.FontFamily, baseFontSize * _textZoom);
+			UpdateCachedResources();
+			CalculateScrollLimits();
 			UpdateStatusLabel();
+			textDrawPanel.Invalidate();
 		}
 
-		public void UpdateItem(ClipboardItem item)
+		private void UpdateCachedResources()
 		{
-			string shortTitle = item.Title.Length > Constants.MaxDetailFormTitleLength ? item.Title.Substring(0, Constants.MaxDetailFormTitleLength) + "…" : item.Title;
-			this.Text = $"{shortTitle} - {Constants.AppName}";
-			SetupTextMode(item.Content);
+			_drawFont?.Dispose();
+			_drawFont = new Font(this.Font.FontFamily, 12 * _baseFontSize * _textZoom);
 		}
 
-
-		// ---------------- ZOOM ----------------
-		private void ClipDetail_MouseWheel(object sender, MouseEventArgs e)
+		private void CalculateScrollLimits()
 		{
-			if ((ModifierKeys & Keys.Control) == Keys.Control)
+			if (_drawFont == null) return;
+			int lineHeight = TextRenderer.MeasureText("Ag", _drawFont).Height + LinePadding;
+			vScrollBar1.Minimum = 0;
+			vScrollBar1.Maximum = _lines.Count;
+			vScrollBar1.LargeChange = Math.Max(1, textDrawPanel.Height / lineHeight);
+
+			_maxLineWidth = 0;
+			int checkCount = Math.Min(_lines.Count, 500);
+			for (int i = 0; i < checkCount; i++)
 			{
-				if (richTextBox1.Visible)
+				int w = TextRenderer.MeasureText(_lines[i], _drawFont).Width;
+				if (w > _maxLineWidth) _maxLineWidth = w;
+			}
+			hScrollBar1.Minimum = 0;
+			hScrollBar1.Maximum = _maxLineWidth + 100;
+			hScrollBar1.LargeChange = Math.Max(1, textDrawPanel.Width / 2);
+		}
+
+		private void textDrawPanel_Paint(object sender, PaintEventArgs e)
+		{
+			if (_lines.Count == 0 || _drawFont == null) return;
+			e.Graphics.Clear(textDrawPanel.BackColor);
+			e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
+			int lineHeight = TextRenderer.MeasureText("Ag", _drawFont).Height + LinePadding;
+			int lineNumWidth = TextRenderer.MeasureText(_lines.Count.ToString(), _drawFont).Width + 20;
+
+			int vVal = vScrollBar1.Value;
+			int hVal = hScrollBar1.Value;
+			int visibleLines = (textDrawPanel.Height / lineHeight) + 1;
+
+			for (int i = 0; i < visibleLines; i++)
+			{
+				int lineIdx = vVal + i;
+				if (lineIdx >= _lines.Count) break;
+				int yPos = i * lineHeight;
+				int textX = lineNumWidth + 10 - hVal;
+
+				DrawSelectionForLine(e.Graphics, lineIdx, yPos, textX, lineHeight);
+
+				var oldClip = e.Graphics.Clip;
+				e.Graphics.SetClip(new Rectangle(lineNumWidth + 5, 0, textDrawPanel.Width - lineNumWidth - 5, textDrawPanel.Height));
+				TextRenderer.DrawText(e.Graphics, _lines[lineIdx], _drawFont, new Point(textX, yPos), Color.Black);
+				e.Graphics.Clip = oldClip;
+
+				Rectangle numRect = new Rectangle(0, yPos, lineNumWidth, lineHeight);
+				e.Graphics.FillRectangle(new SolidBrush(this.BackColor), numRect);
+				TextRenderer.DrawText(e.Graphics, (lineIdx + 1).ToString(), _drawFont, numRect, Color.DimGray, TextFormatFlags.Right | TextFormatFlags.VerticalCenter);
+			}
+		}
+
+		private void DrawSelectionForLine(Graphics g, int lineIdx, int y, int textX, int h)
+		{
+			if (_selStartLine == -1) return;
+			int sL = Math.Min(_selStartLine, _selEndLine);
+			int eL = Math.Max(_selStartLine, _selEndLine);
+			if (lineIdx >= sL && lineIdx <= eL)
+			{
+				int cStart = 0, cEnd = _lines[lineIdx].Length;
+				if (_selStartLine == _selEndLine) { cStart = Math.Min(_selStartChar, _selEndChar); cEnd = Math.Max(_selStartChar, _selEndChar); }
+				else if (lineIdx == sL) cStart = (_selStartLine < _selEndLine) ? _selStartChar : _selEndChar;
+				else if (lineIdx == eL) cEnd = (_selStartLine < _selEndLine) ? _selEndChar : _selStartChar;
+
+				if (cEnd > cStart)
 				{
-					_textZoom = Math.Max(0.3f, _textZoom + (e.Delta > 0 ? 0.1f : -0.1f));
-					richTextBox1.Font = new Font(richTextBox1.Font.FontFamily, 12 * _textZoom);
+					string pre = _lines[lineIdx].Substring(0, Math.Min(cStart, _lines[lineIdx].Length));
+					string sel = _lines[lineIdx].Substring(cStart, Math.Min(cEnd - cStart, _lines[lineIdx].Length - cStart));
+					int x = textX + TextRenderer.MeasureText(pre, _drawFont).Width;
+					int w = TextRenderer.MeasureText(sel, _drawFont).Width;
+					g.FillRectangle(_selectionBrush, x, y, w, h);
 				}
 			}
-			else if ((ModifierKeys & Keys.Shift) == Keys.Shift)
-			{
-				if (richTextBox1.Visible)
-				{
-					int scrollAmount = e.Delta > 0 ? -10 : 10; 
-					int steps = 10; 
-					for (int i = 0; i < steps; i++)
-					{
-						SendMessage(richTextBox1.Handle, WM_HSCROLL, (IntPtr)(e.Delta > 0 ? SB_LINELEFT : SB_LINERIGHT), IntPtr.Zero);
-					}
-				}
-			}
 		}
 
-		// ---------------- P/Invoke ----------------
-		private const int WM_HSCROLL = 0x114;
-		private const int SB_LINELEFT = 0;
-		private const int SB_LINERIGHT = 1;
-		private const int WM_SETREDRAW = 0x000B;
-
-		[System.Runtime.InteropServices.DllImport("user32.dll")]
-		private static extern int SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
-		[DllImport("user32.dll")]
-		private static extern IntPtr SendMessage(IntPtr hWnd, int Msg, bool wParam, int lParam);
-
-
-		// ---------------- COPY ----------------
-		private void button1_copy_Click(object sender, EventArgs e)
+		private void TextDrawPanel_MouseWheel(object sender, MouseEventArgs e)
 		{
-			_mainForm?.copyToolStripMenuItem_Click(sender, e);
+			if (ModifierKeys == Keys.Control) { _textZoom = Math.Max(0.5f, _textZoom + (e.Delta > 0 ? 0.1f : -0.1f)); UpdateCachedResources(); CalculateScrollLimits(); }
+			else if (ModifierKeys == Keys.Shift) { int newVal = hScrollBar1.Value + (e.Delta > 0 ? -60 : 60); hScrollBar1.Value = Math.Max(hScrollBar1.Minimum, Math.Min(newVal, hScrollBar1.Maximum - hScrollBar1.LargeChange + 1)); }
+			else { int newVal = vScrollBar1.Value + (e.Delta > 0 ? -3 : 3); vScrollBar1.Value = Math.Max(vScrollBar1.Minimum, Math.Min(newVal, vScrollBar1.Maximum - vScrollBar1.LargeChange + 1)); }
+			textDrawPanel.Invalidate();
 		}
 
-		// Büyük metinleri hızlı yüklemek için yeniden çizimi geçici kapat
-		private void SetTextFast(string textToDisplay, bool resetSelection)
+		private (int line, int ch) GetCharCoordsFromMouse(Point p)
 		{
-			if (richTextBox1.IsHandleCreated)
+			if (_drawFont == null) return (0, 0);
+			int lineHeight = TextRenderer.MeasureText("Ag", _drawFont).Height + LinePadding;
+			int lineNumWidth = TextRenderer.MeasureText(_lines.Count.ToString(), _drawFont).Width + 20;
+			int lineIdx = Math.Max(0, Math.Min(vScrollBar1.Value + (p.Y / lineHeight), _lines.Count - 1));
+			int relX = p.X - (lineNumWidth + 10) + hScrollBar1.Value;
+			int chIdx = 0;
+			if (relX > 0)
 			{
-				SendMessage(richTextBox1.Handle, WM_SETREDRAW, false, 0);
+				string line = _lines[lineIdx];
+				for (int i = 1; i <= line.Length; i++) { if (TextRenderer.MeasureText(line.Substring(0, i), _drawFont).Width > relX) return (lineIdx, i - 1); }
+				chIdx = line.Length;
 			}
-			richTextBox1.SuspendLayout();
-			richTextBox1.Clear();
-			richTextBox1.Text = textToDisplay;
-			if (resetSelection)
-			{
-				richTextBox1.SelectionStart = 0;
-				richTextBox1.SelectionLength = 0;
-			}
-			richTextBox1.ResumeLayout();
-			if (richTextBox1.IsHandleCreated)
-			{
-				SendMessage(richTextBox1.Handle, WM_SETREDRAW, true, 0);
-				richTextBox1.Invalidate();
-			}
+			return (lineIdx, chIdx);
 		}
 
-		private void AppendTextFast(string chunk)
+		private string GetSelectedText()
 		{
-			if (string.IsNullOrEmpty(chunk))
-				return;
-
-			if (richTextBox1.IsHandleCreated)
+			if (_selStartLine == -1) return "";
+			int sL = Math.Min(_selStartLine, _selEndLine);
+			int eL = Math.Max(_selStartLine, _selEndLine);
+			StringBuilder sb = new StringBuilder();
+			for (int i = sL; i <= eL; i++)
 			{
-				SendMessage(richTextBox1.Handle, WM_SETREDRAW, false, 0);
+				string line = _lines[i];
+				int cS = 0, cE = line.Length;
+				if (_selStartLine == _selEndLine) { cS = Math.Min(_selStartChar, _selEndChar); cE = Math.Max(_selStartChar, _selEndChar); }
+				else if (i == sL) cS = (_selStartLine < _selEndLine) ? _selStartChar : _selEndChar;
+				else if (i == eL) cE = (_selStartLine < _selEndLine) ? _selEndChar : _selStartChar;
+				if (cE > cS) sb.Append(line.Substring(cS, Math.Min(cE - cS, line.Length - cS)));
+				if (i < eL) sb.AppendLine();
 			}
-			int selectionStart = richTextBox1.SelectionStart;
-			richTextBox1.SuspendLayout();
-			richTextBox1.SelectionStart = richTextBox1.TextLength;
-			richTextBox1.SelectionLength = 0;
-			richTextBox1.SelectedText = chunk;
-			richTextBox1.SelectionStart = selectionStart;
-			richTextBox1.SelectionLength = 0;
-			richTextBox1.ResumeLayout();
-			if (richTextBox1.IsHandleCreated)
-			{
-				SendMessage(richTextBox1.Handle, WM_SETREDRAW, true, 0);
-				richTextBox1.Invalidate();
-			}
+			return sb.ToString();
 		}
 
-		private void LoadNextChunk(bool reset)
+		private void TextDrawPanel_MouseDown(object sender, MouseEventArgs e)
 		{
-			if (_fullyLoaded)
-				return;
-
-			int startIndex = _loadedUntilIndex;
-			int targetLines = 0;
-			int length = _fullText.Length;
-			int end = startIndex;
-
-			while (end < length && targetLines < LinesPerChunk)
+			if (e.Button == MouseButtons.Left)
 			{
-				if (_fullText[end] == '\n')
-					targetLines++;
-				end++;
+				_isSelecting = true;
+				_autoScrollTimer.Start();
+				var c = GetCharCoordsFromMouse(e.Location);
+				_selStartLine = _selEndLine = c.line;
+				_selStartChar = _selEndChar = c.ch;
+				UpdateStatusLabel();
+				textDrawPanel.Invalidate();
 			}
-
-			if (end >= length)
-			{
-				end = length;
-				_fullyLoaded = true;
-			}
-
-			string chunk = _fullText.Substring(startIndex, end - startIndex);
-			if (reset)
-			{
-				SetTextFast(chunk, resetSelection: true);
-			}
-			else
-			{
-				AppendTextFast(chunk);
-			}
-
-			_loadedUntilIndex = end;
 		}
 
-		private void TryLoadMoreIfNearBottom()
+		private void TextDrawPanel_MouseMove(object sender, MouseEventArgs e)
 		{
-			if (_fullyLoaded)
-				return;
-
-			int lastChar = richTextBox1.GetCharIndexFromPosition(new Point(1, richTextBox1.ClientSize.Height - 1));
-			int lastLine = richTextBox1.GetLineFromCharIndex(lastChar);
-			int totalLines = richTextBox1.Lines.Length;
-
-			while (!_fullyLoaded && (totalLines - lastLine) < PreloadThresholdLines)
+			if (_isSelecting)
 			{
-				LoadNextChunk(reset: false);
-				lastChar = richTextBox1.GetCharIndexFromPosition(new Point(1, richTextBox1.ClientSize.Height - 1));
-				lastLine = richTextBox1.GetLineFromCharIndex(lastChar);
-				totalLines = richTextBox1.Lines.Length;
+				var c = GetCharCoordsFromMouse(e.Location);
+				_selEndLine = c.line;
+				_selEndChar = c.ch;
+				UpdateStatusLabel();
+				textDrawPanel.Invalidate();
 			}
 		}
 
-		private void RichTextBox1_VScroll(object sender, EventArgs e)
+		private void TextDrawPanel_MouseUp(object sender, MouseEventArgs e) { _isSelecting = false; _autoScrollTimer.Stop(); }
+
+		private void UpdateStatusLabel()
 		{
-			TryLoadMoreIfNearBottom();
+			long size = Encoding.UTF8.GetByteCount(_fullText);
+			string baseStatus = $"Lines: {_lines.Count} | Size: {FormatByteSize(size)}";
+			if (_selStartLine != -1)
+			{
+				int currentLine = _selEndLine + 1;
+				int currentCol = _selEndChar + 1;
+				toolStripStatusLabel1.Text = $"{baseStatus} | Ln: {currentLine}, Col: {currentCol} | Sel: {GetSelectedText().Length} chars";
+			}
+			else toolStripStatusLabel1.Text = baseStatus;
 		}
 
-		private void RichTextBox1_Resize(object sender, EventArgs e)
-		{
-			TryLoadMoreIfNearBottom();
-		}
-
-		private void ContextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e)
-		{
-			if(string.IsNullOrEmpty(richTextBox1.SelectedText))
-			e.Cancel = true;
-
-		}
 		private string FormatByteSize(long bytes)
 		{
 			string[] suffixes = { "B", "KB", "MB", "GB" };
-			int counter = 0;
-			decimal number = bytes;
-			while (Math.Round(number / 1024) >= 1)
-			{
-				number /= 1024;
-				counter++;
-			}
-			return string.Format("{0:n1} {1}", number, suffixes[counter]);
+			int counter = 0; decimal number = bytes;
+			while (Math.Round(number / 1024) >= 1) { number /= 1024; counter++; }
+			return $"{number:n1} {suffixes[counter]}";
 		}
+		public void UpdateItem(ClipboardItem item)
 
-		private void InitializeLineNumbers()
 		{
-			lineNumberPanel.Paint += LineNumberPanel_Paint;
-			richTextBox1.VScroll += (s, e) => lineNumberPanel.Invalidate();
-			richTextBox1.TextChanged += (s, e) => lineNumberPanel.Invalidate();
-			richTextBox1.Resize += (s, e) => lineNumberPanel.Invalidate();
-			// Zoom yapıldığında da numaralar güncellenmeli
-			richTextBox1.SelectionChanged += (s, e) => lineNumberPanel.Invalidate();
+
+			SetupTextMode(item.Content);
+
 		}
+		private void button1_copy_Click(object sender, EventArgs e) => _mainForm?.copyToolStripMenuItem_Click(sender, e);
+		private void copySelectedTextToolStripMenuItem_Click(object sender, EventArgs e) => CopySelection();
+		private void ContextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e) => e.Cancel = string.IsNullOrEmpty(GetSelectedText());
 
-		private void LineNumberPanel_Paint(object sender, PaintEventArgs e)
+		protected override void OnFormClosing(FormClosingEventArgs e)
 		{
-			if (string.IsNullOrEmpty(richTextBox1.Text)) return;
-
-			e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-
-			// RichTextBox üzerindeki ilk karakterin konumunu al
-			int firstChar = richTextBox1.GetCharIndexFromPosition(new Point(0, 5));
-			int firstLine = richTextBox1.GetLineFromCharIndex(firstChar);
-
-			Point firstCharPos = richTextBox1.GetPositionFromCharIndex(firstChar);
-			int y = firstCharPos.Y;
-
-			// Fontu RichTextBox ile eşitle
-			Font lineFont = richTextBox1.Font;
-			Brush textBrush = new SolidBrush(Color.DimGray);
-
-			int currentLine = firstLine;
-			while (y < richTextBox1.Height)
-			{
-				string lineNum = (currentLine + 1).ToString();
-
-				// Sayıyı sağa yaslı çizmek için genişlik hesabı
-				SizeF textSize = e.Graphics.MeasureString(lineNum, lineFont);
-				e.Graphics.DrawString(lineNum, lineFont, textBrush,
-					lineNumberPanel.Width - textSize.Width - 5, y);
-
-				currentLine++;
-				int nextLineChar = richTextBox1.GetFirstCharIndexFromLine(currentLine);
-				if (nextLineChar == -1) break;
-
-				y = richTextBox1.GetPositionFromCharIndex(nextLineChar).Y;
-				if (y > richTextBox1.Height) break;
-			}
-		}
-
-
-		private void copySelectedTextToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			if (!string.IsNullOrEmpty(richTextBox1.SelectedText))
-			{
-				try
-				{
-					// ClipboardMonitor'un kendi kopyaladığımız şeyi tekrar yakalamaması için
-					// TrayApplicationContext üzerinden eventleri susturabiliriz.
-					TrayApplicationContext.Instance?.SuppressClipboardEvents(true);
-
-					Clipboard.SetText(richTextBox1.SelectedText);
-
-					// Kısa bir süre sonra tekrar izlemeyi aç (MainFormViewModel'deki mantıkla aynı)
-					System.Threading.Tasks.Task.Delay(150).ContinueWith(_ =>
-						TrayApplicationContext.Instance?.SuppressClipboardEvents(false));
-				}
-				catch (Exception ex)
-				{
-					MessageBox.Show("Kopyalama hatası: " + ex.Message);
-				}
-			}
+			_autoScrollTimer?.Dispose();
+			_drawFont?.Dispose();
+			_selectionBrush?.Dispose();
+			_lineNumBrush?.Dispose();
+			base.OnFormClosing(e);
 		}
 	}
 }
