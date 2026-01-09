@@ -61,14 +61,26 @@ namespace HelloClipboard
 						  "• Scroll: Mouse Wheel (Shift for Horizontal)";
 
 		}
+		private string FormatByteSize(long bytes)
+		{
+			string[] suffixes = { "B", "KB", "MB", "GB" };
+			int counter = 0;
+			decimal number = bytes;
+			while (Math.Round(number / 1024) >= 1)
+			{
+				number /= 1024;
+				counter++;
+				if (counter == suffixes.Length - 1) break;
+			}
+			return string.Format("{0:n1} {1}", number, suffixes[counter]);
+		}
+
 		private void UpdateImageLabelInfo()
 		{
 			if (_image == null) return;
-
-			// Örn: 1920x1080 [Zoom: 120%]
-			toolStripStatusLabel1.Text = $"{_image.Width}x{_image.Height} [Zoom: {Math.Round(_imageZoom * 100)}%]";
-
+			toolStripStatusLabel1.Text = $"{_image.Width}x{_image.Height} | Size: {_cachedImageSize} | Zoom: {Math.Round(_imageZoom * 100)}%";
 		}
+
 		private void CalculateInitialZoom()
 		{
 			if (_image == null) return;
@@ -82,9 +94,23 @@ namespace HelloClipboard
 			CenterImage();
 		}
 
+		private string _cachedImageSize = "";
+
 		private void SetupImageMode(Image img)
 		{
 			_image = img;
+
+			// Boyutu burada bir kez hesapla
+			try
+			{
+				using (var ms = new System.IO.MemoryStream())
+				{
+					_image.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+					_cachedImageSize = FormatByteSize(ms.Length);
+				}
+			}
+			catch { _cachedImageSize = "Error"; }
+
 			CalculateInitialZoom();
 			CenterImage();
 			UpdateImageLabelInfo();

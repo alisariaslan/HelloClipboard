@@ -247,7 +247,7 @@ namespace HelloClipboard
 			}
 			else
 			{
-				button1_copy.Text = "File not found";
+				button1_copy.Text = "Path not found";
 			}
 
 			// Status label bilgisini güncelle

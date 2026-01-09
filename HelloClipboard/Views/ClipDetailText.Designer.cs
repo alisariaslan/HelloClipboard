@@ -35,6 +35,7 @@
 			this.copySelectedTextToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
 			this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+			this.lineNumberPanel = new System.Windows.Forms.Panel();
 			this.contextMenuStrip1.SuspendLayout();
 			this.statusStrip1.SuspendLayout();
 			this.SuspendLayout();
@@ -58,9 +59,9 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.richTextBox1.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.richTextBox1.Location = new System.Drawing.Point(0, 0);
+			this.richTextBox1.Location = new System.Drawing.Point(27, 0);
 			this.richTextBox1.Name = "richTextBox1";
-			this.richTextBox1.Size = new System.Drawing.Size(344, 274);
+			this.richTextBox1.Size = new System.Drawing.Size(317, 274);
 			this.richTextBox1.TabIndex = 1;
 			this.richTextBox1.Text = "";
 			// 
@@ -94,11 +95,21 @@
 			this.toolStripStatusLabel1.Size = new System.Drawing.Size(118, 17);
 			this.toolStripStatusLabel1.Text = "toolStripStatusLabel1";
 			// 
+			// lineNumberPanel
+			// 
+			this.lineNumberPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+			this.lineNumberPanel.Location = new System.Drawing.Point(0, 0);
+			this.lineNumberPanel.Name = "lineNumberPanel";
+			this.lineNumberPanel.Size = new System.Drawing.Size(26, 274);
+			this.lineNumberPanel.TabIndex = 9;
+			// 
 			// ClipDetailText
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 21F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(344, 341);
+			this.Controls.Add(this.lineNumberPanel);
 			this.Controls.Add(this.statusStrip1);
 			this.Controls.Add(this.richTextBox1);
 			this.Controls.Add(this.button1_copy);
@@ -127,5 +138,6 @@
 		private System.Windows.Forms.ToolStripMenuItem copySelectedTextToolStripMenuItem;
 		private System.Windows.Forms.StatusStrip statusStrip1;
 		private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
+		private System.Windows.Forms.Panel lineNumberPanel;
 	}
 }

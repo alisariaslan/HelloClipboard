@@ -33,7 +33,7 @@ namespace HelloClipboard
 			richTextBox1.ContextMenuStrip = contextMenuStrip1;
 			richTextBox1.SelectionChanged += RichTextBox1_SelectionChanged;
 			contextMenuStrip1.Opening += ContextMenuStrip1_Opening;
-
+			InitializeLineNumbers();
 			SetupTextMode(item.Content);
 		}
 
@@ -291,6 +291,53 @@ namespace HelloClipboard
 			}
 			return string.Format("{0:n1} {1}", number, suffixes[counter]);
 		}
+
+		private void InitializeLineNumbers()
+		{
+			lineNumberPanel.Paint += LineNumberPanel_Paint;
+			richTextBox1.VScroll += (s, e) => lineNumberPanel.Invalidate();
+			richTextBox1.TextChanged += (s, e) => lineNumberPanel.Invalidate();
+			richTextBox1.Resize += (s, e) => lineNumberPanel.Invalidate();
+			// Zoom yapıldığında da numaralar güncellenmeli
+			richTextBox1.SelectionChanged += (s, e) => lineNumberPanel.Invalidate();
+		}
+
+		private void LineNumberPanel_Paint(object sender, PaintEventArgs e)
+		{
+			if (string.IsNullOrEmpty(richTextBox1.Text)) return;
+
+			e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+			// RichTextBox üzerindeki ilk karakterin konumunu al
+			int firstChar = richTextBox1.GetCharIndexFromPosition(new Point(0, 5));
+			int firstLine = richTextBox1.GetLineFromCharIndex(firstChar);
+
+			Point firstCharPos = richTextBox1.GetPositionFromCharIndex(firstChar);
+			int y = firstCharPos.Y;
+
+			// Fontu RichTextBox ile eşitle
+			Font lineFont = richTextBox1.Font;
+			Brush textBrush = new SolidBrush(Color.DimGray);
+
+			int currentLine = firstLine;
+			while (y < richTextBox1.Height)
+			{
+				string lineNum = (currentLine + 1).ToString();
+
+				// Sayıyı sağa yaslı çizmek için genişlik hesabı
+				SizeF textSize = e.Graphics.MeasureString(lineNum, lineFont);
+				e.Graphics.DrawString(lineNum, lineFont, textBrush,
+					lineNumberPanel.Width - textSize.Width - 5, y);
+
+				currentLine++;
+				int nextLineChar = richTextBox1.GetFirstCharIndexFromLine(currentLine);
+				if (nextLineChar == -1) break;
+
+				y = richTextBox1.GetPositionFromCharIndex(nextLineChar).Y;
+				if (y > richTextBox1.Height) break;
+			}
+		}
+
 
 		private void copySelectedTextToolStripMenuItem_Click(object sender, EventArgs e)
 		{
