@@ -15,6 +15,7 @@ namespace HelloClipboard.Services
 		private Form _activeForm;
 		private ClipDetailText _detailTextForm;
 		private ClipDetailImage _detailImageForm;
+		private ClipDetailFile _detailFileForm;
 
 		public DetailWindowManager(MainForm owner, EventHandler deactivateHandler)
 		{
@@ -32,8 +33,26 @@ namespace HelloClipboard.Services
 
 			Form targetForm;
 
-			// Handle IMAGE type items
-			if (item.ItemType == ClipboardItemType.Image)
+			// 1. Dosya Tipi Kontrolü (Yeni)
+			if (item.ItemType == ClipboardItemType.Path)
+			{
+				if (_detailFileForm == null || _detailFileForm.IsDisposed)
+				{
+					_detailFileForm = new ClipDetailFile(_owner, item);
+					_detailFileForm.Deactivate += _deactivateHandler;
+					_detailFileForm.Owner = _owner;
+				}
+				else
+				{
+					_detailFileForm.UpdateItem(item);
+				}
+
+				targetForm = _detailFileForm;
+				_detailTextForm?.Hide();
+				_detailImageForm?.Hide();
+			}
+			// 2. Resim Tipi Kontrolü
+			else if (item.ItemType == ClipboardItemType.Image)
 			{
 				if (_detailImageForm == null || _detailImageForm.IsDisposed)
 				{
@@ -47,9 +66,10 @@ namespace HelloClipboard.Services
 				}
 
 				targetForm = _detailImageForm;
-				_detailTextForm?.Hide(); // Hide text form if it was visible
+				_detailTextForm?.Hide();
+				_detailFileForm?.Hide(); // Dosya formunu gizle
 			}
-			// Handle TEXT or other types
+			// 3. Metin veya Diğer Tipler
 			else
 			{
 				if (_detailTextForm == null || _detailTextForm.IsDisposed)
@@ -64,7 +84,8 @@ namespace HelloClipboard.Services
 				}
 
 				targetForm = _detailTextForm;
-				_detailImageForm?.Hide(); // Hide image form if it was visible
+				_detailImageForm?.Hide();
+				_detailFileForm?.Hide(); // Dosya formunu gizle
 			}
 
 			_activeForm = targetForm;
@@ -129,6 +150,7 @@ namespace HelloClipboard.Services
 		{
 			_detailTextForm?.Hide();
 			_detailImageForm?.Hide();
+			_detailFileForm?.Hide();
 			_activeForm = null;
 		}
 

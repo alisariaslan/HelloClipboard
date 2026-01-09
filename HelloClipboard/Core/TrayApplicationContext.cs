@@ -24,6 +24,8 @@ namespace HelloClipboard
 		private readonly PrivacyService _privacyService = new PrivacyService();
 		private readonly UpdateService _updateService = new UpdateService();
 
+		public int GetStoredCount() => _historyHelper.GetStoredItemCount();
+
 		public TrayApplicationContext()
 		{
 			Instance = this;
@@ -233,6 +235,7 @@ namespace HelloClipboard
 			}
 			ExitThread();
 		}
+
 
 		/// <summary>
 		/// Ensures the given action is executed on the UI thread.

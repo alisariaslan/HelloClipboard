@@ -54,7 +54,7 @@ namespace HelloClipboard
 			try
 			{
 				byte[] rawData = null;
-				if (item.ItemType == ClipboardItemType.Text || item.ItemType == ClipboardItemType.File)
+				if (item.ItemType == ClipboardItemType.Text || item.ItemType == ClipboardItemType.Path)
 					rawData = Encoding.UTF8.GetBytes(item.Content);
 				else if (item.ItemType == ClipboardItemType.Image && item.ImageContent != null)
 				{
@@ -117,7 +117,7 @@ namespace HelloClipboard
 					string content = null;
 					Image imageContent = null;
 
-					if (type == ClipboardItemType.Text || type == ClipboardItemType.File)
+					if (type == ClipboardItemType.Text || type == ClipboardItemType.Path)
 					{
 						content = Encoding.UTF8.GetString(decryptedBytes);
 					}
@@ -141,6 +141,16 @@ namespace HelloClipboard
 			return loadedCache;
 		}
 
+
+		public int GetStoredItemCount()
+		{
+			string historyDir = Constants.HistoryDirectory;
+			if (!Directory.Exists(historyDir)) return 0;
+
+			// secret.key dosyası hariç diğer dosyaları say
+			return Directory.GetFiles(historyDir)
+							.Count(f => !Path.GetFileName(f).Equals("secret.key", StringComparison.OrdinalIgnoreCase));
+		}
 
 		private void EnforceDiskLimitOnDisk(string historyDir)
 		{

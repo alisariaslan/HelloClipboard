@@ -105,7 +105,7 @@ namespace HelloClipboard.Services
 					{
 						if (dataObj.GetData(DataFormats.FileDrop) is string[] files && files.Length > 0)
 						{
-							foreach (var file in files) AddToCache(ClipboardItemType.File, file);
+							foreach (var file in files) AddToCache(ClipboardItemType.Path, file);
 							return;
 						}
 					}
@@ -117,7 +117,7 @@ namespace HelloClipboard.Services
 						if (image != null)
 						{
 							var imageCount = _clipboardCache.Count(i => i.ItemType == ClipboardItemType.Image);
-							AddToCache(ClipboardItemType.Image, $"[IMAGE {imageCount + 1}]", image);
+							AddToCache(ClipboardItemType.Image, $"[IMAGE] {imageCount + 1}", image);
 							return;
 						}
 					}
@@ -145,7 +145,7 @@ namespace HelloClipboard.Services
 				: null;
 
 			bool isSameAsLast = (type == ClipboardItemType.Text && textContent == _lastTextContent) ||
-								(type == ClipboardItemType.File && textContent == _lastFileContent) ||
+								(type == ClipboardItemType.Path && textContent == _lastFileContent) ||
 								(type == ClipboardItemType.Image && !string.IsNullOrEmpty(imageHash) && imageHash == _lastImageHash);
 
 			if (isSameAsLast && timeDiff < 500) return;
@@ -205,7 +205,7 @@ namespace HelloClipboard.Services
 		private void UpdateLastCaptureInfo(ClipboardItemType type, string text, string imgHash, DateTime captureTime)
 		{
 			if (type == ClipboardItemType.Text) _lastTextContent = text;
-			else if (type == ClipboardItemType.File) _lastFileContent = text;
+			else if (type == ClipboardItemType.Path) _lastFileContent = text;
 			else if (type == ClipboardItemType.Image) _lastImageHash = imgHash;
 
 			_lastCaptureTime = captureTime; 

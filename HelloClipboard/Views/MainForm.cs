@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 
 namespace HelloClipboard
@@ -181,6 +182,7 @@ namespace HelloClipboard
 			finally
 			{
 				MessagesListBox.EndUpdate();
+				UpdateStatusLabel();
 			}
 
 			if (MessagesListBox.Items.Count > 0)
@@ -328,7 +330,7 @@ namespace HelloClipboard
 			_viewModel.CopyClicked(selectedItem);
 		}
 
-		private void pinToolStripMenuItem_Click(object sender, EventArgs e)
+		private void pinUnpinToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			if (MessagesListBox.SelectedItem is ClipboardItem selected)
 			{
@@ -348,11 +350,11 @@ namespace HelloClipboard
 
 				MessagesListBox.EndUpdate();
 
-				pinToolStripMenuItem.Checked = isPinned;
+				pinUnpinToolStripMenuItem.Checked = isPinned;
 			}
 		}
 
-		private void saveToFileToolStripMenuItem_Click(object sender, EventArgs e)
+		private void saveToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			if (!(MessagesListBox.SelectedItem is ClipboardItem selected)) return;
 			var saveInfo = _viewModel.GetSaveFileInfo(selected);
@@ -366,22 +368,95 @@ namespace HelloClipboard
 			}
 		}
 
-		private void openUrlToolStripMenuItem_Click(object sender, EventArgs e)
+		private void openToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			if (!(MessagesListBox.SelectedItem is ClipboardItem selected)) return;
-			try { UrlHelper.OpenUrl(selected.Content); }
-			catch (Exception ex) { MessageBox.Show(ex.Message, "URL Hatası", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+
+			try
+			{
+				// 1. Durum: URL ise
+				if (selected.ItemType == ClipboardItemType.Text && UrlHelper.IsValidUrl(selected.Content))
+				{
+					UrlHelper.OpenUrl(selected.Content);
+				}
+				// 2. Durum: Halihazırda var olan bir Dosya veya Klasör Yolu ise
+				else if (!string.IsNullOrEmpty(selected.Content) && (File.Exists(selected.Content) || Directory.Exists(selected.Content)))
+				{
+					System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(selected.Content)
+					{
+						UseShellExecute = true
+					});
+				}
+				// 3. Durum: Bellekteki bir Resim veya Düz Metin ise
+				else if (selected.ItemType == ClipboardItemType.Image || selected.ItemType == ClipboardItemType.Text)
+				{
+					// ViewModel'deki merkezi isimlendirme metodunu çağırıyoruz (TAM TUTARLILIK BURADA)
+					string tempPath = _viewModel.GetOrCreateTempPath(selected);
+
+					if (selected.ItemType == ClipboardItemType.Image && selected.ImageContent != null)
+					{
+						selected.ImageContent.Save(tempPath, System.Drawing.Imaging.ImageFormat.Png);
+					}
+					else if (selected.ItemType == ClipboardItemType.Text && !string.IsNullOrEmpty(selected.Content))
+					{
+						File.WriteAllText(tempPath, selected.Content, Encoding.UTF8); // Encoding eklendi
+					}
+
+					System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(tempPath)
+					{
+						UseShellExecute = true
+					});
+				}
+				else
+				{
+					MessageBox.Show("This item cannot be opened.", "Open Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				}
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show($"An error occurred while opening: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
 		}
 
 		private void UpdateMenuStates()
 		{
 			if (!(MessagesListBox.SelectedItem is ClipboardItem selected)) return;
-			pinToolStripMenuItem.Checked = selected.IsPinned;
-			pinToolStripMenuItem.Text = selected.IsPinned ? "Unpin" : "Pin";
-			var isUrl = selected.ItemType == ClipboardItemType.Text && UrlHelper.IsValidUrl(selected.Content);
-			openUrlToolStripMenuItem.Visible = isUrl;
-			var fileExists = selected.ItemType != ClipboardItemType.File || (!string.IsNullOrWhiteSpace(selected.Content) && File.Exists(selected.Content));
-			saveToFileToolStripMenuItem.Enabled = fileExists;
+
+			// --- 1. PIN DURUMU ---
+			pinUnpinToolStripMenuItem.Checked = selected.IsPinned;
+			pinUnpinToolStripMenuItem.Text = selected.IsPinned ? "Unpin" : "Pin";
+
+			// --- 2. KOŞUL HESAPLAMALARI ---
+			bool isUrl = selected.ItemType == ClipboardItemType.Text && UrlHelper.IsValidUrl(selected.Content);
+
+			// Path geçerliliği (Hem dosya hem klasör kontrolü)
+			bool isFileExists = File.Exists(selected.Content);
+			bool isDirExists = !string.IsNullOrEmpty(selected.Content) && Directory.Exists(selected.Content);
+			bool isPathFound = isFileExists || isDirExists;
+
+			bool isImage = selected.ItemType == ClipboardItemType.Image && selected.ImageContent != null;
+			bool isText = selected.ItemType == ClipboardItemType.Text && !string.IsNullOrEmpty(selected.Content);
+
+			// --- 3. COPY (KOPYALA) KONTROLÜ ---
+			// Eğer bir yol (Path) öğesiyse sadece diskte varsa aktif olsun. 
+			// Metin ve Resim öğeleri her zaman kopyalanabilir.
+			if (selected.ItemType == ClipboardItemType.Path || selected.ItemType == ClipboardItemType.Path)
+			{
+				copyToolStripMenuItem.Enabled = isPathFound;
+			}
+			else
+			{
+				copyToolStripMenuItem.Enabled = true;
+			}
+
+			// --- 4. OPEN (AÇ) KONTROLÜ ---
+			openToolStripMenuItem.Visible = true;
+			openToolStripMenuItem.Enabled = isUrl || isPathFound || isImage || isText;
+
+			// --- 5. SAVE (KAYDET) KONTROLÜ ---
+			// Eğer Path tipindeyse ve dosya bulunamadıysa (veya klasörse) Save disabled olsun.
+			var canSave = selected.ItemType != ClipboardItemType.Path || isFileExists;
+			saveToolStripMenuItem.Enabled = canSave;
 		}
 
 		private void pictureBox2_Click(object sender, EventArgs e)
@@ -443,6 +518,17 @@ namespace HelloClipboard
 			pictureBox3_topMost.Image = this.TopMost ? Properties.Resources.icons8_locked_192px : Properties.Resources.icons8_unlocked_192px;
 		}
 
+		public void UpdateStatusLabel()
+		{
+			if (toolStripStatusLabel1 == null) return;
+
+			int memoryCount = _trayApplicationContext.GetClipboardCache().Count;
+			int storedCount = _trayApplicationContext.GetStoredCount();
+
+			// İngilizce formatta yazdırıyoruz
+			toolStripStatusLabel1.Text = $"Memory: {memoryCount} | Stored: {storedCount}";
+
+		}
 		private void pictureBox3_topMost_Click(object sender, EventArgs e)
 		{
 			if (!this.TopMost) this.TopMost = true;
@@ -459,5 +545,10 @@ namespace HelloClipboard
 		}
 
 		#endregion
+
+		private void cancelStripMenuItem1_Click(object sender, EventArgs e)
+		{
+			contextMenuStrip1?.Close();
+		}
 	}
 }

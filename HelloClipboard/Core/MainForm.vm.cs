@@ -79,18 +79,54 @@ namespace HelloClipboard
 		{
 			if (selectedItem == null) return;
 
-			// Suppress monitor events to prevent re-capturing the same item
 			_trayApplicationContext.SuppressClipboardEvents(true);
 			try
 			{
-				if (selectedItem.ItemType == ClipboardItemType.Image)
-					Clipboard.SetImage(selectedItem.ImageContent);
+				DataObject dataObj = new DataObject();
+
+				// --- RESİM KOPYALAMA ---
+				if (selectedItem.ItemType == ClipboardItemType.Image && selectedItem.ImageContent != null)
+				{
+					dataObj.SetData(DataFormats.Bitmap, true, selectedItem.ImageContent);
+
+					try
+					{
+						string tempPath = GetOrCreateTempPath(selectedItem);
+						selectedItem.ImageContent.Save(tempPath, ImageFormat.Png);
+
+						var fileList = new System.Collections.Specialized.StringCollection { tempPath };
+						dataObj.SetFileDropList(fileList);
+					}
+					catch { /* Log error */ }
+
+					Clipboard.SetDataObject(dataObj, true);
+				}
+				// --- DOSYA KOPYALAMA ---
+				else if (selectedItem.ItemType == ClipboardItemType.Path)
+				{
+					var fileList = new System.Collections.Specialized.StringCollection { selectedItem.Content };
+					Clipboard.SetFileDropList(fileList);
+				}
+				// --- METİN KOPYALAMA ---
 				else if (!string.IsNullOrEmpty(selectedItem.Content))
-					Clipboard.SetText(selectedItem.Content);
+				{
+					dataObj.SetData(DataFormats.UnicodeText, true, selectedItem.Content);
+
+					try
+					{
+						string tempPath = GetOrCreateTempPath(selectedItem);
+						File.WriteAllText(tempPath, selectedItem.Content, Encoding.UTF8);
+
+						var fileList = new System.Collections.Specialized.StringCollection { tempPath };
+						dataObj.SetFileDropList(fileList);
+					}
+					catch { /* Log error */ }
+
+					Clipboard.SetDataObject(dataObj, true);
+				}
 			}
 			finally
 			{
-				// Brief delay before re-enabling monitor to ensure OS clipboard operations complete
 				Task.Delay(150).ContinueWith(_ => _trayApplicationContext.SuppressClipboardEvents(false));
 			}
 		}
@@ -134,7 +170,7 @@ namespace HelloClipboard
 
 				item.ImageContent.Save(targetPath, format);
 			}
-			else if (item.ItemType == ClipboardItemType.File)
+			else if (item.ItemType == ClipboardItemType.Path)
 			{
 				if (File.Exists(item.Content))
 				{
@@ -244,26 +280,44 @@ namespace HelloClipboard
 		/// </summary>
 		public SaveFileInfo GetSaveFileInfo(ClipboardItem item)
 		{
+			var title = GetOrCreateTempPath(item);
+
 			var info = new SaveFileInfo();
 			switch (item.ItemType)
 			{
 				case ClipboardItemType.Image:
 					info.Title = "Save Image";
 					info.Filter = "PNG Image|*.png|JPEG Image|*.jpg|Bitmap Image|*.bmp";
-					info.FileName = "clipboard_image";
+					info.FileName = title;
 					break;
-				case ClipboardItemType.File:
+				case ClipboardItemType.Path:
 					info.Title = "Save File As";
-					info.FileName = Path.GetFileName(item.Content);
+					info.FileName = !string.IsNullOrEmpty(item.Content) ? Path.GetFileName(item.Content) : "unknown_file";
 					info.Filter = "All files|*.*";
 					break;
 				default:
 					info.Title = "Save Text";
 					info.Filter = "Text File|*.txt|All files|*.*";
-					info.FileName = "clipboard_text.txt";
+					info.FileName = title;
 					break;
 			}
 			return info;
+		}
+
+		public string GetOrCreateTempPath(ClipboardItem item)
+		{
+			string folder = Path.GetTempPath();
+			string prefix = item.ItemType == ClipboardItemType.Image ? "IMG" : "TXT";
+
+			// Başlığı temizle (Geçersiz karakterleri kaldır)
+			string safeTitle = string.Join("_", item.Title.Split(Path.GetInvalidFileNameChars()));
+			if (safeTitle.Length > 30) safeTitle = safeTitle.Substring(0, 30);
+
+			string extension = item.ItemType == ClipboardItemType.Image ? ".png" : ".txt";
+
+			// Format: HC_{Prefix}_{SafeTitle}_{Ticks}.ext
+			string fileName = $"HC_{prefix}_{safeTitle}_{DateTime.Now.Ticks}{extension}";
+			return Path.Combine(folder, fileName);
 		}
 
 		public IEnumerable<ClipboardItem> GetDisplayList(string searchTerm = "")

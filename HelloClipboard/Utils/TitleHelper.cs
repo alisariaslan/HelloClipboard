@@ -15,15 +15,15 @@ namespace HelloClipboard.Utils
 					string cleaned = Regex.Replace(content.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' '), @"\s+", " ").Trim();
 					return cleaned.Length > 1024 ? cleaned.Substring(0, 1024) + "..." : cleaned;
 
-				case ClipboardItemType.File:
-					return $"{Path.GetFileName(content)} -> {content}";
+				case ClipboardItemType.Path:
+					return $"[PATH] {Path.GetFileName(content)}";
 
 				case ClipboardItemType.Image:
 					_imgCount++;
-					return $"[IMAGE {_imgCount}]";
+					return $"[IMAGE] {_imgCount}";
 
 				default:
-					return "Unknown Content";
+					return "[Unknown Content]";
 			}
 		}
 	}

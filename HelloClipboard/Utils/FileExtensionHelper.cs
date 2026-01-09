@@ -8,7 +8,7 @@
 			{
 				case ClipboardItemType.Text:
 					return ".txt";
-				case ClipboardItemType.File:
+				case ClipboardItemType.Path:
 					return ".path";
 				case ClipboardItemType.Image:
 					return ".png";
@@ -26,7 +26,7 @@
 				case ".txt":
 					return ClipboardItemType.Text;
 				case ".path":
-					return ClipboardItemType.File;
+					return ClipboardItemType.Path;
 				case ".png":
 					return ClipboardItemType.Image;
 				default:

@@ -20,6 +20,7 @@ namespace HelloClipboard
 		{
 			InitializeComponent();
 
+			SetupShortcutHelp();
 			_mainForm = mainForm;
 			string shortTitle = item.Title.Length > Constants.MaxDetailFormTitleLength ? item.Title.Substring(0, Constants.MaxDetailFormTitleLength) + "…" : item.Title;
 			this.Text = $"{shortTitle} - {Constants.AppName}";
@@ -30,6 +31,7 @@ namespace HelloClipboard
 			panel1.MouseMove += Panel1_MouseMove;
 			panel1.MouseUp += Panel1_MouseUp;
 			panel1.Resize += Panel1_Resize;
+			panel1.ContextMenuStrip = contextMenuStrip1;
 
 			SetDoubleBuffered(panel1, true);
 
@@ -52,6 +54,21 @@ namespace HelloClipboard
 			SetupImageMode(item.ImageContent);
 		}
 
+		private void SetupShortcutHelp()
+		{
+			lbl_help.Text = "• Zoom: Ctrl + Mouse Wheel\n" +
+						  "• Pan: Left Click & Drag\n" +
+						  "• Scroll: Mouse Wheel (Shift for Horizontal)";
+
+		}
+		private void UpdateImageLabelInfo()
+		{
+			if (_image == null) return;
+
+			// Örn: 1920x1080 [Zoom: 120%]
+			toolStripStatusLabel1.Text = $"{_image.Width}x{_image.Height} [Zoom: {Math.Round(_imageZoom * 100)}%]";
+
+		}
 		private void CalculateInitialZoom()
 		{
 			if (_image == null) return;
@@ -70,6 +87,7 @@ namespace HelloClipboard
 			_image = img;
 			CalculateInitialZoom();
 			CenterImage();
+			UpdateImageLabelInfo();
 			panel1.Invalidate();
 		}
 
@@ -108,6 +126,7 @@ namespace HelloClipboard
 				}
 
 				ClampImageOffset();
+				UpdateImageLabelInfo();
 				panel1.Invalidate();
 				return;
 			}
@@ -175,6 +194,7 @@ namespace HelloClipboard
 				_imageZoom = _minZoom;
 				CenterImage();
 				ClampImageOffset();
+				UpdateImageLabelInfo();
 			}
 
 			panel1.Invalidate();
@@ -235,6 +255,11 @@ namespace HelloClipboard
 		private void button1_copy_Click(object sender, EventArgs e)
 		{
 			_mainForm?.copyToolStripMenuItem_Click(sender, e);
+		}
+
+		private void copyImageToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			button1_copy_Click(this, e);
 		}
 	}
 }

@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Drawing;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace HelloClipboard
 {
-	public partial class ClipDetailText : Form
+	public partial class ClipDetailFile : Form
 	{
 		private readonly MainForm _mainForm;
 
@@ -16,7 +18,7 @@ namespace HelloClipboard
 		private const int LinesPerChunk = 1000;
 		private const int PreloadThresholdLines = 50;
 
-		public ClipDetailText(MainForm mainForm, ClipboardItem item)
+		public ClipDetailFile(MainForm mainForm, ClipboardItem item)
 		{
 			InitializeComponent();
 
@@ -32,8 +34,9 @@ namespace HelloClipboard
 			richTextBox1.Resize += RichTextBox1_Resize;
 			richTextBox1.ContextMenuStrip = contextMenuStrip1;
 			contextMenuStrip1.Opening += ContextMenuStrip1_Opening;
-
+			UpdateCopyFileButton(item.Content);
 			SetupTextMode(item.Content);
+			UpdateStatusInfo(item.Content);
 		}
 
 		// ---------------- TEXT MODE ----------------
@@ -60,6 +63,8 @@ namespace HelloClipboard
 			string shortTitle = item.Title.Length > Constants.MaxDetailFormTitleLength ? item.Title.Substring(0, Constants.MaxDetailFormTitleLength) + "…" : item.Title;
 			this.Text = $"{shortTitle} - {Constants.AppName}";
 			SetupTextMode(item.Content);
+			UpdateCopyFileButton(item.Content);
+			UpdateStatusInfo(item.Content);
 		}
 
 
@@ -219,10 +224,109 @@ namespace HelloClipboard
 
 		private void ContextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e)
 		{
-			if(string.IsNullOrEmpty(richTextBox1.SelectedText))
-			e.Cancel = true;
+			if (string.IsNullOrEmpty(richTextBox1.SelectedText))
+				e.Cancel = true;
 
 		}
+
+		private void UpdateCopyFileButton(string filePath)
+		{
+			bool fileExists = File.Exists(filePath);
+			bool dirExists = Directory.Exists(filePath);
+			bool exists = fileExists || dirExists;
+
+			button1_copy.Enabled = exists;
+
+			if (dirExists)
+			{
+				button1_copy.Text = "Copy folder"; // Klasör ise metni güncelle
+			}
+			else if (fileExists)
+			{
+				button1_copy.Text = "Copy file";
+			}
+			else
+			{
+				button1_copy.Text = "File not found";
+			}
+
+			// Status label bilgisini güncelle
+			UpdateStatusInfo(filePath);
+		}
+
+		private async void UpdateStatusInfo(string filePath)
+		{
+			if (toolStripStatusLabel1 == null) return;
+
+			if (File.Exists(filePath))
+			{
+				long bytes = new FileInfo(filePath).Length;
+				toolStripStatusLabel1.Text = $"File Exists | Size: {FormatSize(bytes)}";
+				toolStripStatusLabel1.ForeColor = Color.DarkGreen;
+			}
+			else if (Directory.Exists(filePath))
+			{
+				toolStripStatusLabel1.Text = "Directory Exists | Calculating size...";
+				toolStripStatusLabel1.ForeColor = Color.Blue;
+
+				// Performansı korumak için hesaplamayı arka plana atıyoruz
+				try
+				{
+					string pathSnapshot = filePath; // Thread güvenliği için
+					var (size, count) = await Task.Run(() => GetDirectoryInfo(pathSnapshot));
+
+					// Form kapanmışsa veya yol değişmişse güncelleme yapma
+					if (this.IsDisposed) return;
+
+					toolStripStatusLabel1.Text = $"Directory Exists | Items: {count} | Total Size: {FormatSize(size)}";
+				}
+				catch (Exception)
+				{
+					toolStripStatusLabel1.Text = "Directory Exists | Size unknown (Access Denied)";
+				}
+			}
+			else
+			{
+				toolStripStatusLabel1.Text = "Path not found on disk";
+				toolStripStatusLabel1.ForeColor = Color.Red;
+			}
+		}
+
+
+
+		// Klasör tarama işlemini yapan yardımcı metod
+		private (long size, int count) GetDirectoryInfo(string path)
+		{
+			long totalSize = 0;
+			int count = 0;
+
+			// Recursive tarama yaparak dosyaları topla
+			var files = Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories);
+			foreach (var file in files)
+			{
+				totalSize += new FileInfo(file).Length;
+				count++;
+			}
+
+			// Klasörlerin kendisini de saymak istersen:
+			count += Directory.GetDirectories(path, "*", SearchOption.AllDirectories).Length;
+
+			return (totalSize, count);
+		}
+
+		private string FormatSize(long bytes)
+		{
+			string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
+			int counter = 0;
+			decimal number = bytes;
+			while (Math.Round(number / 1024) >= 1)
+			{
+				number /= 1024;
+				counter++;
+			}
+			return string.Format("{0:n1} {1}", number, suffixes[counter]);
+		}
+
 		private void copySelectedTextToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			if (!string.IsNullOrEmpty(richTextBox1.SelectedText))
