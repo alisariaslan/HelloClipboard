@@ -33,14 +33,17 @@
 			this.richTextBox1 = new System.Windows.Forms.RichTextBox();
 			this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
 			this.copySelectedTextToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+			this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
 			this.contextMenuStrip1.SuspendLayout();
+			this.statusStrip1.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// button1_copy
 			// 
 			this.button1_copy.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.button1_copy.Location = new System.Drawing.Point(13, 295);
+			this.button1_copy.Location = new System.Drawing.Point(13, 282);
 			this.button1_copy.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
 			this.button1_copy.Name = "button1_copy";
 			this.button1_copy.Size = new System.Drawing.Size(318, 32);
@@ -57,7 +60,7 @@
 			this.richTextBox1.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.richTextBox1.Location = new System.Drawing.Point(0, 0);
 			this.richTextBox1.Name = "richTextBox1";
-			this.richTextBox1.Size = new System.Drawing.Size(344, 287);
+			this.richTextBox1.Size = new System.Drawing.Size(344, 274);
 			this.richTextBox1.TabIndex = 1;
 			this.richTextBox1.Text = "";
 			// 
@@ -66,20 +69,37 @@
 			this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.copySelectedTextToolStripMenuItem});
 			this.contextMenuStrip1.Name = "contextMenuStrip1";
-			this.contextMenuStrip1.Size = new System.Drawing.Size(181, 48);
+			this.contextMenuStrip1.Size = new System.Drawing.Size(171, 26);
 			// 
 			// copySelectedTextToolStripMenuItem
 			// 
 			this.copySelectedTextToolStripMenuItem.Name = "copySelectedTextToolStripMenuItem";
-			this.copySelectedTextToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.copySelectedTextToolStripMenuItem.Size = new System.Drawing.Size(170, 22);
 			this.copySelectedTextToolStripMenuItem.Text = "Copy selected text";
 			this.copySelectedTextToolStripMenuItem.Click += new System.EventHandler(this.copySelectedTextToolStripMenuItem_Click);
+			// 
+			// statusStrip1
+			// 
+			this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripStatusLabel1});
+			this.statusStrip1.Location = new System.Drawing.Point(0, 319);
+			this.statusStrip1.Name = "statusStrip1";
+			this.statusStrip1.Size = new System.Drawing.Size(344, 22);
+			this.statusStrip1.TabIndex = 8;
+			this.statusStrip1.Text = "statusStrip1";
+			// 
+			// toolStripStatusLabel1
+			// 
+			this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+			this.toolStripStatusLabel1.Size = new System.Drawing.Size(118, 17);
+			this.toolStripStatusLabel1.Text = "toolStripStatusLabel1";
 			// 
 			// ClipDetailText
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 21F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(344, 341);
+			this.Controls.Add(this.statusStrip1);
 			this.Controls.Add(this.richTextBox1);
 			this.Controls.Add(this.button1_copy);
 			this.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -92,7 +112,10 @@
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
 			this.Text = "Text Detail - HelloClipbaord";
 			this.contextMenuStrip1.ResumeLayout(false);
+			this.statusStrip1.ResumeLayout(false);
+			this.statusStrip1.PerformLayout();
 			this.ResumeLayout(false);
+			this.PerformLayout();
 
 		}
 
@@ -102,5 +125,7 @@
 		private System.Windows.Forms.RichTextBox richTextBox1;
 		private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
 		private System.Windows.Forms.ToolStripMenuItem copySelectedTextToolStripMenuItem;
+		private System.Windows.Forms.StatusStrip statusStrip1;
+		private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
 	}
 }

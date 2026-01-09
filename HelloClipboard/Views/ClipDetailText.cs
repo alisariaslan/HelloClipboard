@@ -31,9 +31,64 @@ namespace HelloClipboard
 			richTextBox1.VScroll += RichTextBox1_VScroll;
 			richTextBox1.Resize += RichTextBox1_Resize;
 			richTextBox1.ContextMenuStrip = contextMenuStrip1;
+			richTextBox1.SelectionChanged += RichTextBox1_SelectionChanged;
 			contextMenuStrip1.Opening += ContextMenuStrip1_Opening;
 
 			SetupTextMode(item.Content);
+		}
+
+		private void RichTextBox1_SelectionChanged(object sender, EventArgs e)
+		{
+			UpdateStatusLabel();
+		}
+
+		private void UpdateStatusLabel()
+		{
+			if (toolStripStatusLabel1 == null) return;
+
+			// 1. Satır Bilgileri
+			int totalLines = _fullText.Split('\n').Length;
+			int index = richTextBox1.SelectionStart;
+			int line = richTextBox1.GetLineFromCharIndex(index);
+			int firstCharOfLine = richTextBox1.GetFirstCharIndexFromLine(line);
+			int column = index - firstCharOfLine;
+
+			// 2. Boyut Hesaplama (Seçiliyse seçim, değilse tamamı)
+			long sizeInBytes;
+			bool isSelection = richTextBox1.SelectionLength > 0;
+
+			if (isSelection)
+			{
+				// Seçili metnin UTF8 byte karşılığı
+				sizeInBytes = System.Text.Encoding.UTF8.GetByteCount(richTextBox1.SelectedText);
+			}
+			else
+			{
+				// Tüm metnin UTF8 byte karşılığı
+				sizeInBytes = System.Text.Encoding.UTF8.GetByteCount(_fullText);
+			}
+
+			string sizeText = FormatByteSize(sizeInBytes);
+
+			// 3. Status Text Oluşturma
+			// Format: Lines: 150 | Ln: 5, Col: 10 | Size: 1.2 KB (Total)
+			string statusText = $"Lines: {totalLines} | Ln: {line + 1}, Col: {column + 1} | Size: {sizeText}";
+
+			if (isSelection)
+			{
+				int selectedLines = 0;
+				int startLine = richTextBox1.GetLineFromCharIndex(richTextBox1.SelectionStart);
+				int endLine = richTextBox1.GetLineFromCharIndex(richTextBox1.SelectionStart + richTextBox1.SelectionLength);
+				selectedLines = (endLine - startLine) + 1;
+
+				statusText += $" (Selected: {selectedLines} line(s))";
+			}
+			else
+			{
+				statusText += " (Total)";
+			}
+
+			toolStripStatusLabel1.Text = statusText;
 		}
 
 		// ---------------- TEXT MODE ----------------
@@ -53,6 +108,7 @@ namespace HelloClipboard
 			_textZoom = 0.8f;
 
 			richTextBox1.Font = new Font(richTextBox1.Font.FontFamily, baseFontSize * _textZoom);
+			UpdateStatusLabel();
 		}
 
 		public void UpdateItem(ClipboardItem item)
@@ -223,6 +279,19 @@ namespace HelloClipboard
 			e.Cancel = true;
 
 		}
+		private string FormatByteSize(long bytes)
+		{
+			string[] suffixes = { "B", "KB", "MB", "GB" };
+			int counter = 0;
+			decimal number = bytes;
+			while (Math.Round(number / 1024) >= 1)
+			{
+				number /= 1024;
+				counter++;
+			}
+			return string.Format("{0:n1} {1}", number, suffixes[counter]);
+		}
+
 		private void copySelectedTextToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			if (!string.IsNullOrEmpty(richTextBox1.SelectedText))
