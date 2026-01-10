@@ -1,4 +1,4 @@
 {
-  "Version": "1.2.0.10",
-  "Notes": "🚀 v1.2.0.10 | ✨ New Features: Image editing support added, file size calculation added, extended details for selected and total text, file & folder image status labels added for better visibility. 🛠 Improvements & Fixes: System tray issues fixed and overall stability improved. ⚠️ Note: After updating, please clear your clipboard using the brush icon in the app."
+  "Version": "1.2.1.11",
+  "Notes": "**Release Notes \u2013 2026\u201101\u201110**\n\n\ud83d\ude80 **Features**\n- Added delete support, optional font size selection, and timestamp display.\n- Completed an overall UI refactor to improve usability and visual consistency.\n\n\ud83d\udc1e **Bug Fixes**\n- No bug fixes reported in this release.\n\n\ud83d\udee0\ufe0f **Maintenance & Refactoring**\n- Replaced the RichTextBox control with a custom panel designed for efficient handling of large text content."
 }
