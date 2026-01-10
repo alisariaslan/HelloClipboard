@@ -27,19 +27,19 @@
 			this.webBrowser1.MinimumSize = new System.Drawing.Size(20, 20);
 			this.webBrowser1.Name = "webBrowser1";
 			this.webBrowser1.ScriptErrorsSuppressed = true;
-			this.webBrowser1.Size = new System.Drawing.Size(620, 437);
+			this.webBrowser1.Size = new System.Drawing.Size(520, 377);
 			this.webBrowser1.TabIndex = 0;
 			this.webBrowser1.Navigating += new System.Windows.Forms.WebBrowserNavigatingEventHandler(this.webBrowser1_Navigating);
 			// 
 			// InfoDialog
 			// 
-			this.ClientSize = new System.Drawing.Size(624, 441);
+			this.ClientSize = new System.Drawing.Size(520, 377);
 			this.Controls.Add(this.webBrowser1);
+			this.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
 			this.MaximizeBox = false;
-			this.MaximumSize = new System.Drawing.Size(640, 480);
 			this.MinimizeBox = false;
-			this.MinimumSize = new System.Drawing.Size(640, 480);
+			this.MinimumSize = new System.Drawing.Size(540, 420);
 			this.Name = "InfoDialog";
 			this.ShowIcon = false;
 			this.ShowInTaskbar = false;

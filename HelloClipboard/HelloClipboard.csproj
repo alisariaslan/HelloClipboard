@@ -249,6 +249,7 @@
     <None Include="Resources\icons8_locked_192px.png" />
     <None Include="Resources\icons8_unlocked_192px.png" />
     <None Include="Resources\pencil_drawing_48px.png" />
+    <None Include="Resources\icons8_info_48px_1.png" />
     <Content Include="settings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

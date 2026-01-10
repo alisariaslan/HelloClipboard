@@ -53,10 +53,8 @@ namespace HelloClipboard
 				}
 			};
 
-			_trayIcon.DoubleClick += (s, e) => onShow();
-
 			_trayIcon.MouseClick += (s, e) => {
-				if (e.Button == MouseButtons.Left && SettingsLoader.Current.OpenWithSingleClick)
+				if (e.Button == MouseButtons.Left)
 					onShow();
 			};
 		}

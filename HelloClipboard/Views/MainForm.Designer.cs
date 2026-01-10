@@ -38,6 +38,7 @@
 			this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.pinUnpinToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+			this.delToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.cancelStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuStrip1 = new System.Windows.Forms.MenuStrip();
 			this.infoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -77,11 +78,11 @@
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.MessagesListBox.ContextMenuStrip = this.contextMenuStrip1;
 			this.MessagesListBox.FormattingEnabled = true;
-			this.MessagesListBox.ItemHeight = 21;
+			this.MessagesListBox.ItemHeight = 17;
 			this.MessagesListBox.Location = new System.Drawing.Point(0, 0);
-			this.MessagesListBox.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+			this.MessagesListBox.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
 			this.MessagesListBox.Name = "MessagesListBox";
-			this.MessagesListBox.Size = new System.Drawing.Size(464, 571);
+			this.MessagesListBox.Size = new System.Drawing.Size(362, 463);
 			this.MessagesListBox.TabIndex = 2;
 			// 
 			// contextMenuStrip1
@@ -92,9 +93,10 @@
             this.openToolStripMenuItem,
             this.pinUnpinToolStripMenuItem,
             this.toolStripSeparator1,
+            this.delToolStripMenuItem,
             this.cancelStripMenuItem1});
 			this.contextMenuStrip1.Name = "contextMenuStrip1";
-			this.contextMenuStrip1.Size = new System.Drawing.Size(181, 142);
+			this.contextMenuStrip1.Size = new System.Drawing.Size(181, 164);
 			this.contextMenuStrip1.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStrip1_Opening);
 			// 
 			// copyToolStripMenuItem
@@ -131,6 +133,13 @@
 			this.toolStripSeparator1.Name = "toolStripSeparator1";
 			this.toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
 			// 
+			// delToolStripMenuItem
+			// 
+			this.delToolStripMenuItem.Name = "delToolStripMenuItem";
+			this.delToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.delToolStripMenuItem.Text = "Delete";
+			this.delToolStripMenuItem.Click += new System.EventHandler(this.delToolStripMenuItem_Click);
+			// 
 			// cancelStripMenuItem1
 			// 
 			this.cancelStripMenuItem1.Name = "cancelStripMenuItem1";
@@ -140,7 +149,7 @@
 			// 
 			// menuStrip1
 			// 
-			this.menuStrip1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.menuStrip1.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.infoToolStripMenuItem,
             this.settingsToolStripMenuItem,
@@ -148,7 +157,8 @@
             this.androidSyncToolStripMenuItem});
 			this.menuStrip1.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip1.Name = "menuStrip1";
-			this.menuStrip1.Size = new System.Drawing.Size(464, 29);
+			this.menuStrip1.Padding = new System.Windows.Forms.Padding(5, 2, 0, 2);
+			this.menuStrip1.Size = new System.Drawing.Size(361, 25);
 			this.menuStrip1.TabIndex = 4;
 			this.menuStrip1.Text = "Info";
 			// 
@@ -158,41 +168,41 @@
             this.aboutToolStripMenuItem,
             this.helpToolStripMenuItem});
 			this.infoToolStripMenuItem.Name = "infoToolStripMenuItem";
-			this.infoToolStripMenuItem.Size = new System.Drawing.Size(49, 25);
+			this.infoToolStripMenuItem.Size = new System.Drawing.Size(42, 21);
 			this.infoToolStripMenuItem.Text = "Info";
 			// 
 			// aboutToolStripMenuItem
 			// 
 			this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-			this.aboutToolStripMenuItem.Size = new System.Drawing.Size(122, 26);
+			this.aboutToolStripMenuItem.Size = new System.Drawing.Size(111, 22);
 			this.aboutToolStripMenuItem.Text = "About";
 			this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
 			// 
 			// helpToolStripMenuItem
 			// 
 			this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-			this.helpToolStripMenuItem.Size = new System.Drawing.Size(122, 26);
+			this.helpToolStripMenuItem.Size = new System.Drawing.Size(111, 22);
 			this.helpToolStripMenuItem.Text = "Help";
 			this.helpToolStripMenuItem.Click += new System.EventHandler(this.helpToolStripMenuItem_Click);
 			// 
 			// settingsToolStripMenuItem
 			// 
 			this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-			this.settingsToolStripMenuItem.Size = new System.Drawing.Size(78, 25);
+			this.settingsToolStripMenuItem.Size = new System.Drawing.Size(66, 21);
 			this.settingsToolStripMenuItem.Text = "Settings";
 			this.settingsToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
 			// 
 			// checkUpdateToolStripMenuItem
 			// 
 			this.checkUpdateToolStripMenuItem.Name = "checkUpdateToolStripMenuItem";
-			this.checkUpdateToolStripMenuItem.Size = new System.Drawing.Size(118, 25);
+			this.checkUpdateToolStripMenuItem.Size = new System.Drawing.Size(101, 21);
 			this.checkUpdateToolStripMenuItem.Text = "Check Update";
 			this.checkUpdateToolStripMenuItem.Click += new System.EventHandler(this.checkUpdateToolStripMenuItem_Click);
 			// 
 			// androidSyncToolStripMenuItem
 			// 
 			this.androidSyncToolStripMenuItem.Name = "androidSyncToolStripMenuItem";
-			this.androidSyncToolStripMenuItem.Size = new System.Drawing.Size(103, 25);
+			this.androidSyncToolStripMenuItem.Size = new System.Drawing.Size(86, 21);
 			this.androidSyncToolStripMenuItem.Text = "Phone Sync";
 			this.androidSyncToolStripMenuItem.Click += new System.EventHandler(this.phoneSyncToolStripMenuItem_Click);
 			// 
@@ -200,18 +210,20 @@
 			// 
 			this.textBox1_search.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.textBox1_search.Location = new System.Drawing.Point(47, 8);
+			this.textBox1_search.Location = new System.Drawing.Point(37, 6);
+			this.textBox1_search.Margin = new System.Windows.Forms.Padding(2);
 			this.textBox1_search.Name = "textBox1_search";
-			this.textBox1_search.Size = new System.Drawing.Size(335, 29);
+			this.textBox1_search.Size = new System.Drawing.Size(261, 25);
 			this.textBox1_search.TabIndex = 1;
 			this.textBox1_search.TextChanged += new System.EventHandler(this.textBox1_search_TextChanged);
 			// 
 			// pictureBox1
 			// 
 			this.pictureBox1.Image = global::HelloClipboard.Properties.Resources.icons8_search_512px;
-			this.pictureBox1.Location = new System.Drawing.Point(12, 8);
+			this.pictureBox1.Location = new System.Drawing.Point(9, 6);
+			this.pictureBox1.Margin = new System.Windows.Forms.Padding(2);
 			this.pictureBox1.Name = "pictureBox1";
-			this.pictureBox1.Size = new System.Drawing.Size(29, 29);
+			this.pictureBox1.Size = new System.Drawing.Size(23, 23);
 			this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
 			this.pictureBox1.TabIndex = 5;
 			this.pictureBox1.TabStop = false;
@@ -220,9 +232,10 @@
 			// 
 			this.pictureBox2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.pictureBox2.Image = global::HelloClipboard.Properties.Resources.icons8_broom_480px;
-			this.pictureBox2.Location = new System.Drawing.Point(388, 8);
+			this.pictureBox2.Location = new System.Drawing.Point(302, 6);
+			this.pictureBox2.Margin = new System.Windows.Forms.Padding(2);
 			this.pictureBox2.Name = "pictureBox2";
-			this.pictureBox2.Size = new System.Drawing.Size(29, 29);
+			this.pictureBox2.Size = new System.Drawing.Size(23, 23);
 			this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
 			this.pictureBox2.TabIndex = 6;
 			this.pictureBox2.TabStop = false;
@@ -233,9 +246,10 @@
 			this.panel1.Controls.Add(this.panel3);
 			this.panel1.Controls.Add(this.panel2);
 			this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.panel1.Location = new System.Drawing.Point(0, 29);
+			this.panel1.Location = new System.Drawing.Point(0, 25);
+			this.panel1.Margin = new System.Windows.Forms.Padding(2);
 			this.panel1.Name = "panel1";
-			this.panel1.Size = new System.Drawing.Size(464, 664);
+			this.panel1.Size = new System.Drawing.Size(361, 536);
 			this.panel1.TabIndex = 7;
 			// 
 			// panel3
@@ -243,18 +257,20 @@
 			this.panel3.Controls.Add(this.statusStrip1);
 			this.panel3.Controls.Add(this.MessagesListBox);
 			this.panel3.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.panel3.Location = new System.Drawing.Point(0, 71);
+			this.panel3.Location = new System.Drawing.Point(0, 57);
+			this.panel3.Margin = new System.Windows.Forms.Padding(2);
 			this.panel3.Name = "panel3";
-			this.panel3.Size = new System.Drawing.Size(464, 593);
+			this.panel3.Size = new System.Drawing.Size(361, 479);
 			this.panel3.TabIndex = 8;
 			// 
 			// statusStrip1
 			// 
 			this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1});
-			this.statusStrip1.Location = new System.Drawing.Point(0, 571);
+			this.statusStrip1.Location = new System.Drawing.Point(0, 457);
 			this.statusStrip1.Name = "statusStrip1";
-			this.statusStrip1.Size = new System.Drawing.Size(464, 22);
+			this.statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 11, 0);
+			this.statusStrip1.Size = new System.Drawing.Size(361, 22);
 			this.statusStrip1.TabIndex = 3;
 			this.statusStrip1.Text = "statusStrip1";
 			// 
@@ -273,17 +289,19 @@
 			this.panel2.Controls.Add(this.panel4);
 			this.panel2.Dock = System.Windows.Forms.DockStyle.Top;
 			this.panel2.Location = new System.Drawing.Point(0, 0);
+			this.panel2.Margin = new System.Windows.Forms.Padding(2);
 			this.panel2.Name = "panel2";
-			this.panel2.Size = new System.Drawing.Size(464, 71);
+			this.panel2.Size = new System.Drawing.Size(361, 57);
 			this.panel2.TabIndex = 7;
 			// 
 			// pictureBox3_topMost
 			// 
 			this.pictureBox3_topMost.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.pictureBox3_topMost.Image = global::HelloClipboard.Properties.Resources.icons8_unlocked_192px;
-			this.pictureBox3_topMost.Location = new System.Drawing.Point(423, 8);
+			this.pictureBox3_topMost.Location = new System.Drawing.Point(329, 6);
+			this.pictureBox3_topMost.Margin = new System.Windows.Forms.Padding(2);
 			this.pictureBox3_topMost.Name = "pictureBox3_topMost";
-			this.pictureBox3_topMost.Size = new System.Drawing.Size(29, 29);
+			this.pictureBox3_topMost.Size = new System.Drawing.Size(23, 23);
 			this.pictureBox3_topMost.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
 			this.pictureBox3_topMost.TabIndex = 7;
 			this.pictureBox3_topMost.TabStop = false;
@@ -294,19 +312,21 @@
 			this.panel4.Controls.Add(this.checkBoxCaseSensitive);
 			this.panel4.Controls.Add(this.checkBoxRegex);
 			this.panel4.Dock = System.Windows.Forms.DockStyle.Bottom;
-			this.panel4.Location = new System.Drawing.Point(0, 46);
+			this.panel4.Location = new System.Drawing.Point(0, 33);
+			this.panel4.Margin = new System.Windows.Forms.Padding(2);
 			this.panel4.Name = "panel4";
-			this.panel4.Padding = new System.Windows.Forms.Padding(12, 0, 0, 0);
-			this.panel4.Size = new System.Drawing.Size(464, 25);
+			this.panel4.Padding = new System.Windows.Forms.Padding(9, 0, 0, 0);
+			this.panel4.Size = new System.Drawing.Size(361, 24);
 			this.panel4.TabIndex = 10;
 			// 
 			// checkBoxCaseSensitive
 			// 
 			this.checkBoxCaseSensitive.AutoSize = true;
 			this.checkBoxCaseSensitive.Dock = System.Windows.Forms.DockStyle.Left;
-			this.checkBoxCaseSensitive.Location = new System.Drawing.Point(184, 0);
+			this.checkBoxCaseSensitive.Location = new System.Drawing.Point(158, 0);
+			this.checkBoxCaseSensitive.Margin = new System.Windows.Forms.Padding(2);
 			this.checkBoxCaseSensitive.Name = "checkBoxCaseSensitive";
-			this.checkBoxCaseSensitive.Size = new System.Drawing.Size(229, 25);
+			this.checkBoxCaseSensitive.Size = new System.Drawing.Size(195, 24);
 			this.checkBoxCaseSensitive.TabIndex = 9;
 			this.checkBoxCaseSensitive.Text = "Enable Case Sensitive Search";
 			this.checkBoxCaseSensitive.UseVisualStyleBackColor = true;
@@ -316,9 +336,10 @@
 			// 
 			this.checkBoxRegex.AutoSize = true;
 			this.checkBoxRegex.Dock = System.Windows.Forms.DockStyle.Left;
-			this.checkBoxRegex.Location = new System.Drawing.Point(12, 0);
+			this.checkBoxRegex.Location = new System.Drawing.Point(9, 0);
+			this.checkBoxRegex.Margin = new System.Windows.Forms.Padding(2);
 			this.checkBoxRegex.Name = "checkBoxRegex";
-			this.checkBoxRegex.Size = new System.Drawing.Size(172, 25);
+			this.checkBoxRegex.Size = new System.Drawing.Size(149, 24);
 			this.checkBoxRegex.TabIndex = 8;
 			this.checkBoxRegex.Text = "Enable Regex Search";
 			this.checkBoxRegex.UseVisualStyleBackColor = true;
@@ -326,16 +347,16 @@
 			// 
 			// MainForm
 			// 
-			this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 21F);
+			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(464, 693);
+			this.ClientSize = new System.Drawing.Size(361, 561);
 			this.Controls.Add(this.panel1);
 			this.Controls.Add(this.menuStrip1);
-			this.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.MainMenuStrip = this.menuStrip1;
-			this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
-			this.MinimumSize = new System.Drawing.Size(480, 720);
+			this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+			this.MinimumSize = new System.Drawing.Size(377, 590);
 			this.Name = "MainForm";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "HelloClipboard";
@@ -388,6 +409,7 @@
 		private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
 		private System.Windows.Forms.ToolStripMenuItem cancelStripMenuItem1;
 		private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+		private System.Windows.Forms.ToolStripMenuItem delToolStripMenuItem;
 	}
 }
 

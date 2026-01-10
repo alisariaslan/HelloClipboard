@@ -6,7 +6,7 @@
 		{
 			return "Under Development - HelloClipboard";
 		}
-		public static string GetHtml(string featureName)
+		public static string GetHtml(string featureName,float fontsize = 12)
 		{
 			string html = $@"
 <!doctype html>
@@ -15,8 +15,8 @@
   <meta charset='utf-8'/>
   <title>{featureName}</title>
   <style>
-    body {{ font-family: Segoe UI, Tahoma, Arial; padding: 16px; color:#222; }}
-    h1 {{ margin-top:0; font-size: 20px; }}
+    body {{ font-size: {fontsize}px; font-family: Segoe UI, Tahoma, Arial; padding: 16px; color:#222; }}
+    h2 {{ margin-top:0; font-size: 20px; }}
     p {{ margin-top:12px; color:#555; }}
     a {{ color:#1a73e8; text-decoration:none; }}
     a:hover {{ text-decoration:underline; }}

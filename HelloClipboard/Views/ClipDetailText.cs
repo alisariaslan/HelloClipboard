@@ -13,12 +13,12 @@ namespace HelloClipboard
 		private readonly MainForm _mainForm;
 		private List<string> _lines = new List<string>();
 		private string _fullText = string.Empty;
-		private float _baseFontSize = 0.9f;
+		private float _baseFontSize = 0.8f;
 
 		private float _textZoom = 0.9f;
 		private const int LinePadding = 4;
 		private Font _drawFont;
-		private SolidBrush _selectionBrush = new SolidBrush(Color.FromArgb(100, Color.LightBlue));
+		private SolidBrush _selectionBrush = new SolidBrush(Color.FromArgb(100, Color.DeepSkyBlue));
 		private SolidBrush _lineNumBrush = new SolidBrush(Color.DimGray);
 
 		private int _maxLineWidth = 0;

@@ -327,27 +327,6 @@ namespace HelloClipboard
 			return string.Format("{0:n1} {1}", number, suffixes[counter]);
 		}
 
-		private void copySelectedTextToolStripMenuItem_Click(object sender, EventArgs e)
-		{
-			if (!string.IsNullOrEmpty(richTextBox1.SelectedText))
-			{
-				try
-				{
-					// ClipboardMonitor'un kendi kopyaladığımız şeyi tekrar yakalamaması için
-					// TrayApplicationContext üzerinden eventleri susturabiliriz.
-					TrayApplicationContext.Instance?.SuppressClipboardEvents(true);
-
-					Clipboard.SetText(richTextBox1.SelectedText);
-
-					// Kısa bir süre sonra tekrar izlemeyi aç (MainFormViewModel'deki mantıkla aynı)
-					System.Threading.Tasks.Task.Delay(150).ContinueWith(_ =>
-						TrayApplicationContext.Instance?.SuppressClipboardEvents(false));
-				}
-				catch (Exception ex)
-				{
-					MessageBox.Show("Kopyalama hatası: " + ex.Message);
-				}
-			}
-		}
+		private void copySelectedTextToolStripMenuItem_Click(object sender, EventArgs e) => _mainForm?.copyToolStripMenuItem_Click(sender, e);
 	}
 }

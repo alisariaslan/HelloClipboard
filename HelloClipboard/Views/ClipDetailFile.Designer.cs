@@ -43,10 +43,10 @@
 			// 
 			this.button1_copy.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.button1_copy.Location = new System.Drawing.Point(13, 282);
-			this.button1_copy.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+			this.button1_copy.Location = new System.Drawing.Point(10, 273);
+			this.button1_copy.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
 			this.button1_copy.Name = "button1_copy";
-			this.button1_copy.Size = new System.Drawing.Size(318, 32);
+			this.button1_copy.Size = new System.Drawing.Size(323, 26);
 			this.button1_copy.TabIndex = 0;
 			this.button1_copy.Text = "Copy file";
 			this.button1_copy.UseVisualStyleBackColor = true;
@@ -59,8 +59,9 @@
             | System.Windows.Forms.AnchorStyles.Right)));
 			this.richTextBox1.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
 			this.richTextBox1.Location = new System.Drawing.Point(0, 0);
+			this.richTextBox1.Margin = new System.Windows.Forms.Padding(2);
 			this.richTextBox1.Name = "richTextBox1";
-			this.richTextBox1.Size = new System.Drawing.Size(344, 274);
+			this.richTextBox1.Size = new System.Drawing.Size(344, 268);
 			this.richTextBox1.TabIndex = 1;
 			this.richTextBox1.Text = "";
 			// 
@@ -82,8 +83,9 @@
 			// 
 			this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1});
-			this.statusStrip1.Location = new System.Drawing.Point(0, 319);
+			this.statusStrip1.Location = new System.Drawing.Point(0, 299);
 			this.statusStrip1.Name = "statusStrip1";
+			this.statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 11, 0);
 			this.statusStrip1.Size = new System.Drawing.Size(344, 22);
 			this.statusStrip1.TabIndex = 7;
 			this.statusStrip1.Text = "statusStrip1";
@@ -96,21 +98,21 @@
 			// 
 			// ClipDetailFile
 			// 
-			this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 21F);
+			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(344, 341);
+			this.ClientSize = new System.Drawing.Size(344, 321);
 			this.Controls.Add(this.statusStrip1);
 			this.Controls.Add(this.richTextBox1);
 			this.Controls.Add(this.button1_copy);
-			this.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+			this.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
 			this.MinimizeBox = false;
-			this.MinimumSize = new System.Drawing.Size(360, 380);
+			this.MinimumSize = new System.Drawing.Size(360, 360);
 			this.Name = "ClipDetailFile";
 			this.ShowIcon = false;
 			this.ShowInTaskbar = false;
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-			this.Text = "Text Detail - HelloClipbaord";
+			this.Text = "File Detail - HelloClipbaord";
 			this.contextMenuStrip1.ResumeLayout(false);
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();

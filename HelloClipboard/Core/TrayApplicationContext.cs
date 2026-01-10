@@ -264,6 +264,10 @@ namespace HelloClipboard
 		public IReadOnlyList<ClipboardItem> GetClipboardCache() => _clipboardMonitor.GetCache();
 		public void SuppressClipboardEvents(bool value) => _clipboardMonitor.SuppressEvents(value);
 		public void RefreshPrivacyMenuLabel() => UpdatePrivacyMenuText();
+		public void RequestDeletion(ClipboardItem item)
+		{
+			_clipboardMonitor.RemoveItem(item);
+		}
 
 		#endregion
 	}

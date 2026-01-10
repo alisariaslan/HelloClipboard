@@ -550,5 +550,23 @@ namespace HelloClipboard
 		{
 			contextMenuStrip1?.Close();
 		}
+
+		// MainForm.cs
+		private void delToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			if (!(MessagesListBox.SelectedItem is ClipboardItem selected)) return;
+
+			// 1. Görsel hazırlık
+			CloseDetailFormIfAvaible();
+
+			// 2. İş mantığını ViewModel'e devret
+			_viewModel.DeleteItem(selected);
+
+			// 3. ListBox'ı güncelle
+			MessagesListBox.Items.Remove(selected);
+			UpdateStatusLabel();
+
+			textBox1_search.Focus();
+		}
 	}
 }

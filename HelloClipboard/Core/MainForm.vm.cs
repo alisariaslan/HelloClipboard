@@ -79,7 +79,8 @@ namespace HelloClipboard
 		{
 			if (selectedItem == null) return;
 
-			_trayApplicationContext.SuppressClipboardEvents(true);
+			if (SettingsLoader.Current.SuppressClipboardEvents)
+				_trayApplicationContext.SuppressClipboardEvents(true);
 			try
 			{
 				DataObject dataObj = new DataObject();
@@ -127,7 +128,8 @@ namespace HelloClipboard
 			}
 			finally
 			{
-				Task.Delay(150).ContinueWith(_ => _trayApplicationContext.SuppressClipboardEvents(false));
+				if (SettingsLoader.Current.SuppressClipboardEvents)
+					Task.Delay(150).ContinueWith(_ => _trayApplicationContext.SuppressClipboardEvents(false));
 			}
 		}
 
@@ -349,6 +351,23 @@ namespace HelloClipboard
 				var unpinnedSorted = unpinned.OrderBy(i => i.Timestamp);
 				return unpinnedSorted.Concat(pinnedSorted);
 			}
+		}
+
+		public void DeleteItem(ClipboardItem item)
+		{
+			if (item == null) return;
+
+			// 1. Pinned (İğnelenmiş) durumunu kontrol et ve temizle
+			if (item.IsPinned)
+			{
+				TempConfigLoader.Current.PinnedHashes.Remove(item.Id);
+				TempConfigLoader.Save();
+			}
+
+			// 2. Tray üzerinden monitor'e ulaşıp asıl silme işlemini yap
+			// Not: TrayAppContext içinde ClipboardMonitor'ü public bir property 
+			// veya doğrudan silme metodunu köprü olarak sunmak gerekebilir.
+			_trayApplicationContext.RequestDeletion(item);
 		}
 
 		public void Dispose()

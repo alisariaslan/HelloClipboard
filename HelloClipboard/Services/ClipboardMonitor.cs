@@ -90,6 +90,20 @@ namespace HelloClipboard.Services
 					var dataObj = Clipboard.GetDataObject();
 					if (dataObj == null) return;
 
+
+
+					// Handle IMAGE content
+					if (dataObj.GetDataPresent(DataFormats.Bitmap))
+					{
+						var image = Clipboard.GetImage();
+						if (image != null)
+						{
+							var imageCount = _clipboardCache.Count(i => i.ItemType == ClipboardItemType.Image);
+							AddToCache(ClipboardItemType.Image, $"[IMAGE] {imageCount + 1}", image);
+							return;
+						}
+					}
+
 					// Handle TEXT content
 					if (dataObj.GetDataPresent(DataFormats.UnicodeText, true))
 					{
@@ -106,18 +120,6 @@ namespace HelloClipboard.Services
 						if (dataObj.GetData(DataFormats.FileDrop) is string[] files && files.Length > 0)
 						{
 							foreach (var file in files) AddToCache(ClipboardItemType.Path, file);
-							return;
-						}
-					}
-
-					// Handle IMAGE content
-					if (dataObj.GetDataPresent(DataFormats.Bitmap))
-					{
-						var image = Clipboard.GetImage();
-						if (image != null)
-						{
-							var imageCount = _clipboardCache.Count(i => i.ItemType == ClipboardItemType.Image);
-							AddToCache(ClipboardItemType.Image, $"[IMAGE] {imageCount + 1}", image);
 							return;
 						}
 					}
@@ -246,6 +248,27 @@ namespace HelloClipboard.Services
 			}
 		}
 
+		// ClipboardMonitor.cs
+		public void RemoveItem(ClipboardItem item)
+		{
+			if (item == null) return;
+
+			// 1. Bellekten kaldır
+			_clipboardCache.Remove(item);
+
+			// 2. Hash havuzunu temizle (Aynı içerik tekrar gelirse yeni kabul edilsin)
+			if (!string.IsNullOrEmpty(item.ContentHash))
+			{
+				if (!_clipboardCache.Any(i => i.ContentHash == item.ContentHash))
+				{
+					_clipboardHashPool.Remove(item.ContentHash);
+				}
+			}
+
+			// 3. Diskten sil
+			_historyHelper.DeleteItemFromFile(item.Id);
+
+		}
 		public void ClearAll()
 		{
 			_clipboardCache.Clear();

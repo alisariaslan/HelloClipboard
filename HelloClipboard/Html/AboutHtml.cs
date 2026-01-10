@@ -8,7 +8,7 @@ namespace HelloClipboard.Html
 		{
 			return "About - HelloClipboard";
 		}
-		public static string GetHtml()
+		public static string GetHtml(float fontSize = 12)
 		{
 			string aboutHtml = $@"
 <!doctype html>
@@ -17,8 +17,8 @@ namespace HelloClipboard.Html
   <meta charset='utf-8'/>
   <title>About - HelloClipboard</title>
   <style>
-    body {{ font-family: Segoe UI, Tahoma, Arial; padding: 16px; color:#222; }}
-    h1 {{ margin-top:0; }}
+    body {{ font-size: {fontSize}px; font-family: Segoe UI, Tahoma, Arial; padding: 16px; color:#222; }}
+    h2 {{ margin-top:0; }}
     a {{ color:#1a73e8; text-decoration:none; }}
     a:hover {{ text-decoration:underline; }}
     .meta {{ margin-top:12px; color:#555; }}

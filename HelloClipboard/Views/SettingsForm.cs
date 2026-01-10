@@ -22,6 +22,7 @@ namespace HelloClipboard
 			_debounceTimer.Tick += DebounceTimer_Tick;
 
 			RemoveSettingEvents();
+			checkBox1_suppressClipboardEvents.Checked = SettingsLoader.Current.SuppressClipboardEvents;
 			checkBox2_hideToSystemTray.Checked = SettingsLoader.Current.HideToTray;
 			checkBox3_checkUpdates.Checked = SettingsLoader.Current.CheckUpdates;
 			checkBox1_startWithWindows.Checked = SettingsLoader.Current.StartWithWindows;
@@ -31,7 +32,6 @@ namespace HelloClipboard
 			checkBox1_clipboardHistory.Checked = SettingsLoader.Current.EnableClipboardHistory;
 			checkBox1_alwaysTopMost.Checked = SettingsLoader.Current.AlwaysTopMost;
 			checkBox1_showInTaskbar.Checked = SettingsLoader.Current.ShowInTaskbar;
-			checkBox2_openWithSingleClick.Checked = SettingsLoader.Current.OpenWithSingleClick;
 			checkBox1_autoHideWhenUnfocus.Checked = SettingsLoader.Current.AutoHideWhenUnfocus;
 			textBox_privacyDuration.Text = SettingsLoader.Current.PrivacyModeDurationMinutes.ToString();
 			checkBox_enableHotkey.Checked = SettingsLoader.Current.EnableGlobalHotkey;
@@ -39,6 +39,7 @@ namespace HelloClipboard
 			textBox_hotkey.Enabled = SettingsLoader.Current.EnableGlobalHotkey;
 			_pendingHotkeyKey = SettingsLoader.Current.HotkeyKey;
 			_pendingHotkeyModifiers = SettingsLoader.Current.HotkeyModifiers;
+			checkBox2_enableTimeStamps.Checked = SettingsLoader.Current.EnableTimeStamps;
 			AddSettingEvents();
 
 		}
@@ -95,6 +96,7 @@ namespace HelloClipboard
 
 		private void RemoveSettingEvents()
 		{
+			checkBox1_suppressClipboardEvents.CheckedChanged -= checkBox1_suppressClipboardEvents_CheckedChanged;
 			textBox1_maxHistoryCount.TextChanged -= textBox1_maxHistoryCount_TextChanged;
 			checkBox3_checkUpdates.CheckedChanged -= checkBox3_checkUpdates_CheckedChanged;
 			checkBox1_startWithWindows.CheckedChanged -= checkBox1_startWithWindows_CheckedChanged;
@@ -104,17 +106,17 @@ namespace HelloClipboard
 			checkBox1_clipboardHistory.CheckedChanged -= checkBox1_clipboardHistory_CheckedChanged;
 			checkBox1_alwaysTopMost.CheckedChanged -= checkBox1_alwaysTopMost_CheckedChanged;
 			checkBox1_showInTaskbar.CheckedChanged -= checkBox1_showInTaskbar_CheckedChanged;
-			checkBox2_openWithSingleClick.CheckedChanged -= checkBox2_openWithSingleClick_CheckedChanged;
 			checkBox1_autoHideWhenUnfocus.CheckedChanged -= checkBox1_autoHideWhenUnfocus_CheckedChanged;
 			textBox_privacyDuration.KeyPress -= textBox_privacyDuration_KeyPress;
 			textBox_privacyDuration.Leave -= textBox_privacyDuration_Leave;
 			checkBox_enableHotkey.CheckedChanged -= checkBox_enableHotkey_CheckedChanged;
 			textBox_hotkey.KeyDown -= textBox_hotkey_KeyDown;
-
+			checkBox2_enableTimeStamps.CheckedChanged -= checkBox2_enableTimeStamps_CheckedChanged;
 		}
 
 		private void AddSettingEvents()
 		{
+			checkBox1_suppressClipboardEvents.CheckedChanged += checkBox1_suppressClipboardEvents_CheckedChanged;
 			textBox1_maxHistoryCount.TextChanged += textBox1_maxHistoryCount_TextChanged;
 			checkBox3_checkUpdates.CheckedChanged += checkBox3_checkUpdates_CheckedChanged;
 			checkBox1_startWithWindows.CheckedChanged += checkBox1_startWithWindows_CheckedChanged;
@@ -124,12 +126,12 @@ namespace HelloClipboard
 			checkBox1_clipboardHistory.CheckedChanged += checkBox1_clipboardHistory_CheckedChanged;
 			checkBox1_alwaysTopMost.CheckedChanged += checkBox1_alwaysTopMost_CheckedChanged;
 			checkBox1_showInTaskbar.CheckedChanged += checkBox1_showInTaskbar_CheckedChanged;
-			checkBox2_openWithSingleClick.CheckedChanged += checkBox2_openWithSingleClick_CheckedChanged;
 			checkBox1_autoHideWhenUnfocus.CheckedChanged += checkBox1_autoHideWhenUnfocus_CheckedChanged;
 			textBox_privacyDuration.KeyPress += textBox_privacyDuration_KeyPress;
 			textBox_privacyDuration.Leave += textBox_privacyDuration_Leave;
 			checkBox_enableHotkey.CheckedChanged += checkBox_enableHotkey_CheckedChanged;
 			textBox_hotkey.KeyDown += textBox_hotkey_KeyDown;
+			checkBox2_enableTimeStamps.CheckedChanged += checkBox2_enableTimeStamps_CheckedChanged;
 		}
 
 		private async void button2_Defaults_Click(object sender, EventArgs e)
@@ -140,6 +142,7 @@ namespace HelloClipboard
 			var def = new SettingsModel();
 
 			RemoveSettingEvents();
+			checkBox1_suppressClipboardEvents.Checked = def.SuppressClipboardEvents;
 			textBox1_maxHistoryCount.Text = def.MaxHistoryCount.ToString();
 			checkBox3_checkUpdates.Checked = def.CheckUpdates;
 			checkBox1_startWithWindows.Checked = def.StartWithWindows;
@@ -149,12 +152,12 @@ namespace HelloClipboard
 			checkBox1_clipboardHistory.Checked = def.EnableClipboardHistory;
 			checkBox1_alwaysTopMost.Checked = def.AlwaysTopMost;
 			checkBox1_showInTaskbar.Checked = def.ShowInTaskbar;
-			checkBox2_openWithSingleClick.Checked = def.OpenWithSingleClick;
 			checkBox1_autoHideWhenUnfocus.Checked = def.AutoHideWhenUnfocus;
 			textBox_privacyDuration.Text = def.PrivacyModeDurationMinutes.ToString();
 			checkBox_enableHotkey.Checked = def.EnableGlobalHotkey;
 			textBox_hotkey.Text = FormatHotkey(def.HotkeyModifiers, def.HotkeyKey);
 			textBox_hotkey.Enabled = def.EnableGlobalHotkey;
+			checkBox2_enableTimeStamps.Checked = def.EnableTimeStamps;
 			AddSettingEvents();
 
 			SettingsLoader.Current = def;
@@ -315,12 +318,6 @@ namespace HelloClipboard
 			this.Close();
 		}
 
-		private void checkBox2_openWithSingleClick_CheckedChanged(object sender, EventArgs e)
-		{
-			SettingsLoader.Current.OpenWithSingleClick = checkBox2_openWithSingleClick.Checked;
-			SettingsLoader.Save();
-		}
-
 		private void checkBox1_autoHideWhenUnfocus_CheckedChanged(object sender, EventArgs e)
 		{
 			SettingsLoader.Current.AutoHideWhenUnfocus = checkBox1_autoHideWhenUnfocus.Checked;
@@ -394,5 +391,18 @@ namespace HelloClipboard
 			return key == Keys.ControlKey || key == Keys.ShiftKey || key == Keys.Menu || key == Keys.LWin || key == Keys.RWin;
 		}
 
+		private void checkBox1_suppressClipboardEvents_CheckedChanged(object sender, EventArgs e)
+		{
+			SettingsLoader.Current.SuppressClipboardEvents = checkBox1_suppressClipboardEvents.Checked;
+			SettingsLoader.Save();
+		}
+
+		private void checkBox2_enableTimeStamps_CheckedChanged(object sender, EventArgs e)
+		{
+			SettingsLoader.Current.EnableTimeStamps = checkBox2_enableTimeStamps.Checked;
+			SettingsLoader.Save();
+			// Liste görünümünü anında güncellemek için
+			_mainForm.RefreshCacheView();
+		}
 	}
 }

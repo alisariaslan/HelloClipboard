@@ -9,10 +9,10 @@ namespace HelloClipboard.Utils
 	public static class DrawingHelper
 	{
 		public static void RenderClipboardItem(
-			DrawItemEventArgs e,
-			ListBox listBox,
-			string searchTerm,
-			MainFormViewModel viewModel)
+	DrawItemEventArgs e,
+	ListBox listBox,
+	string searchTerm,
+	MainFormViewModel viewModel)
 		{
 			e.DrawBackground();
 			if (e.Index < 0 || e.Index >= listBox.Items.Count)
@@ -26,9 +26,19 @@ namespace HelloClipboard.Utils
 			Color textColor = selected ? SystemColors.HighlightText : SystemColors.ControlText;
 			var bounds = e.Bounds;
 
+			// --- METİN OLUŞTURMA BAŞLANGICI ---
 			string displayText = item.Title ?? string.Empty;
+
+			// 1. Önce Zaman Damgasını ekleyelim (Eğer ayar aktifse)
+			if (SettingsLoader.Current.EnableTimeStamps)
+			{
+				displayText = $"[{item.Timestamp:HH:mm:ss}] " + displayText;
+			}
+
+			// 2. Sonra Pin bilgisini ekleyelim
 			if (item.IsPinned)
 				displayText = "[PIN] " + displayText;
+			// --- METİN OLUŞTURMA SONU ---
 
 			DrawingHelper.DrawTextWithHighlight(
 				e.Graphics,

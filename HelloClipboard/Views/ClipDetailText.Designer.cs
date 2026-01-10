@@ -44,12 +44,12 @@
 			// 
 			// button1_copy
 			// 
-			this.button1_copy.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
-			| System.Windows.Forms.AnchorStyles.Right)));
-			this.button1_copy.Location = new System.Drawing.Point(12, 277);
-			this.button1_copy.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+			this.button1_copy.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.button1_copy.Location = new System.Drawing.Point(9, 269);
+			this.button1_copy.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
 			this.button1_copy.Name = "button1_copy";
-			this.button1_copy.Size = new System.Drawing.Size(320, 35);
+			this.button1_copy.Size = new System.Drawing.Size(325, 28);
 			this.button1_copy.TabIndex = 0;
 			this.button1_copy.Text = "Copy text";
 			this.button1_copy.UseVisualStyleBackColor = true;
@@ -58,24 +58,25 @@
 			// contextMenuStrip1
 			// 
 			this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-			this.copySelectedTextToolStripMenuItem});
+            this.copySelectedTextToolStripMenuItem});
 			this.contextMenuStrip1.Name = "contextMenuStrip1";
-			this.contextMenuStrip1.Size = new System.Drawing.Size(171, 26);
+			this.contextMenuStrip1.Size = new System.Drawing.Size(181, 48);
 			this.contextMenuStrip1.Opening += new System.ComponentModel.CancelEventHandler(this.ContextMenuStrip1_Opening);
 			// 
 			// copySelectedTextToolStripMenuItem
 			// 
 			this.copySelectedTextToolStripMenuItem.Name = "copySelectedTextToolStripMenuItem";
-			this.copySelectedTextToolStripMenuItem.Size = new System.Drawing.Size(170, 22);
-			this.copySelectedTextToolStripMenuItem.Text = "Copy selected text";
+			this.copySelectedTextToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+			this.copySelectedTextToolStripMenuItem.Text = "Copy";
 			this.copySelectedTextToolStripMenuItem.Click += new System.EventHandler(this.copySelectedTextToolStripMenuItem_Click);
 			// 
 			// statusStrip1
 			// 
 			this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-			this.toolStripStatusLabel1});
-			this.statusStrip1.Location = new System.Drawing.Point(0, 319);
+            this.toolStripStatusLabel1});
+			this.statusStrip1.Location = new System.Drawing.Point(0, 299);
 			this.statusStrip1.Name = "statusStrip1";
+			this.statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 11, 0);
 			this.statusStrip1.Size = new System.Drawing.Size(344, 22);
 			this.statusStrip1.TabIndex = 8;
 			this.statusStrip1.Text = "statusStrip1";
@@ -88,17 +89,18 @@
 			// 
 			// textDrawPanel
 			// 
-			this.textDrawPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-			| System.Windows.Forms.AnchorStyles.Left)
-			| System.Windows.Forms.AnchorStyles.Right)));
+			this.textDrawPanel.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
 			this.textDrawPanel.BackColor = System.Drawing.Color.White;
 			this.textDrawPanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
 			this.textDrawPanel.ContextMenuStrip = this.contextMenuStrip1;
 			this.textDrawPanel.Controls.Add(this.vScrollBar1);
 			this.textDrawPanel.Controls.Add(this.hScrollBar1);
 			this.textDrawPanel.Location = new System.Drawing.Point(0, 0);
+			this.textDrawPanel.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
 			this.textDrawPanel.Name = "textDrawPanel";
-			this.textDrawPanel.Size = new System.Drawing.Size(344, 269);
+			this.textDrawPanel.Size = new System.Drawing.Size(344, 263);
 			this.textDrawPanel.TabIndex = 9;
 			this.textDrawPanel.Paint += new System.Windows.Forms.PaintEventHandler(this.textDrawPanel_Paint);
 			// 
@@ -107,29 +109,29 @@
 			this.vScrollBar1.Dock = System.Windows.Forms.DockStyle.Right;
 			this.vScrollBar1.Location = new System.Drawing.Point(325, 0);
 			this.vScrollBar1.Name = "vScrollBar1";
-			this.vScrollBar1.Size = new System.Drawing.Size(17, 250);
+			this.vScrollBar1.Size = new System.Drawing.Size(17, 244);
 			this.vScrollBar1.TabIndex = 0;
 			// 
 			// hScrollBar1
 			// 
 			this.hScrollBar1.Dock = System.Windows.Forms.DockStyle.Bottom;
-			this.hScrollBar1.Location = new System.Drawing.Point(0, 250);
+			this.hScrollBar1.Location = new System.Drawing.Point(0, 244);
 			this.hScrollBar1.Name = "hScrollBar1";
 			this.hScrollBar1.Size = new System.Drawing.Size(342, 17);
 			this.hScrollBar1.TabIndex = 1;
 			// 
 			// ClipDetailText
 			// 
-			this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 21F);
+			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(344, 341);
+			this.ClientSize = new System.Drawing.Size(344, 321);
 			this.Controls.Add(this.textDrawPanel);
 			this.Controls.Add(this.statusStrip1);
 			this.Controls.Add(this.button1_copy);
-			this.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+			this.Font = new System.Drawing.Font("Segoe UI", 10F);
+			this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
 			this.MinimizeBox = false;
-			this.MinimumSize = new System.Drawing.Size(360, 380);
+			this.MinimumSize = new System.Drawing.Size(360, 360);
 			this.Name = "ClipDetailText";
 			this.ShowIcon = false;
 			this.ShowInTaskbar = false;
