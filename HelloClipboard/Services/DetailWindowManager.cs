@@ -164,7 +164,14 @@ namespace HelloClipboard.Services
 			_activeForm = null;
 		}
 
-		public Form GetActiveForm() => _activeForm;
+		public Form GetActiveForm()
+		{
+			if (_activeForm != null && _activeForm.IsDisposed)
+			{
+				_activeForm = null;
+			}
+			return _activeForm;
+		}
 		public bool IsAnyVisible() => _activeForm != null && _activeForm.Visible;
 	}
 }
