@@ -6,15 +6,47 @@ using System.Windows.Forms;
 
 namespace HelloClipboard.Utils
 {
+
 	public static class DrawingHelper
 	{
+
+		private static readonly Color ZebraOddRowColor = Color.FromArgb(245, 245, 245); // Açık gri
+		private static readonly Color ZebraEvenRowColor = Color.White; // Beyaz (Liste kutusu rengi de olabilir)
+
 		public static void RenderClipboardItem(
 	DrawItemEventArgs e,
 	ListBox listBox,
 	string searchTerm,
 	MainFormViewModel viewModel)
 		{
-			e.DrawBackground();
+
+			bool selectedd = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+			Color backColor;
+
+			if (selectedd)
+			{
+				// Seçili öğe için varsayılan vurgu rengi
+				backColor = SystemColors.Highlight;
+			}
+			else
+			{
+				// Index'e göre zebra rengini seç
+				if (e.Index % 2 == 0) // Çift indeksler (0, 2, 4...)
+				{
+					backColor = ZebraEvenRowColor;
+				}
+				else // Tek indeksler (1, 3, 5...)
+				{
+					backColor = ZebraOddRowColor;
+				}
+			}
+
+			// Arka planı çiz
+			using (SolidBrush brush = new SolidBrush(backColor))
+			{
+				e.Graphics.FillRectangle(brush, e.Bounds);
+			}
+
 			if (e.Index < 0 || e.Index >= listBox.Items.Count)
 				return;
 

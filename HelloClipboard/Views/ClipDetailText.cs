@@ -13,13 +13,16 @@ namespace HelloClipboard
 		private readonly MainForm _mainForm;
 		private List<string> _lines = new List<string>();
 		private string _fullText = string.Empty;
-		private float _baseFontSize = 0.8f;
+		private float _baseFontSize = 0.75f;
 
 		private float _textZoom = 0.9f;
 		private const int LinePadding = 4;
 		private Font _drawFont;
 		private SolidBrush _selectionBrush = new SolidBrush(Color.FromArgb(100, Color.DeepSkyBlue));
 		private SolidBrush _lineNumBrush = new SolidBrush(Color.DimGray);
+
+		private SolidBrush _zebraBrushOdd = new SolidBrush(Color.White); // Tek satırlar için (Varsayılan Form rengi)
+		private SolidBrush _zebraBrushEven = new SolidBrush(Color.FromArgb(245, 245, 245)); // Çift satırlar için çok açık gri
 
 		private int _maxLineWidth = 0;
 		private int _selStartLine = -1, _selStartChar = -1;
@@ -228,10 +231,12 @@ namespace HelloClipboard
 			hScrollBar1.LargeChange = Math.Max(1, textDrawPanel.Width / 2);
 		}
 
+
+		private SolidBrush _lineNumberBackgroundBrush = new SolidBrush(Color.FromArgb(235, 235, 235)); // Açık ama sabit bir gri tonu
 		private void textDrawPanel_Paint(object sender, PaintEventArgs e)
 		{
 			if (_lines.Count == 0 || _drawFont == null) return;
-			e.Graphics.Clear(textDrawPanel.BackColor);
+
 			e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
 			int lineHeight = TextRenderer.MeasureText("Ag", _drawFont).Height + LinePadding;
@@ -241,22 +246,59 @@ namespace HelloClipboard
 			int hVal = hScrollBar1.Value;
 			int visibleLines = (textDrawPanel.Height / lineHeight) + 1;
 
+			// 1. Ekranı temizle
+			e.Graphics.Clear(textDrawPanel.BackColor);
+
+			// --- AŞAMA 1: METİN KATMANI (TEXT LAYER) ---
+			// Burada çizim alanını sadece metin bölgesiyle (sol gri alan hariç) sınırlandırıyoruz.
+			// Bu sayede yazılar sola kaysa bile, lineNumWidth koordinatından öncesine çizilemezler.
+
+			Rectangle textAreaClip = new Rectangle(lineNumWidth, 0, textDrawPanel.Width - lineNumWidth, textDrawPanel.Height);
+			Region originalRegion = e.Graphics.Clip; // Orijinal clip bölgesini sakla
+			e.Graphics.SetClip(textAreaClip);
+
 			for (int i = 0; i < visibleLines; i++)
 			{
 				int lineIdx = vVal + i;
 				if (lineIdx >= _lines.Count) break;
-				int yPos = i * lineHeight;
-				int textX = lineNumWidth + 10 - hVal;
 
+				int yPos = i * lineHeight;
+				int textX = lineNumWidth + 10 - hVal; // Scroll durumuna göre X konumu
+
+				// Zebra Arkaplan (Sadece metin alanı için)
+				SolidBrush textBackgroundBrush = (lineIdx % 2 == 0) ? _zebraBrushEven : _zebraBrushOdd;
+				Rectangle textRect = new Rectangle(lineNumWidth, yPos, textDrawPanel.Width - lineNumWidth, lineHeight);
+				e.Graphics.FillRectangle(textBackgroundBrush, textRect);
+
+				// Seçim Alanı
 				DrawSelectionForLine(e.Graphics, lineIdx, yPos, textX, lineHeight);
 
-				var oldClip = e.Graphics.Clip;
-				e.Graphics.SetClip(new Rectangle(lineNumWidth + 5, 0, textDrawPanel.Width - lineNumWidth - 5, textDrawPanel.Height));
+				// Metnin Kendisi
 				TextRenderer.DrawText(e.Graphics, _lines[lineIdx], _drawFont, new Point(textX, yPos), Color.Black);
-				e.Graphics.Clip = oldClip;
+			}
 
-				Rectangle numRect = new Rectangle(0, yPos, lineNumWidth, lineHeight);
-				e.Graphics.FillRectangle(new SolidBrush(this.BackColor), numRect);
+			// --- AŞAMA 2: ARAYÜZ KATMANI (UI LAYER) ---
+			// Clip'i (sınırlamayı) kaldırıyoruz ki sol tarafa çizim yapabilelim.
+			e.Graphics.Clip = originalRegion;
+
+			// Sol taraftaki gri sütunu EN SON çiziyoruz. 
+			// Böylece altta yanlışlıkla taşan yazı parçası kalsa bile bu gri kutu onların üzerini örter.
+			Rectangle sidebarRect = new Rectangle(0, 0, lineNumWidth, textDrawPanel.Height);
+			e.Graphics.FillRectangle(_lineNumberBackgroundBrush, sidebarRect);
+
+			// İsteğe bağlı: Satır numarası ile metin arasına dikey bir çizgi
+			e.Graphics.DrawLine(SystemPens.ControlLight, lineNumWidth - 1, 0, lineNumWidth - 1, textDrawPanel.Height);
+
+			// Satır Numaralarını Çiz
+			for (int i = 0; i < visibleLines; i++)
+			{
+				int lineIdx = vVal + i;
+				if (lineIdx >= _lines.Count) break;
+
+				int yPos = i * lineHeight;
+				Rectangle numRect = new Rectangle(0, yPos, lineNumWidth - 5, lineHeight); // Sağdan biraz boşluk bırak
+
+				// Numarayı çiz
 				TextRenderer.DrawText(e.Graphics, (lineIdx + 1).ToString(), _drawFont, numRect, Color.DimGray, TextFormatFlags.Right | TextFormatFlags.VerticalCenter);
 			}
 		}
@@ -396,6 +438,9 @@ namespace HelloClipboard
 			_drawFont?.Dispose();
 			_selectionBrush?.Dispose();
 			_lineNumBrush?.Dispose();
+			_zebraBrushOdd?.Dispose();
+			_zebraBrushEven?.Dispose();
+			_lineNumberBackgroundBrush?.Dispose();
 			base.OnFormClosing(e);
 		}
 	}

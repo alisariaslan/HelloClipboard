@@ -413,6 +413,7 @@ namespace HelloClipboard
 		{
 			SettingsLoader.Current.FocusDetailWindow = chbox_focusDetailWindow.Checked;
 			SettingsLoader.Save();
+			_mainForm.UpdateDetailWindowKeyPreview(chbox_focusDetailWindow.Checked);
 		}
 	}
 }

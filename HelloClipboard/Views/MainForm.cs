@@ -43,7 +43,6 @@ namespace HelloClipboard
 			MessagesListBox.Resize += (s, e) => MessagesListBox.Invalidate();
 			MessagesListBox.SelectedIndexChanged += MessagesListBox_SelectedIndexChanged;
 			MessagesListBox.MouseClick += MessagesListBox_MouseClick;
-
 			// Search Box Events
 			textBox1_search.KeyDown += textBox1_search_KeyDown;
 			textBox1_search.KeyPress += textBox1_search_KeyPress;
@@ -55,6 +54,13 @@ namespace HelloClipboard
 		}
 
 		#endregion
+
+
+		public void UpdateDetailWindowKeyPreview(bool focusEnabled)
+		{
+			// _detailWindowManager'ın MainForm'da tanımlı olduğunu varsayıyoruz
+			_detailManager.SetKeyPreview(focusEnabled); // <-- Yanlış isim
+		}
 
 		#region FORM LIFECYCLE
 
@@ -270,6 +276,8 @@ namespace HelloClipboard
 			MessagesListBox.EndUpdate();
 		}
 
+		// MainForm.cs
+		public void CallDeleteFromDetailWindow(object sender, EventArgs e) => delToolStripMenuItem_Click(sender, e); 
 		private void textBox1_search_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (textBox1_search.HandleWordDeletion(e))
@@ -289,6 +297,31 @@ namespace HelloClipboard
 					case Keys.Up:
 						MessagesListBox.MoveSelection(-1);
 						e.Handled = e.SuppressKeyPress = true;
+						break;
+					case Keys.PageDown:
+						// Listenin en sonuna (en altına) git
+						int lastIndex = MessagesListBox.Items.Count - 1;
+						MessagesListBox.SelectedIndex = lastIndex;
+						MessagesListBox.TopIndex = lastIndex; // Scroll'u anında en alta taşı (Sertleştirme)
+						e.Handled = e.SuppressKeyPress = true;
+						break;
+
+					case Keys.PageUp:
+						// Listenin en başına (en üstüne) git
+						int firstIndex = 0;
+						MessagesListBox.SelectedIndex = firstIndex;
+						MessagesListBox.TopIndex = firstIndex; // Scroll'u anında en üste taşı (Sertleştirme)
+						e.Handled = e.SuppressKeyPress = true;
+						break;
+					case Keys.Delete:
+						if (e.Modifiers == Keys.Shift || textBox1_search.TextLength == 0)
+						{
+							if (MessagesListBox.SelectedItem != null)
+							{
+								delToolStripMenuItem_Click(sender, e);
+								e.Handled = e.SuppressKeyPress = true;
+							}
+						}
 						break;
 					case Keys.Enter:
 						if (MessagesListBox.SelectedItem is ClipboardItem selectedItem)

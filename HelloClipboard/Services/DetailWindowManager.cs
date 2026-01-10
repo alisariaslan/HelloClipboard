@@ -41,6 +41,10 @@ namespace HelloClipboard.Services
 					_detailFileForm = new ClipDetailFile(_owner, item);
 					_detailFileForm.Deactivate += _deactivateHandler;
 					_detailFileForm.Owner = _owner;
+
+					_detailFileForm.KeyDown += DetailForm_KeyDown;
+					_detailTextForm.KeyPreview = SettingsLoader.Current.FocusDetailWindow;
+
 				}
 				else
 				{
@@ -59,6 +63,10 @@ namespace HelloClipboard.Services
 					_detailImageForm = new ClipDetailImage(_owner, item);
 					_detailImageForm.Deactivate += _deactivateHandler;
 					_detailImageForm.Owner = _owner;
+					
+						_detailImageForm.KeyDown += DetailForm_KeyDown;
+						_detailImageForm.KeyPreview = SettingsLoader.Current.FocusDetailWindow;
+					
 				}
 				else
 				{
@@ -77,6 +85,10 @@ namespace HelloClipboard.Services
 					_detailTextForm = new ClipDetailText(_owner, item);
 					_detailTextForm.Deactivate += _deactivateHandler;
 					_detailTextForm.Owner = _owner;
+					
+						_detailTextForm.KeyDown += DetailForm_KeyDown;
+						_detailTextForm.KeyPreview = SettingsLoader.Current.FocusDetailWindow;
+					
 				}
 				else
 				{
@@ -89,17 +101,8 @@ namespace HelloClipboard.Services
 			}
 
 			_activeForm = targetForm;
+			PositionFormNextToOwner(targetForm);
 
-			// If specific bounds are provided (e.g., window was already open), maintain them
-			if (!previousBounds.IsEmpty)
-			{
-				targetForm.StartPosition = FormStartPosition.Manual;
-				targetForm.Bounds = previousBounds;
-			}
-			else
-			{
-				PositionFormNextToOwner(targetForm);
-			}
 
 			// Sync "Always on Top" setting with the main window
 			targetForm.TopMost = _owner.TopMost;
@@ -114,6 +117,24 @@ namespace HelloClipboard.Services
 			{
 				// Eğer odaklanma istenmiyorsa, MainForm'un odağı kaybetmediğinden emin olalım
 				_owner.Activate();
+			}
+		}
+
+		private void DetailForm_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (!SettingsLoader.Current.FocusDetailWindow)
+			{
+				return;
+			}
+
+
+			if (e.KeyCode == Keys.Delete)
+			{
+				if (_owner != null)
+				{
+					_owner.CallDeleteFromDetailWindow(sender, e);
+				}
+				e.Handled = true;
 			}
 		}
 
@@ -151,6 +172,26 @@ namespace HelloClipboard.Services
 
 			detailForm.StartPosition = FormStartPosition.Manual;
 			detailForm.Location = location;
+		}
+
+		/// <summary>
+		/// Detay pencerelerinin KeyPreview özelliğini ayarlar.
+		/// Bu özellik, kısayol tuşlarının (örneğin Silme tuşu) pencere tarafından yakalanmasını sağlar.
+		/// </summary>
+		public void SetKeyPreview(bool enabled)
+		{
+			if (_detailTextForm != null && !_detailTextForm.IsDisposed)
+			{
+				_detailTextForm.KeyPreview = enabled;
+			}
+			if (_detailImageForm != null && !_detailImageForm.IsDisposed)
+			{
+				_detailImageForm.KeyPreview = enabled;
+			}
+			if (_detailFileForm != null && !_detailFileForm.IsDisposed)
+			{
+				_detailFileForm.KeyPreview = enabled;
+			}
 		}
 
 		/// <summary>
