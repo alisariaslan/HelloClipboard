@@ -108,7 +108,7 @@ namespace HelloClipboard
 		// ---------------- COPY ----------------
 		private void button1_copy_Click(object sender, EventArgs e)
 		{
-			_mainForm?.copyToolStripMenuItem_Click(sender, e);
+			_mainForm?.CopyCliked();
 		}
 
 		// Büyük metinleri hızlı yüklemek için yeniden çizimi geçici kapat
@@ -327,6 +327,6 @@ namespace HelloClipboard
 			return string.Format("{0:n1} {1}", number, suffixes[counter]);
 		}
 
-		private void copySelectedTextToolStripMenuItem_Click(object sender, EventArgs e) => _mainForm?.copyToolStripMenuItem_Click(sender, e);
+		private void copySelectedTextToolStripMenuItem_Click(object sender, EventArgs e) => _mainForm?.CopyCliked();
 	}
 }

@@ -23,6 +23,7 @@ namespace HelloClipboard
 		public System.Windows.Forms.Keys HotkeyModifiers { get; set; } = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift;
 		public System.Windows.Forms.Keys HotkeyKey { get; set; } = System.Windows.Forms.Keys.H;
 		public bool SuppressClipboardEvents { get; set; } = true;
+		public bool FocusDetailWindow { get; set; } = false;
 	}
 
 	public static class SettingsLoader

@@ -169,7 +169,8 @@ namespace HelloClipboard
 			}
 		}
 
-		private void TogglePrivacyMode() => _privacyService.Toggle(_privacyService.GetPrivacyDurationMinutes());
+		public void TogglePrivacyMode() => _privacyService.Toggle(_privacyService.GetPrivacyDurationMinutes());
+		public bool IsPrivacyModeActive => _privacyService.IsActive;
 
 		private void OnPrivacyStateChanged(bool active)
 		{

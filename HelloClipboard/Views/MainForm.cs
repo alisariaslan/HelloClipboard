@@ -6,7 +6,6 @@ using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 
 namespace HelloClipboard
@@ -68,6 +67,7 @@ namespace HelloClipboard
 		private void MainForm_Shown(object sender, EventArgs e)
 		{
 			_layoutManager.OnShown();
+			UpdatePrivacyStatusUI();
 			RefreshCacheView();
 		}
 
@@ -102,14 +102,19 @@ namespace HelloClipboard
 			}
 		}
 
+
+		private bool _isLocked = false;
 		private void MainFormDeactivated()
 		{
+			if (_isLocked)
+				return;
+
 			if (!SettingsLoader.Current.AutoHideWhenUnfocus || !_layoutManager.IsLoaded)
 				return;
 
 			BeginInvoke(new MethodInvoker(async () =>
 			{
-				await System.Threading.Tasks.Task.Delay(100);
+				await System.Threading.Tasks.Task.Delay(150); // Biraz daha toleranslı bir süre
 				if (!NativeMethods.IsCurrentProcessFocused())
 				{
 					_trayApplicationContext.HideMainWindow();
@@ -200,7 +205,13 @@ namespace HelloClipboard
 			if (MessagesListBox.SelectedIndex >= 0)
 			{
 				OpenDetailForIndex(MessagesListBox.SelectedIndex);
-				textBox1_search.Focus();
+
+				// --- GÜNCELLEME ---
+				if (!SettingsLoader.Current.FocusDetailWindow)
+				{
+					textBox1_search.Focus();
+				}
+
 				UpdateMenuStates();
 			}
 		}
@@ -210,7 +221,12 @@ namespace HelloClipboard
 			if (e.Button != MouseButtons.Left) return;
 			int index = MessagesListBox.IndexFromPoint(e.Location);
 			OpenDetailForIndex(index);
-			textBox1_search.Focus();
+
+			// --- GÜNCELLEME ---
+			if (!SettingsLoader.Current.FocusDetailWindow)
+			{
+				textBox1_search.Focus();
+			}
 		}
 
 		private void MessagesListBox_DrawItem(object sender, DrawItemEventArgs e)
@@ -277,7 +293,7 @@ namespace HelloClipboard
 					case Keys.Enter:
 						if (MessagesListBox.SelectedItem is ClipboardItem selectedItem)
 						{
-							_viewModel.CopyClicked(selectedItem);
+							_viewModel.CopyClicked(selectedItem, asObject: false);
 							_trayApplicationContext.HideMainWindow();
 						}
 						e.Handled = e.SuppressKeyPress = true;
@@ -322,12 +338,17 @@ namespace HelloClipboard
 			UpdateMenuStates();
 		}
 
-		public void copyToolStripMenuItem_Click(object sender, EventArgs e)
+		public void CopyCliked( bool asObject = false)
 		{
 			if (MessagesListBox.SelectedIndices.Count == 0) return;
 			CloseDetailFormIfAvaible();
 			ClipboardItem selectedItem = MessagesListBox.SelectedItem as ClipboardItem;
-			_viewModel.CopyClicked(selectedItem);
+			_viewModel.CopyClicked(selectedItem,asObject);
+		}
+
+		public void copyToolStripMenuItem_Click(object sender, EventArgs e)
+		{
+			CopyCliked();
 		}
 
 		private void pinUnpinToolStripMenuItem_Click(object sender, EventArgs e)
@@ -370,51 +391,9 @@ namespace HelloClipboard
 
 		private void openToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			if (!(MessagesListBox.SelectedItem is ClipboardItem selected)) return;
-
-			try
+			if (MessagesListBox.SelectedItem is ClipboardItem selected)
 			{
-				// 1. Durum: URL ise
-				if (selected.ItemType == ClipboardItemType.Text && UrlHelper.IsValidUrl(selected.Content))
-				{
-					UrlHelper.OpenUrl(selected.Content);
-				}
-				// 2. Durum: Halihazırda var olan bir Dosya veya Klasör Yolu ise
-				else if (!string.IsNullOrEmpty(selected.Content) && (File.Exists(selected.Content) || Directory.Exists(selected.Content)))
-				{
-					System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(selected.Content)
-					{
-						UseShellExecute = true
-					});
-				}
-				// 3. Durum: Bellekteki bir Resim veya Düz Metin ise
-				else if (selected.ItemType == ClipboardItemType.Image || selected.ItemType == ClipboardItemType.Text)
-				{
-					// ViewModel'deki merkezi isimlendirme metodunu çağırıyoruz (TAM TUTARLILIK BURADA)
-					string tempPath = _viewModel.GetOrCreateTempPath(selected);
-
-					if (selected.ItemType == ClipboardItemType.Image && selected.ImageContent != null)
-					{
-						selected.ImageContent.Save(tempPath, System.Drawing.Imaging.ImageFormat.Png);
-					}
-					else if (selected.ItemType == ClipboardItemType.Text && !string.IsNullOrEmpty(selected.Content))
-					{
-						File.WriteAllText(tempPath, selected.Content, Encoding.UTF8); // Encoding eklendi
-					}
-
-					System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(tempPath)
-					{
-						UseShellExecute = true
-					});
-				}
-				else
-				{
-					MessageBox.Show("This item cannot be opened.", "Open Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-				}
-			}
-			catch (Exception ex)
-			{
-				MessageBox.Show($"An error occurred while opening: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				FileOpener.OpenItem(selected);
 			}
 		}
 
@@ -459,7 +438,7 @@ namespace HelloClipboard
 			saveToolStripMenuItem.Enabled = canSave;
 		}
 
-		private void pictureBox2_Click(object sender, EventArgs e)
+		private void pcbox_clearClipboard_Click(object sender, EventArgs e)
 		{
 			var result = MessageBox.Show("Are you sure you want to clear the clipboard history?", "Clear Clipboard", MessageBoxButtons.YesNo);
 			if (result == DialogResult.Yes) _trayApplicationContext.ClearClipboard();
@@ -515,9 +494,25 @@ namespace HelloClipboard
 
 		public void CheckAndUpdateTopMostImage()
 		{
-			pictureBox3_topMost.Image = this.TopMost ? Properties.Resources.icons8_locked_192px : Properties.Resources.icons8_unlocked_192px;
+			// Resim kaynaklarını projenizdeki ikon isimlerine göre güncelleyin
+			pcbox_topMost.Image = _isLocked
+		? Properties.Resources.icons8_locked_192px
+		: Properties.Resources.icons8_unlocked_192px;
+
+			// Görsel bir geri bildirim için (opsiyonel) Arka plan rengi değişimi
+			pcbox_topMost.BackColor = _isLocked ? Color.LightBlue : Color.Transparent;
 		}
 
+		public void UpdatePrivacyStatusUI()
+		{
+			bool isActive = _trayApplicationContext.IsPrivacyModeActive;
+			// Gizlilik modu için uygun ikonları seçin (Örn: Eye / Eye-off)
+			pcbox_togglePrivacy.Image = isActive ? Properties.Resources.hide_50px : Properties.Resources.eye_50px;
+
+			// Liste kutusunu gizlilik moduna göre tazele (İçerikler maskelensin diye)
+			RefreshCacheView();
+
+		}
 		public void UpdateStatusLabel()
 		{
 			if (toolStripStatusLabel1 == null) return;
@@ -529,18 +524,15 @@ namespace HelloClipboard
 			toolStripStatusLabel1.Text = $"Memory: {memoryCount} | Stored: {storedCount}";
 
 		}
-		private void pictureBox3_topMost_Click(object sender, EventArgs e)
+		private void pcbox_topMost_Click(object sender, EventArgs e)
 		{
-			if (!this.TopMost) this.TopMost = true;
-			else
-			{
-				if (SettingsLoader.Current.AlwaysTopMost)
-				{
-					MessageBox.Show("The 'Always Top Most' setting is enabled in settings.", "Action Not Allowed", MessageBoxButtons.OK, MessageBoxIcon.Information);
-					return;
-				}
-				this.TopMost = false;
-			}
+			// 1. Durumu tersine çevir
+			_isLocked = !_isLocked;
+
+			// 2. Formun TopMost özelliğini kilit durumuna göre ayarla
+			// (Ancak ayarlardan "AlwaysTopMost" açıksa her zaman true kalmalı)
+			this.TopMost = _isLocked || SettingsLoader.Current.AlwaysTopMost;
+
 			CheckAndUpdateTopMostImage();
 		}
 
@@ -567,6 +559,12 @@ namespace HelloClipboard
 			UpdateStatusLabel();
 
 			textBox1_search.Focus();
+		}
+
+		private void pcbox_togglePrivacy_Click(object sender, EventArgs e)
+		{
+			_trayApplicationContext.TogglePrivacyMode();
+			UpdatePrivacyStatusUI();
 		}
 	}
 }

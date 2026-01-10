@@ -47,6 +47,7 @@
 			this.label_privacyDuration = new System.Windows.Forms.Label();
 			this.textBox_privacyDuration = new System.Windows.Forms.TextBox();
 			this.checkBox1_suppressClipboardEvents = new System.Windows.Forms.CheckBox();
+			this.chbox_focusDetailWindow = new System.Windows.Forms.CheckBox();
 			this.SuspendLayout();
 			// 
 			// checkBox1_startWithWindows
@@ -88,7 +89,7 @@
 			// textBox1_maxHistoryCount
 			// 
 			this.textBox1_maxHistoryCount.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.textBox1_maxHistoryCount.Location = new System.Drawing.Point(314, 82);
+			this.textBox1_maxHistoryCount.Location = new System.Drawing.Point(378, 82);
 			this.textBox1_maxHistoryCount.Name = "textBox1_maxHistoryCount";
 			this.textBox1_maxHistoryCount.Size = new System.Drawing.Size(78, 25);
 			this.textBox1_maxHistoryCount.TabIndex = 4;
@@ -101,7 +102,7 @@
 			// 
 			this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(276, 62);
+			this.label1.Location = new System.Drawing.Point(340, 62);
 			this.label1.Name = "label1";
 			this.label1.Size = new System.Drawing.Size(116, 17);
 			this.label1.TabIndex = 5;
@@ -123,9 +124,9 @@
 			// 
 			this.button2_Defaults.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-			this.button2_Defaults.Location = new System.Drawing.Point(10, 354);
+			this.button2_Defaults.Location = new System.Drawing.Point(10, 406);
 			this.button2_Defaults.Name = "button2_Defaults";
-			this.button2_Defaults.Size = new System.Drawing.Size(382, 26);
+			this.button2_Defaults.Size = new System.Drawing.Size(446, 26);
 			this.button2_Defaults.TabIndex = 9;
 			this.button2_Defaults.Text = "Reset to Defaults";
 			this.button2_Defaults.UseVisualStyleBackColor = true;
@@ -207,7 +208,7 @@
 			// 
 			this.label2_hotkey.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label2_hotkey.AutoSize = true;
-			this.label2_hotkey.Location = new System.Drawing.Point(258, 13);
+			this.label2_hotkey.Location = new System.Drawing.Point(322, 13);
 			this.label2_hotkey.Name = "label2_hotkey";
 			this.label2_hotkey.Size = new System.Drawing.Size(134, 17);
 			this.label2_hotkey.TabIndex = 17;
@@ -216,7 +217,7 @@
 			// textBox_hotkey
 			// 
 			this.textBox_hotkey.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.textBox_hotkey.Location = new System.Drawing.Point(224, 33);
+			this.textBox_hotkey.Location = new System.Drawing.Point(288, 33);
 			this.textBox_hotkey.Name = "textBox_hotkey";
 			this.textBox_hotkey.ReadOnly = true;
 			this.textBox_hotkey.Size = new System.Drawing.Size(168, 25);
@@ -238,7 +239,7 @@
 			// 
 			this.label_privacyDuration.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.label_privacyDuration.AutoSize = true;
-			this.label_privacyDuration.Location = new System.Drawing.Point(219, 110);
+			this.label_privacyDuration.Location = new System.Drawing.Point(283, 110);
 			this.label_privacyDuration.Name = "label_privacyDuration";
 			this.label_privacyDuration.Size = new System.Drawing.Size(173, 17);
 			this.label_privacyDuration.TabIndex = 20;
@@ -247,7 +248,7 @@
 			// textBox_privacyDuration
 			// 
 			this.textBox_privacyDuration.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.textBox_privacyDuration.Location = new System.Drawing.Point(314, 130);
+			this.textBox_privacyDuration.Location = new System.Drawing.Point(378, 130);
 			this.textBox_privacyDuration.MaxLength = 2;
 			this.textBox_privacyDuration.Name = "textBox_privacyDuration";
 			this.textBox_privacyDuration.Size = new System.Drawing.Size(78, 25);
@@ -264,11 +265,23 @@
 			this.checkBox1_suppressClipboardEvents.UseVisualStyleBackColor = true;
 			this.checkBox1_suppressClipboardEvents.CheckedChanged += new System.EventHandler(this.checkBox1_suppressClipboardEvents_CheckedChanged);
 			// 
+			// chbox_focusDetailWindow
+			// 
+			this.chbox_focusDetailWindow.AutoSize = true;
+			this.chbox_focusDetailWindow.Location = new System.Drawing.Point(10, 343);
+			this.chbox_focusDetailWindow.Name = "chbox_focusDetailWindow";
+			this.chbox_focusDetailWindow.Size = new System.Drawing.Size(148, 21);
+			this.chbox_focusDetailWindow.TabIndex = 23;
+			this.chbox_focusDetailWindow.Text = "Focus Detail Window";
+			this.chbox_focusDetailWindow.UseVisualStyleBackColor = true;
+			this.chbox_focusDetailWindow.CheckedChanged += new System.EventHandler(this.chbox_focusDetailWindow_CheckedChanged);
+			// 
 			// SettingsForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 17F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(400, 389);
+			this.ClientSize = new System.Drawing.Size(464, 441);
+			this.Controls.Add(this.chbox_focusDetailWindow);
 			this.Controls.Add(this.checkBox1_suppressClipboardEvents);
 			this.Controls.Add(this.textBox_privacyDuration);
 			this.Controls.Add(this.label_privacyDuration);
@@ -292,7 +305,7 @@
 			this.Margin = new System.Windows.Forms.Padding(4);
 			this.MaximizeBox = false;
 			this.MinimizeBox = false;
-			this.MinimumSize = new System.Drawing.Size(376, 428);
+			this.MinimumSize = new System.Drawing.Size(480, 480);
 			this.Name = "SettingsForm";
 			this.ShowIcon = false;
 			this.ShowInTaskbar = false;
@@ -324,5 +337,6 @@
 		private System.Windows.Forms.Label label_privacyDuration;
 		private System.Windows.Forms.TextBox textBox_privacyDuration;
 		private System.Windows.Forms.CheckBox checkBox1_suppressClipboardEvents;
+		private System.Windows.Forms.CheckBox chbox_focusDetailWindow;
 	}
 }

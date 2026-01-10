@@ -40,6 +40,7 @@ namespace HelloClipboard
 			_pendingHotkeyKey = SettingsLoader.Current.HotkeyKey;
 			_pendingHotkeyModifiers = SettingsLoader.Current.HotkeyModifiers;
 			checkBox2_enableTimeStamps.Checked = SettingsLoader.Current.EnableTimeStamps;
+			chbox_focusDetailWindow.Checked = SettingsLoader.Current.FocusDetailWindow;
 			AddSettingEvents();
 
 		}
@@ -112,6 +113,7 @@ namespace HelloClipboard
 			checkBox_enableHotkey.CheckedChanged -= checkBox_enableHotkey_CheckedChanged;
 			textBox_hotkey.KeyDown -= textBox_hotkey_KeyDown;
 			checkBox2_enableTimeStamps.CheckedChanged -= checkBox2_enableTimeStamps_CheckedChanged;
+			chbox_focusDetailWindow.CheckedChanged -= chbox_focusDetailWindow_CheckedChanged;
 		}
 
 		private void AddSettingEvents()
@@ -132,6 +134,7 @@ namespace HelloClipboard
 			checkBox_enableHotkey.CheckedChanged += checkBox_enableHotkey_CheckedChanged;
 			textBox_hotkey.KeyDown += textBox_hotkey_KeyDown;
 			checkBox2_enableTimeStamps.CheckedChanged += checkBox2_enableTimeStamps_CheckedChanged;
+			chbox_focusDetailWindow.CheckedChanged += chbox_focusDetailWindow_CheckedChanged;
 		}
 
 		private async void button2_Defaults_Click(object sender, EventArgs e)
@@ -158,6 +161,7 @@ namespace HelloClipboard
 			textBox_hotkey.Text = FormatHotkey(def.HotkeyModifiers, def.HotkeyKey);
 			textBox_hotkey.Enabled = def.EnableGlobalHotkey;
 			checkBox2_enableTimeStamps.Checked = def.EnableTimeStamps;
+			chbox_focusDetailWindow.Checked = def.FocusDetailWindow;
 			AddSettingEvents();
 
 			SettingsLoader.Current = def;
@@ -403,6 +407,12 @@ namespace HelloClipboard
 			SettingsLoader.Save();
 			// Liste görünümünü anında güncellemek için
 			_mainForm.RefreshCacheView();
+		}
+
+		private void chbox_focusDetailWindow_CheckedChanged(object sender, EventArgs e)
+		{
+			SettingsLoader.Current.FocusDetailWindow = chbox_focusDetailWindow.Checked;
+			SettingsLoader.Save();
 		}
 	}
 }

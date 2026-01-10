@@ -26,5 +26,7 @@ namespace HelloClipboard.Utils
 					return "[Unknown Content]";
 			}
 		}
+
+
 	}
 }

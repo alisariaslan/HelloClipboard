@@ -105,6 +105,16 @@ namespace HelloClipboard.Services
 			targetForm.TopMost = _owner.TopMost;
 
 			if (!targetForm.Visible) targetForm.Show();
+
+			if (SettingsLoader.Current.FocusDetailWindow)
+			{
+				targetForm.Activate(); // Detay penceresini ön plana çıkar ve odakla
+			}
+			else
+			{
+				// Eğer odaklanma istenmiyorsa, MainForm'un odağı kaybetmediğinden emin olalım
+				_owner.Activate();
+			}
 		}
 
 		/// <summary>

@@ -1,48 +1,87 @@
-﻿using System;
+﻿using HelloClipboard.Utils;
+using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace HelloClipboard
 {
 	public static class FileOpener
 	{
-		/// <summary>
-		/// Opens the specified file with the default application.
-		/// </summary>
-		/// <param name="filePath">Full path of the file to open</param>
-		public static void OpenFile(string filePath)
+		public static void OpenItem(ClipboardItem item)
 		{
+			if (item == null) return;
+
 			try
 			{
-				if (!File.Exists(filePath))
+				string content = item.Content?.Trim();
+
+				if (item.ItemType == ClipboardItemType.Text && UrlHelper.IsValidUrl(content))
 				{
-					MessageBox.Show("File not found: " + filePath);
-					return;
+					UrlHelper.OpenUrl(content);
 				}
-
-				ProcessStartInfo psi = new ProcessStartInfo
+				else if (!string.IsNullOrEmpty(content) && (File.Exists(content) || Directory.Exists(content)))
 				{
-					FileName = filePath,
-					UseShellExecute = true
-				};
-
-				Process.Start(psi);
+					OpenPath(content);
+				}
+				else
+				{
+					HandleMemoryContent(item);
+				}
 			}
 			catch (Exception ex)
 			{
-				MessageBox.Show("Failed to open file: " + ex.Message);
+				MessageBox.Show($"General Error: {ex.Message}");
 			}
 		}
 
-		/// <summary>
-		/// Opens a file located in the application's base directory.
-		/// </summary>
-		/// <param name="fileName">File name</param>
-		public static void OpenFileInBaseDir(string fileName)
+		private static void HandleMemoryContent(ClipboardItem item)
 		{
-			string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, fileName);
-			OpenFile(filePath);
+			// Master isimlendirme: HC_[KısaID]_[TemizBaşlık].uzantı
+			string fileName = GetUnifiedFileName(item);
+			string tempPath = Path.Combine(Path.GetTempPath(), fileName);
+
+			try
+			{
+				if (item.ItemType == ClipboardItemType.Image && item.ImageContent != null)
+				{
+					item.ImageContent.Save(tempPath, System.Drawing.Imaging.ImageFormat.Png);
+				}
+				else if (item.ItemType == ClipboardItemType.Text && !string.IsNullOrEmpty(item.Content))
+				{
+					File.WriteAllText(tempPath, item.Content, Encoding.UTF8);
+				}
+
+				if (File.Exists(tempPath))
+				{
+					OpenPath(tempPath);
+				}
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show($"File Write Error: {ex.Message}");
+			}
+		}
+
+		public static void OpenPath(string path)
+		{
+			if (string.IsNullOrEmpty(path)) return;
+			Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+		}
+
+		// BU METOD ViewModel İLE AYNI ÇALIŞMALI
+		public static string GetUnifiedFileName(ClipboardItem item)
+		{
+			string prefix = item.ItemType == ClipboardItemType.Image ? "IMG" : "TXT";
+			string safeTitle = Regex.Replace(item.Title ?? "item", @"[^a-zA-Z0-9]", "");
+			if (safeTitle.Length > 25) safeTitle = safeTitle.Substring(0, 25);
+
+			string extension = item.ItemType == ClipboardItemType.Image ? ".png" : ".txt";
+
+			// Dosya ismi: HC_TXT_TemizBaslik.txt (Açarken ve Kaydederken aynı olması için)
+			return $"HC_{prefix}_{safeTitle}{extension}";
 		}
 	}
 }

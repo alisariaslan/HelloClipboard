@@ -394,7 +394,7 @@ namespace HelloClipboard
 			// Eğer çizim yoksa standart kopyalama yap
 			if (_paths.Count == 0)
 			{
-				_mainForm?.copyToolStripMenuItem_Click(sender, e);
+				_mainForm?.CopyCliked();
 				return;
 			}
 

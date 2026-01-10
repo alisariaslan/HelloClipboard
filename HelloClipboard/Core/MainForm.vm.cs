@@ -75,12 +75,14 @@ namespace HelloClipboard
 		/// <summary>
 		/// Handles the logic when an item is selected to be copied back to the system clipboard.
 		/// </summary>
-		public void CopyClicked(ClipboardItem selectedItem)
+		public void CopyClicked(ClipboardItem selectedItem, bool asObject)
 		{
 			if (selectedItem == null) return;
 
+			// Clipboard dinleyicisini geçici olarak sustur
 			if (SettingsLoader.Current.SuppressClipboardEvents)
 				_trayApplicationContext.SuppressClipboardEvents(true);
+
 			try
 			{
 				DataObject dataObj = new DataObject();
@@ -90,46 +92,65 @@ namespace HelloClipboard
 				{
 					dataObj.SetData(DataFormats.Bitmap, true, selectedItem.ImageContent);
 
+					// Resimlerde asObject her zaman true gibi davranması genellikle daha iyidir 
+					// ama isterseniz bunu da if(asObject) içine alabilirsiniz.
 					try
 					{
-						string tempPath = GetOrCreateTempPath(selectedItem);
+						string tempPath = CreatePathForCopy(selectedItem);
 						selectedItem.ImageContent.Save(tempPath, ImageFormat.Png);
 
 						var fileList = new System.Collections.Specialized.StringCollection { tempPath };
 						dataObj.SetFileDropList(fileList);
 					}
-					catch { /* Log error */ }
+					catch (Exception ex) { /* Log: ex.Message */ }
 
 					Clipboard.SetDataObject(dataObj, true);
 				}
-				// --- DOSYA KOPYALAMA ---
+				// --- DOSYA/YOL KOPYALAMA ---
 				else if (selectedItem.ItemType == ClipboardItemType.Path)
 				{
+					// Yol zaten bir dosya objesi olduğu için direkt FileDropList olarak atanır
 					var fileList = new System.Collections.Specialized.StringCollection { selectedItem.Content };
 					Clipboard.SetFileDropList(fileList);
 				}
 				// --- METİN KOPYALAMA ---
 				else if (!string.IsNullOrEmpty(selectedItem.Content))
 				{
-					dataObj.SetData(DataFormats.UnicodeText, true, selectedItem.Content);
-
-					try
+					if (asObject)
 					{
-						string tempPath = GetOrCreateTempPath(selectedItem);
-						File.WriteAllText(tempPath, selectedItem.Content, Encoding.UTF8);
+						// 1. Veriyi metin formatında ekle (Metin editörleri için)
+						dataObj.SetData(DataFormats.UnicodeText, true, selectedItem.Content);
 
-						var fileList = new System.Collections.Specialized.StringCollection { tempPath };
-						dataObj.SetFileDropList(fileList);
+						// 2. Veriyi dosya formatında ekle (Dosya gezgini için temp dosya oluştur)
+						try
+						{
+							string tempPath = CreatePathForCopy(selectedItem);
+							File.WriteAllText(tempPath, selectedItem.Content, Encoding.UTF8);
+
+							var fileList = new System.Collections.Specialized.StringCollection { tempPath };
+							dataObj.SetFileDropList(fileList);
+						}
+						catch (Exception) { /* Log: ex.Message */ }
+
+						// DataObject olarak (çoklu format) panoya gönder
+						Clipboard.SetDataObject(dataObj, true);
 					}
-					catch { /* Log error */ }
-
-					Clipboard.SetDataObject(dataObj, true);
+					else
+					{
+						// Sadece düz metin olarak kopyala
+						Clipboard.SetText(selectedItem.Content, TextDataFormat.UnicodeText);
+					}
 				}
 			}
 			finally
 			{
+				// İşlem bittikten kısa bir süre sonra dinleyiciyi tekrar aç
 				if (SettingsLoader.Current.SuppressClipboardEvents)
-					Task.Delay(150).ContinueWith(_ => _trayApplicationContext.SuppressClipboardEvents(false));
+				{
+					Task.Delay(150).ContinueWith(_ =>
+						_trayApplicationContext.SuppressClipboardEvents(false)
+					);
+				}
 			}
 		}
 
@@ -282,7 +303,7 @@ namespace HelloClipboard
 		/// </summary>
 		public SaveFileInfo GetSaveFileInfo(ClipboardItem item)
 		{
-			var title = GetOrCreateTempPath(item,true);
+			var title = FileOpener.GetUnifiedFileName(item);
 
 			var info = new SaveFileInfo();
 			switch (item.ItemType)
@@ -306,23 +327,19 @@ namespace HelloClipboard
 			return info;
 		}
 
-		public string GetOrCreateTempPath(ClipboardItem item,bool isSaveOperation = false)
+		public string CreatePathForCopy(ClipboardItem item, bool isSaveOperation = false)
 		{
-			string folder = Path.GetTempPath();
-			string prefix = item.ItemType == ClipboardItemType.Image ? "IMG" : "TXT";
+			// Dosya isimlendirme mantığını tamamen GetUnifiedFileName'e devrediyoruz
+			string fileName = FileOpener.GetUnifiedFileName(item);
 
-			// Başlığı temizle (Geçersiz karakterleri kaldır)
-			string safeTitle = string.Join("_", item.Title.Split(Path.GetInvalidFileNameChars()));
-			if (safeTitle.Length > 30) safeTitle = safeTitle.Substring(0, 30);
-
-			string extension = item.ItemType == ClipboardItemType.Image ? ".png" : ".txt";
-
-			// Format: HC_{Prefix}_{SafeTitle}_{Ticks}.ext
-			string fileName = $"HC_{prefix}_{safeTitle}_{DateTime.Now.Ticks}{extension}";
+			// Eğer sadece dosya ismi (isSaveOperation = true) isteniyorsa direkt döndür,
+			// Değilse Temp klasörüyle yolu birleştir.
 			if (isSaveOperation)
+			{
 				return fileName;
-			else 
-				return Path.Combine(folder, fileName);
+			}
+
+			return Path.Combine(Path.GetTempPath(), fileName);
 		}
 
 		public IEnumerable<ClipboardItem> GetDisplayList(string searchTerm = "")

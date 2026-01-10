@@ -52,8 +52,10 @@ namespace HelloClipboard
 		}
 
 		// --- KLAVYE KISAYOLLARI (Ctrl+A, Ctrl+C) ---
+		// --- KLAVYE KISAYOLLARI VE NAVİGASYON ---
 		protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
 		{
+			// Mevcut Ctrl+A ve Ctrl+C işlemleri
 			if (keyData == (Keys.Control | Keys.A))
 			{
 				SelectAll();
@@ -64,7 +66,62 @@ namespace HelloClipboard
 				CopySelection();
 				return true;
 			}
+
+			// Scroll İşlemleri
+			bool handled = false;
+			int vStep = 1; // Ok tuşları için 1 satır
+			int hStep = 20; // Yatayda 20 piksel
+
+			switch (keyData)
+			{
+				case Keys.Up:
+					ScrollVertical(-vStep);
+					handled = true;
+					break;
+				case Keys.Down:
+					ScrollVertical(vStep);
+					handled = true;
+					break;
+				case Keys.Left:
+					ScrollHorizontal(-hStep);
+					handled = true;
+					break;
+				case Keys.Right:
+					ScrollHorizontal(hStep);
+					handled = true;
+					break;
+				case Keys.PageUp:
+					ScrollVertical(-vScrollBar1.LargeChange);
+					handled = true;
+					break;
+				case Keys.PageDown:
+					ScrollVertical(vScrollBar1.LargeChange);
+					handled = true;
+					break;
+			}
+
+			if (handled)
+			{
+				textDrawPanel.Invalidate();
+				return true;
+			}
+
 			return base.ProcessCmdKey(ref msg, keyData);
+		}
+
+		// Yardımcı metodlar: Scroll değerlerini sınırlar içinde tutar
+		private void ScrollVertical(int delta)
+		{
+			int newVal = vScrollBar1.Value + delta;
+			int max = vScrollBar1.Maximum - vScrollBar1.LargeChange + 1;
+			vScrollBar1.Value = Math.Max(vScrollBar1.Minimum, Math.Min(newVal, Math.Max(0, max)));
+		}
+
+		private void ScrollHorizontal(int delta)
+		{
+			int newVal = hScrollBar1.Value + delta;
+			int max = hScrollBar1.Maximum - hScrollBar1.LargeChange + 1;
+			hScrollBar1.Value = Math.Max(hScrollBar1.Minimum, Math.Min(newVal, Math.Max(0, max)));
 		}
 
 		private void SelectAll()
@@ -326,8 +383,11 @@ namespace HelloClipboard
 			SetupTextMode(item.Content);
 
 		}
-		private void button1_copy_Click(object sender, EventArgs e) => _mainForm?.copyToolStripMenuItem_Click(sender, e);
+		private void btn_copyAsText_Click(object sender, EventArgs e) => _mainForm?.CopyCliked();
 		private void copySelectedTextToolStripMenuItem_Click(object sender, EventArgs e) => CopySelection();
+
+		private void btn_copyAsObject_Click(object sender, EventArgs e) => _mainForm?.CopyCliked(asObject: true);
+
 		private void ContextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e) => e.Cancel = string.IsNullOrEmpty(GetSelectedText());
 
 		protected override void OnFormClosing(FormClosingEventArgs e)
