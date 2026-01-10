@@ -20,6 +20,7 @@ namespace HelloClipboard
 		private FormLayoutManager _layoutManager;
 		private string _currentSearchTerm = string.Empty;
 
+
 		public MainForm(TrayApplicationContext trayApplicationContext)
 		{
 			InitializeComponent();
@@ -43,6 +44,7 @@ namespace HelloClipboard
 			MessagesListBox.Resize += (s, e) => MessagesListBox.Invalidate();
 			MessagesListBox.SelectedIndexChanged += MessagesListBox_SelectedIndexChanged;
 			MessagesListBox.MouseClick += MessagesListBox_MouseClick;
+			MessagesListBox.MouseWheel += MessagesListBox_MouseWheel;
 			// Search Box Events
 			textBox1_search.KeyDown += textBox1_search_KeyDown;
 			textBox1_search.KeyPress += textBox1_search_KeyPress;
@@ -55,6 +57,31 @@ namespace HelloClipboard
 
 		#endregion
 
+		private void MessagesListBox_MouseWheel(object sender, MouseEventArgs e)
+		{
+			// Scroll miktarını kontrol eden kısım (e.Delta)
+			// e.Delta pozitif ise yukarı, negatif ise aşağı scroll demektir.
+			const int ScrollStep = 10; // Atlanacak satır sayısı (Sertlik ayarı)
+
+			// Mevcut pozisyonu al
+			int currentTopIndex = MessagesListBox.TopIndex;
+
+			// Yeni pozisyonu hesapla
+			if (e.Delta > 0) // Yukarı (Geriye doğru) kaydırma
+			{
+				currentTopIndex = Math.Max(0, currentTopIndex - ScrollStep);
+			}
+			else if (e.Delta < 0) // Aşağı (İleriye doğru) kaydırma
+			{
+				currentTopIndex = Math.Min(MessagesListBox.Items.Count - 1, currentTopIndex + ScrollStep);
+			}
+
+			// ListBox'ın kaydırma çubuğunu yeni pozisyona ayarla
+			MessagesListBox.TopIndex = currentTopIndex;
+
+			// Olayı işlendi olarak işaretle (Varsayılan WinForms scroll'unu engeller)
+			((HandledMouseEventArgs)e).Handled = true;
+		}
 
 		public void UpdateDetailWindowKeyPreview(bool focusEnabled)
 		{

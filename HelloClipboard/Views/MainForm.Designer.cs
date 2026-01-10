@@ -84,7 +84,7 @@
 			this.MessagesListBox.Location = new System.Drawing.Point(0, 0);
 			this.MessagesListBox.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
 			this.MessagesListBox.Name = "MessagesListBox";
-			this.MessagesListBox.Size = new System.Drawing.Size(345, 344);
+			this.MessagesListBox.Size = new System.Drawing.Size(345, 327);
 			this.MessagesListBox.TabIndex = 2;
 			// 
 			// contextMenuStrip1
