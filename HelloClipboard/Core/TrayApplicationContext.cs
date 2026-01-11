@@ -207,7 +207,7 @@ namespace HelloClipboard
         private void OnUpdateAvailable(object sender, UpdateInfo e)
         {
             RunOnUI(() => _form.UpdateCheckUpdateNowBtnText("Update Now"));
-            _trayManager.ShowNotification($"{Constants.AppName} Update", $"Version v{e.Version} available.", ToolTipIcon.Info, ShowMainWindow);
+            _trayManager.ShowNotification($"{Constants.AppName} Update", $"Version v{e.Version} ({e.BuildNumber}) available.", ToolTipIcon.Info, ShowMainWindow);
         }
 
         #endregion

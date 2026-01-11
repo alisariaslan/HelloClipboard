@@ -12,7 +12,8 @@ namespace HelloClipboard
 {
     public class UpdateInfo
     {
-        public int Version { get; set; }
+        public int BuildNumber { get; set; }
+        public string Version { get; set; }
         public string Notes { get; set; }
     }
 
@@ -92,7 +93,7 @@ namespace HelloClipboard
                     if (info == null) throw new Exception("Failed to parse update information.");
 
                     SetUpdateDownloadUrl();
-                    var latestBuildNumber = info.Version;
+                    var latestBuildNumber = info.BuildNumber;
                     var currentBuildNumber = AppVersionHelper.GetBuildNumber();
             
                     // Update and save the last check timestamp
