@@ -102,7 +102,7 @@ namespace HelloClipboard
                         var fileList = new System.Collections.Specialized.StringCollection { tempPath };
                         dataObj.SetFileDropList(fileList);
                     }
-                    catch (Exception ex) { /* Log: ex.Message */ }
+                    catch (Exception) { /* Log: ex.Message */ }
 
                     Clipboard.SetDataObject(dataObj, true);
                 }
