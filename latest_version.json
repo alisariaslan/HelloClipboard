@@ -1,4 +1,4 @@
 {
-  "Version": "1.2.4.14",
+  "Version": "1.2.4.15",
   "Notes":"**Release Notes \u2013 Version\u202f14**\n\n\ud83d\ude80 **Features**\n- Enhanced tray notifications with updated service logic, UI improvements, and helper utilities.\n- Added build number to update notifications for clearer version tracking.\n\n\ud83d\udee0\ufe0f **Maintenance & Refactoring**\n- Updated key\u2011generation algorithm and bumped the application version.\n- Tidied codebase indentation and formatting for improved readability.\n- Cleaned up error handling in catch blocks and updated release notes to v14."
 }
