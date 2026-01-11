@@ -12,384 +12,384 @@ using System.Windows.Forms;
 
 namespace HelloClipboard
 {
-	public class MainFormViewModel : IDisposable
-	{
-		private readonly TrayApplicationContext _trayApplicationContext;
+    public class MainFormViewModel : IDisposable
+    {
+        private readonly TrayApplicationContext _trayApplicationContext;
 
-		private bool _useRegexSearch;
-		private bool _caseSensitiveSearch;
+        private bool _useRegexSearch;
+        private bool _caseSensitiveSearch;
 
-		// Properties the Form needs to reference while rendering/drawing
-		public bool CaseSensitive => _caseSensitiveSearch;
+        // Properties the Form needs to reference while rendering/drawing
+        public bool CaseSensitive => _caseSensitiveSearch;
 
-		public MainFormViewModel(TrayApplicationContext trayApplicationContext)
-		{
-			_trayApplicationContext = trayApplicationContext;
-		}
+        public MainFormViewModel(TrayApplicationContext trayApplicationContext)
+        {
+            _trayApplicationContext = trayApplicationContext;
+        }
 
-		/// <summary>
-		/// Configures the search behavior.
-		/// </summary>
-		public void SetSearchOptions(bool useRegex, bool caseSensitive)
-		{
-			_useRegexSearch = useRegex;
-			_caseSensitiveSearch = caseSensitive;
-		}
+        /// <summary>
+        /// Configures the search behavior.
+        /// </summary>
+        public void SetSearchOptions(bool useRegex, bool caseSensitive)
+        {
+            _useRegexSearch = useRegex;
+            _caseSensitiveSearch = caseSensitive;
+        }
 
-		/// <summary>
-		/// Returns a filtered list of clipboard items based on the search term.
-		/// </summary>
-		public IEnumerable<ClipboardItem> GetFilteredItems(string searchTerm)
-		{
-			var cache = _trayApplicationContext.GetClipboardCache();
-			if (string.IsNullOrWhiteSpace(searchTerm)) return cache;
+        /// <summary>
+        /// Returns a filtered list of clipboard items based on the search term.
+        /// </summary>
+        public IEnumerable<ClipboardItem> GetFilteredItems(string searchTerm)
+        {
+            var cache = _trayApplicationContext.GetClipboardCache();
+            if (string.IsNullOrWhiteSpace(searchTerm)) return cache;
 
-			if (_useRegexSearch)
-			{
-				try
-				{
-					var options = _caseSensitiveSearch ? RegexOptions.None : RegexOptions.IgnoreCase;
-					var regex = new Regex(searchTerm, options);
-					return cache.Where(i => i.Content != null && regex.IsMatch(i.Content));
-				}
-				catch { return Enumerable.Empty<ClipboardItem>(); }
-			}
+            if (_useRegexSearch)
+            {
+                try
+                {
+                    var options = _caseSensitiveSearch ? RegexOptions.None : RegexOptions.IgnoreCase;
+                    var regex = new Regex(searchTerm, options);
+                    return cache.Where(i => i.Content != null && regex.IsMatch(i.Content));
+                }
+                catch { return Enumerable.Empty<ClipboardItem>(); }
+            }
 
-			var comparison = _caseSensitiveSearch ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
-			return cache.Where(i => i.Content != null && i.Content.IndexOf(searchTerm, comparison) >= 0);
-		}
+            var comparison = _caseSensitiveSearch ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            return cache.Where(i => i.Content != null && i.Content.IndexOf(searchTerm, comparison) >= 0);
+        }
 
-		/// <summary>
-		/// Generates a Regex object to be used for text highlighting in the UI.
-		/// </summary>
-		public Regex GetHighlightRegex(string searchTerm)
-		{
-			if (!_useRegexSearch || string.IsNullOrWhiteSpace(searchTerm)) return null;
-			try
-			{
-				return new Regex(searchTerm, _caseSensitiveSearch ? RegexOptions.None : RegexOptions.IgnoreCase);
-			}
-			catch { return null; }
-		}
+        /// <summary>
+        /// Generates a Regex object to be used for text highlighting in the UI.
+        /// </summary>
+        public Regex GetHighlightRegex(string searchTerm)
+        {
+            if (!_useRegexSearch || string.IsNullOrWhiteSpace(searchTerm)) return null;
+            try
+            {
+                return new Regex(searchTerm, _caseSensitiveSearch ? RegexOptions.None : RegexOptions.IgnoreCase);
+            }
+            catch { return null; }
+        }
 
-		/// <summary>
-		/// Handles the logic when an item is selected to be copied back to the system clipboard.
-		/// </summary>
-		public void CopyClicked(ClipboardItem selectedItem, bool asObject)
-		{
-			if (selectedItem == null) return;
+        /// <summary>
+        /// Handles the logic when an item is selected to be copied back to the system clipboard.
+        /// </summary>
+        public void CopyClicked(ClipboardItem selectedItem, bool asObject)
+        {
+            if (selectedItem == null) return;
 
-			// Clipboard dinleyicisini geçici olarak sustur
-			if (SettingsLoader.Current.SuppressClipboardEvents)
-				_trayApplicationContext.SuppressClipboardEvents(true);
+            // Clipboard dinleyicisini geçici olarak sustur
+            if (SettingsLoader.Current.SuppressClipboardEvents)
+                _trayApplicationContext.SuppressClipboardEvents(true);
 
-			try
-			{
-				DataObject dataObj = new DataObject();
+            try
+            {
+                DataObject dataObj = new DataObject();
 
-				// --- RESİM KOPYALAMA ---
-				if (selectedItem.ItemType == ClipboardItemType.Image && selectedItem.ImageContent != null)
-				{
-					dataObj.SetData(DataFormats.Bitmap, true, selectedItem.ImageContent);
+                // --- RESİM KOPYALAMA ---
+                if (selectedItem.ItemType == ClipboardItemType.Image && selectedItem.ImageContent != null)
+                {
+                    dataObj.SetData(DataFormats.Bitmap, true, selectedItem.ImageContent);
 
-					// Resimlerde asObject her zaman true gibi davranması genellikle daha iyidir 
-					// ama isterseniz bunu da if(asObject) içine alabilirsiniz.
-					try
-					{
-						string tempPath = CreatePathForCopy(selectedItem);
-						selectedItem.ImageContent.Save(tempPath, ImageFormat.Png);
+                    // Resimlerde asObject her zaman true gibi davranması genellikle daha iyidir 
+                    // ama isterseniz bunu da if(asObject) içine alabilirsiniz.
+                    try
+                    {
+                        string tempPath = CreatePathForCopy(selectedItem);
+                        selectedItem.ImageContent.Save(tempPath, ImageFormat.Png);
 
-						var fileList = new System.Collections.Specialized.StringCollection { tempPath };
-						dataObj.SetFileDropList(fileList);
-					}
-					catch (Exception ex) { /* Log: ex.Message */ }
+                        var fileList = new System.Collections.Specialized.StringCollection { tempPath };
+                        dataObj.SetFileDropList(fileList);
+                    }
+                    catch (Exception ex) { /* Log: ex.Message */ }
 
-					Clipboard.SetDataObject(dataObj, true);
-				}
-				// --- DOSYA/YOL KOPYALAMA ---
-				else if (selectedItem.ItemType == ClipboardItemType.Path)
-				{
-					// Yol zaten bir dosya objesi olduğu için direkt FileDropList olarak atanır
-					var fileList = new System.Collections.Specialized.StringCollection { selectedItem.Content };
-					Clipboard.SetFileDropList(fileList);
-				}
-				// --- METİN KOPYALAMA ---
-				else if (!string.IsNullOrEmpty(selectedItem.Content))
-				{
-					if (asObject)
-					{
-						// 1. Veriyi metin formatında ekle (Metin editörleri için)
-						dataObj.SetData(DataFormats.UnicodeText, true, selectedItem.Content);
+                    Clipboard.SetDataObject(dataObj, true);
+                }
+                // --- DOSYA/YOL KOPYALAMA ---
+                else if (selectedItem.ItemType == ClipboardItemType.Path)
+                {
+                    // Yol zaten bir dosya objesi olduğu için direkt FileDropList olarak atanır
+                    var fileList = new System.Collections.Specialized.StringCollection { selectedItem.Content };
+                    Clipboard.SetFileDropList(fileList);
+                }
+                // --- METİN KOPYALAMA ---
+                else if (!string.IsNullOrEmpty(selectedItem.Content))
+                {
+                    if (asObject)
+                    {
+                        // 1. Veriyi metin formatında ekle (Metin editörleri için)
+                        dataObj.SetData(DataFormats.UnicodeText, true, selectedItem.Content);
 
-						// 2. Veriyi dosya formatında ekle (Dosya gezgini için temp dosya oluştur)
-						try
-						{
-							string tempPath = CreatePathForCopy(selectedItem);
-							File.WriteAllText(tempPath, selectedItem.Content, Encoding.UTF8);
+                        // 2. Veriyi dosya formatında ekle (Dosya gezgini için temp dosya oluştur)
+                        try
+                        {
+                            string tempPath = CreatePathForCopy(selectedItem);
+                            File.WriteAllText(tempPath, selectedItem.Content, Encoding.UTF8);
 
-							var fileList = new System.Collections.Specialized.StringCollection { tempPath };
-							dataObj.SetFileDropList(fileList);
-						}
-						catch (Exception) { /* Log: ex.Message */ }
+                            var fileList = new System.Collections.Specialized.StringCollection { tempPath };
+                            dataObj.SetFileDropList(fileList);
+                        }
+                        catch (Exception) { /* Log: ex.Message */ }
 
-						// DataObject olarak (çoklu format) panoya gönder
-						Clipboard.SetDataObject(dataObj, true);
-					}
-					else
-					{
-						// Sadece düz metin olarak kopyala
-						Clipboard.SetText(selectedItem.Content, TextDataFormat.UnicodeText);
-					}
-				}
-			}
-			finally
-			{
-				// İşlem bittikten kısa bir süre sonra dinleyiciyi tekrar aç
-				if (SettingsLoader.Current.SuppressClipboardEvents)
-				{
-					Task.Delay(150).ContinueWith(_ =>
-						_trayApplicationContext.SuppressClipboardEvents(false)
-					);
-				}
-			}
-		}
+                        // DataObject olarak (çoklu format) panoya gönder
+                        Clipboard.SetDataObject(dataObj, true);
+                    }
+                    else
+                    {
+                        // Sadece düz metin olarak kopyala
+                        Clipboard.SetText(selectedItem.Content, TextDataFormat.UnicodeText);
+                    }
+                }
+            }
+            finally
+            {
+                // İşlem bittikten kısa bir süre sonra dinleyiciyi tekrar aç
+                if (SettingsLoader.Current.SuppressClipboardEvents)
+                {
+                    Task.Delay(150).ContinueWith(_ =>
+                        _trayApplicationContext.SuppressClipboardEvents(false)
+                    );
+                }
+            }
+        }
 
-		/// <summary>
-		/// Toggles the pinned status of an item and persists the change to configuration.
-		/// </summary>
-		public bool TogglePin(ClipboardItem item)
-		{
-			if (item == null || string.IsNullOrEmpty(item.Id)) return false;
+        /// <summary>
+        /// Toggles the pinned status of an item and persists the change to configuration.
+        /// </summary>
+        public bool TogglePin(ClipboardItem item)
+        {
+            if (item == null || string.IsNullOrEmpty(item.Id)) return false;
 
-			item.IsPinned = !item.IsPinned;
+            item.IsPinned = !item.IsPinned;
 
-			if (item.IsPinned)
-			{
-				if (!TempConfigLoader.Current.PinnedHashes.Contains(item.Id))
-					TempConfigLoader.Current.PinnedHashes.Add(item.Id);
-			}
-			else
-			{
-				TempConfigLoader.Current.PinnedHashes.Remove(item.Id);
-			}
+            if (item.IsPinned)
+            {
+                if (!TempConfigLoader.Current.PinnedHashes.Contains(item.Id))
+                    TempConfigLoader.Current.PinnedHashes.Add(item.Id);
+            }
+            else
+            {
+                TempConfigLoader.Current.PinnedHashes.Remove(item.Id);
+            }
 
-			TempConfigLoader.Save();
-			return item.IsPinned;
-		}
+            TempConfigLoader.Save();
+            return item.IsPinned;
+        }
 
-		/// <summary>
-		/// Saves the clipboard item content (Image, File, or Text) to a specific disk location.
-		/// </summary>
-		public void SaveItemToDisk(ClipboardItem item, string targetPath)
-		{
-			if (item == null || string.IsNullOrEmpty(targetPath)) return;
+        /// <summary>
+        /// Saves the clipboard item content (Image, File, or Text) to a specific disk location.
+        /// </summary>
+        public void SaveItemToDisk(ClipboardItem item, string targetPath)
+        {
+            if (item == null || string.IsNullOrEmpty(targetPath)) return;
 
-			if (item.ItemType == ClipboardItemType.Image && item.ImageContent != null)
-			{
-				var ext = Path.GetExtension(targetPath)?.ToLowerInvariant();
-				var format = ImageFormat.Png; // Default format
-				if (ext == ".jpg" || ext == ".jpeg") format = ImageFormat.Jpeg;
-				else if (ext == ".bmp") format = ImageFormat.Bmp;
+            if (item.ItemType == ClipboardItemType.Image && item.ImageContent != null)
+            {
+                var ext = Path.GetExtension(targetPath)?.ToLowerInvariant();
+                var format = ImageFormat.Png; // Default format
+                if (ext == ".jpg" || ext == ".jpeg") format = ImageFormat.Jpeg;
+                else if (ext == ".bmp") format = ImageFormat.Bmp;
 
-				item.ImageContent.Save(targetPath, format);
-			}
-			else if (item.ItemType == ClipboardItemType.Path)
-			{
-				if (File.Exists(item.Content))
-				{
-					File.Copy(item.Content, targetPath, true);
-				}
-			}
-			else // Text items
-			{
-				File.WriteAllText(targetPath, item.Content ?? string.Empty, Encoding.UTF8);
-			}
-		}
+                item.ImageContent.Save(targetPath, format);
+            }
+            else if (item.ItemType == ClipboardItemType.Path)
+            {
+                if (File.Exists(item.Content))
+                {
+                    File.Copy(item.Content, targetPath, true);
+                }
+            }
+            else // Text items
+            {
+                File.WriteAllText(targetPath, item.Content ?? string.Empty, Encoding.UTF8);
+            }
+        }
 
-		/// <summary>
-		/// Calculates the correct UI insertion index based on pinning and sort order settings.
-		/// </summary>
-		public int GetInsertionIndex(ClipboardItem item, int currentItemCount, Func<int, ClipboardItem> getItemAt)
-		{
-			bool invert = SettingsLoader.Current.InvertClipboardHistoryListing;
+        /// <summary>
+        /// Calculates the correct UI insertion index based on pinning and sort order settings.
+        /// </summary>
+        public int GetInsertionIndex(ClipboardItem item, int currentItemCount, Func<int, ClipboardItem> getItemAt)
+        {
+            bool invert = SettingsLoader.Current.InvertClipboardHistoryListing;
 
-			if (item.IsPinned)
-			{
-				if (invert) return 0; 
+            if (item.IsPinned)
+            {
+                if (invert) return 0;
 
-				return currentItemCount;
-			}
+                return currentItemCount;
+            }
 
-			int pinnedCount = 0;
-			List<ClipboardItem> unpinnedItems = new List<ClipboardItem>();
+            int pinnedCount = 0;
+            List<ClipboardItem> unpinnedItems = new List<ClipboardItem>();
 
-			for (int i = 0; i < currentItemCount; i++)
-			{
-				var current = getItemAt(i);
-				if (current == null) continue;
+            for (int i = 0; i < currentItemCount; i++)
+            {
+                var current = getItemAt(i);
+                if (current == null) continue;
 
-				if (current.IsPinned) pinnedCount++;
-				else unpinnedItems.Add(current);
-			}
+                if (current.IsPinned) pinnedCount++;
+                else unpinnedItems.Add(current);
+            }
 
-			int indexInUnpinned = 0;
-			foreach (var existingUnpinned in unpinnedItems)
-			{
-				if (invert)
-				{
-					if (item.Timestamp > existingUnpinned.Timestamp) break;
-				}
-				else
-				{
-					if (item.Timestamp < existingUnpinned.Timestamp) break;
-				}
-				indexInUnpinned++;
-			}
+            int indexInUnpinned = 0;
+            foreach (var existingUnpinned in unpinnedItems)
+            {
+                if (invert)
+                {
+                    if (item.Timestamp > existingUnpinned.Timestamp) break;
+                }
+                else
+                {
+                    if (item.Timestamp < existingUnpinned.Timestamp) break;
+                }
+                indexInUnpinned++;
+            }
 
-			if (invert)
-			{
-				return pinnedCount + indexInUnpinned;
-			}
-			else
-			{
-				return indexInUnpinned;
-			}
-		}
+            if (invert)
+            {
+                return pinnedCount + indexInUnpinned;
+            }
+            else
+            {
+                return indexInUnpinned;
+            }
+        }
 
-		public int GetVisualInsertionIndex(ClipboardItem item, ListBox.ObjectCollection items)
-		{
-			// Pin'leme işlemi değiştiğinde elemanın yeni yerini bulur
-			return GetInsertionIndex(item, items.Count, (i) => items[i] as ClipboardItem);
-		}
+        public int GetVisualInsertionIndex(ClipboardItem item, ListBox.ObjectCollection items)
+        {
+            // Pin'leme işlemi değiştiğinde elemanın yeni yerini bulur
+            return GetInsertionIndex(item, items.Count, (i) => items[i] as ClipboardItem);
+        }
 
 
-		// 1 & 3. Index Calculation for Deletion and Insertion
-		/// <summary>
-		/// Determines which unpinned item should be removed when the history limit is reached.
-		/// </summary>
-		public int GetIndexToRemove(IEnumerable<ClipboardItem> currentItems)
-		{
-			var items = currentItems.ToList();
-			if (items.Count == 0) return -1;
+        // 1 & 3. Index Calculation for Deletion and Insertion
+        /// <summary>
+        /// Determines which unpinned item should be removed when the history limit is reached.
+        /// </summary>
+        public int GetIndexToRemove(IEnumerable<ClipboardItem> currentItems)
+        {
+            var items = currentItems.ToList();
+            if (items.Count == 0) return -1;
 
-			if (SettingsLoader.Current.InvertClipboardHistoryListing)
-			{
-				// For inverted listing (newest on top), find the last (oldest) unpinned item
-				for (int i = items.Count - 1; i >= 0; i--)
-				{
-					if (!items[i].IsPinned) return i;
-				}
-			}
-			else
-			{
-				// For normal listing, find the first unpinned item
-				for (int i = 0; i < items.Count; i++)
-				{
-					if (!items[i].IsPinned) return i;
-				}
-			}
-			return -1;
-		}
+            if (SettingsLoader.Current.InvertClipboardHistoryListing)
+            {
+                // For inverted listing (newest on top), find the last (oldest) unpinned item
+                for (int i = items.Count - 1; i >= 0; i--)
+                {
+                    if (!items[i].IsPinned) return i;
+                }
+            }
+            else
+            {
+                // For normal listing, find the first unpinned item
+                for (int i = 0; i < items.Count; i++)
+                {
+                    if (!items[i].IsPinned) return i;
+                }
+            }
+            return -1;
+        }
 
-		// 2. URL and Menu State Validation
-		public bool IsValidUrl(string content)
-		{
-			return !string.IsNullOrWhiteSpace(content) && UrlHelper.IsValidUrl(content);
-		}
+        // 2. URL and Menu State Validation
+        public bool IsValidUrl(string content)
+        {
+            return !string.IsNullOrWhiteSpace(content) && UrlHelper.IsValidUrl(content);
+        }
 
-		// 5. SaveDialog Filename and Filter Generation
-		/// <summary>
-		/// Prepares metadata for the Save File Dialog based on the item type.
-		/// </summary>
-		public SaveFileInfo GetSaveFileInfo(ClipboardItem item)
-		{
-			var title = FileOpener.GetUnifiedFileName(item);
+        // 5. SaveDialog Filename and Filter Generation
+        /// <summary>
+        /// Prepares metadata for the Save File Dialog based on the item type.
+        /// </summary>
+        public SaveFileInfo GetSaveFileInfo(ClipboardItem item)
+        {
+            var title = FileOpener.GetUnifiedFileName(item);
 
-			var info = new SaveFileInfo();
-			switch (item.ItemType)
-			{
-				case ClipboardItemType.Image:
-					info.Title = "Save Image";
-					info.Filter = "PNG Image|*.png|JPEG Image|*.jpg|Bitmap Image|*.bmp";
-					info.FileName = title;
-					break;
-				case ClipboardItemType.Path:
-					info.Title = "Save File As";
-					info.FileName = !string.IsNullOrEmpty(item.Content) ? Path.GetFileName(item.Content) : "unknown_file";
-					info.Filter = "All files|*.*";
-					break;
-				default:
-					info.Title = "Save Text";
-					info.Filter = "Text File|*.txt|All files|*.*";
-					info.FileName = title;
-					break;
-			}
-			return info;
-		}
+            var info = new SaveFileInfo();
+            switch (item.ItemType)
+            {
+                case ClipboardItemType.Image:
+                    info.Title = "Save Image";
+                    info.Filter = "PNG Image|*.png|JPEG Image|*.jpg|Bitmap Image|*.bmp";
+                    info.FileName = title;
+                    break;
+                case ClipboardItemType.Path:
+                    info.Title = "Save File As";
+                    info.FileName = !string.IsNullOrEmpty(item.Content) ? Path.GetFileName(item.Content) : "unknown_file";
+                    info.Filter = "All files|*.*";
+                    break;
+                default:
+                    info.Title = "Save Text";
+                    info.Filter = "Text File|*.txt|All files|*.*";
+                    info.FileName = title;
+                    break;
+            }
+            return info;
+        }
 
-		public string CreatePathForCopy(ClipboardItem item, bool isSaveOperation = false)
-		{
-			// Dosya isimlendirme mantığını tamamen GetUnifiedFileName'e devrediyoruz
-			string fileName = FileOpener.GetUnifiedFileName(item);
+        public string CreatePathForCopy(ClipboardItem item, bool isSaveOperation = false)
+        {
+            // Dosya isimlendirme mantığını tamamen GetUnifiedFileName'e devrediyoruz
+            string fileName = FileOpener.GetUnifiedFileName(item);
 
-			// Eğer sadece dosya ismi (isSaveOperation = true) isteniyorsa direkt döndür,
-			// Değilse Temp klasörüyle yolu birleştir.
-			if (isSaveOperation)
-			{
-				return fileName;
-			}
+            // Eğer sadece dosya ismi (isSaveOperation = true) isteniyorsa direkt döndür,
+            // Değilse Temp klasörüyle yolu birleştir.
+            if (isSaveOperation)
+            {
+                return fileName;
+            }
 
-			return Path.Combine(Path.GetTempPath(), fileName);
-		}
+            return Path.Combine(Path.GetTempPath(), fileName);
+        }
 
-		public IEnumerable<ClipboardItem> GetDisplayList(string searchTerm = "")
-		{
-			var cache = _trayApplicationContext.GetClipboardCache();
-			bool invert = SettingsLoader.Current.InvertClipboardHistoryListing;
+        public IEnumerable<ClipboardItem> GetDisplayList(string searchTerm = "")
+        {
+            var cache = _trayApplicationContext.GetClipboardCache();
+            bool invert = SettingsLoader.Current.InvertClipboardHistoryListing;
 
-			var filtered = string.IsNullOrWhiteSpace(searchTerm)
-				? cache
-				: GetFilteredItems(searchTerm);
+            var filtered = string.IsNullOrWhiteSpace(searchTerm)
+                ? cache
+                : GetFilteredItems(searchTerm);
 
-			var pinned = filtered.Where(i => i.IsPinned);
-			var unpinned = filtered.Where(i => !i.IsPinned);
+            var pinned = filtered.Where(i => i.IsPinned);
+            var unpinned = filtered.Where(i => !i.IsPinned);
 
-			if (invert)
-			{
-				// [Pinned] -> [Unpinned]
-				var pinnedSorted = pinned.OrderByDescending(i => i.Timestamp);
-				var unpinnedSorted = unpinned.OrderByDescending(i => i.Timestamp);
-				return pinnedSorted.Concat(unpinnedSorted);
-			}
-			else
-			{
-				//  [Unpinned] -> [Pinned]
-				var pinnedSorted = pinned.OrderBy(i => i.Timestamp);
-				var unpinnedSorted = unpinned.OrderBy(i => i.Timestamp);
-				return unpinnedSorted.Concat(pinnedSorted);
-			}
-		}
+            if (invert)
+            {
+                // [Pinned] -> [Unpinned]
+                var pinnedSorted = pinned.OrderByDescending(i => i.Timestamp);
+                var unpinnedSorted = unpinned.OrderByDescending(i => i.Timestamp);
+                return pinnedSorted.Concat(unpinnedSorted);
+            }
+            else
+            {
+                //  [Unpinned] -> [Pinned]
+                var pinnedSorted = pinned.OrderBy(i => i.Timestamp);
+                var unpinnedSorted = unpinned.OrderBy(i => i.Timestamp);
+                return unpinnedSorted.Concat(pinnedSorted);
+            }
+        }
 
-		public void DeleteItem(ClipboardItem item)
-		{
-			if (item == null) return;
+        public void DeleteItem(ClipboardItem item)
+        {
+            if (item == null) return;
 
-			// 1. Pinned (İğnelenmiş) durumunu kontrol et ve temizle
-			if (item.IsPinned)
-			{
-				TempConfigLoader.Current.PinnedHashes.Remove(item.Id);
-				TempConfigLoader.Save();
-			}
+            // 1. Pinned (İğnelenmiş) durumunu kontrol et ve temizle
+            if (item.IsPinned)
+            {
+                TempConfigLoader.Current.PinnedHashes.Remove(item.Id);
+                TempConfigLoader.Save();
+            }
 
-			// 2. Tray üzerinden monitor'e ulaşıp asıl silme işlemini yap
-			// Not: TrayAppContext içinde ClipboardMonitor'ü public bir property 
-			// veya doğrudan silme metodunu köprü olarak sunmak gerekebilir.
-			_trayApplicationContext.RequestDeletion(item);
-		}
+            // 2. Tray üzerinden monitor'e ulaşıp asıl silme işlemini yap
+            // Not: TrayAppContext içinde ClipboardMonitor'ü public bir property 
+            // veya doğrudan silme metodunu köprü olarak sunmak gerekebilir.
+            _trayApplicationContext.RequestDeletion(item);
+        }
 
-		public void Dispose()
-		{
-			// Clean up resources if necessary
-		}
-	}
+        public void Dispose()
+        {
+            // Clean up resources if necessary
+        }
+    }
 }

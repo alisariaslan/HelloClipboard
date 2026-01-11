@@ -3,31 +3,31 @@ using System.IO;
 
 namespace HelloClipboard
 {
-	public static class Constants
-	{
-		public static readonly string AppName = "HelloClipboard";
+    public static class Constants
+    {
+        public static readonly string AppName = "HelloClipboard";
 
-		public static readonly string AppBaseDir = AppDomain.CurrentDomain.BaseDirectory;
+        public static readonly string AppBaseDir = AppDomain.CurrentDomain.BaseDirectory;
 
-		public static readonly string UserDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppName);
+        public static readonly string UserDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppName);
 
-		public static readonly string HistoryDirectory = Path.Combine(UserDataDir, "ClipboardHistory");
+        public static readonly string HistoryDirectory = Path.Combine(UserDataDir, "ClipboardHistory");
 
-		public static readonly string RegistryKeyPath = @"Software\HelloClipboard";
+        public static readonly string RegistryKeyPath = @"Software\HelloClipboard";
 
-		public static readonly string RegistryKeyValueName = "AppSecret";
+        public static readonly string RegistryKeyValueName = "AppSecret";
 
-		public static readonly TimeSpan ApplicationUpdateInterval = TimeSpan.FromHours(2);
-		
-		public const int MaxDetailFormTitleLength = 15;
+        public static readonly TimeSpan ApplicationUpdateInterval = TimeSpan.FromHours(2);
 
-		private const string _appSettingsFileName = "settings.json";
-		private const string _tempConfigsFileName = "tempconfigs.json";
+        public const int MaxDetailFormTitleLength = 15;
 
-		public static string AppSettingsPath => Path.Combine(UserDataDir, _appSettingsFileName);
-		public static string TempConfigsPath => Path.Combine(UserDataDir, _tempConfigsFileName);
+        private const string _appSettingsFileName = "settings.json";
+        private const string _tempConfigsFileName = "tempconfigs.json";
 
-		public static string AppSettingsFileName => _appSettingsFileName;
-		public static string TempConfigsFileName => _tempConfigsFileName;
-	}
+        public static string AppSettingsPath => Path.Combine(UserDataDir, _appSettingsFileName);
+        public static string TempConfigsPath => Path.Combine(UserDataDir, _tempConfigsFileName);
+
+        public static string AppSettingsFileName => _appSettingsFileName;
+        public static string TempConfigsFileName => _tempConfigsFileName;
+    }
 }

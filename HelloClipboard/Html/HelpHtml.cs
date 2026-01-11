@@ -1,14 +1,14 @@
 ﻿namespace HelloClipboard.Html
 {
-	internal class HelpHtml
-	{
-		public static string GetTitle()
-		{
-			return "Help - HelloClipboard";
-		}
-		public static string GetHtml(float fontsize = 12)
-		{
-			string helpHtml = $@"
+    internal class HelpHtml
+    {
+        public static string GetTitle()
+        {
+            return "Help - HelloClipboard";
+        }
+        public static string GetHtml(float fontsize = 12)
+        {
+            string helpHtml = $@"
 <!doctype html>
 <html>
 <head>
@@ -35,7 +35,7 @@
   <p>GitHub: <a href='https://github.com/alisariaslan/HelloClipboard' target='_blank'>https://github.com/alisariaslan/HelloClipboard</a></p>
 </body>
 </html>";
-			return helpHtml;
-		}
-	}
+            return helpHtml;
+        }
+    }
 }

@@ -8,186 +8,186 @@ using System.Text;
 
 namespace HelloClipboard
 {
-	public class HistoryHelper
-	{
-		private readonly int _maxHistoryCount;
+    public class HistoryHelper
+    {
+        private readonly int _maxHistoryCount;
 
-		public HistoryHelper()
-		{
-			_maxHistoryCount = SettingsLoader.Current.MaxHistoryCount;
-		}
+        public HistoryHelper()
+        {
+            _maxHistoryCount = SettingsLoader.Current.MaxHistoryCount;
+        }
 
-		public void ClearAllHistoryFiles()
-		{
-			string historyDir = Constants.HistoryDirectory;
-			if (!Directory.Exists(historyDir)) return;
+        public void ClearAllHistoryFiles()
+        {
+            string historyDir = Constants.HistoryDirectory;
+            if (!Directory.Exists(historyDir)) return;
 
-			try
-			{
-				var files = Directory.GetFiles(historyDir);
-				foreach (var file in files)
-				{
-					if (Path.GetFileName(file).Equals("secret.key", StringComparison.OrdinalIgnoreCase))
-						continue;
+            try
+            {
+                var files = Directory.GetFiles(historyDir);
+                foreach (var file in files)
+                {
+                    if (Path.GetFileName(file).Equals("secret.key", StringComparison.OrdinalIgnoreCase))
+                        continue;
 
-					File.Delete(file);
-				}
-			}
-			catch (Exception ex)
-			{
-				System.Diagnostics.Debug.WriteLine($"Error occured when cleaning history files: {ex.Message}");
-			}
+                    File.Delete(file);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error occured when cleaning history files: {ex.Message}");
+            }
 
-		}
-		public void SaveItemToHistoryFile(ClipboardItem item)
-		{
-			if (string.IsNullOrEmpty(item.Id)) return;
+        }
+        public void SaveItemToHistoryFile(ClipboardItem item)
+        {
+            if (string.IsNullOrEmpty(item.Id)) return;
 
-			string historyDir = Constants.HistoryDirectory;
-			if (!Directory.Exists(historyDir)) Directory.CreateDirectory(historyDir);
+            string historyDir = Constants.HistoryDirectory;
+            if (!Directory.Exists(historyDir)) Directory.CreateDirectory(historyDir);
 
-			string extension = FileExtensionHelper.GetFileExtension(item.ItemType);
-		
-			string filePath = Path.Combine(historyDir, item.Id + extension);
+            string extension = FileExtensionHelper.GetFileExtension(item.ItemType);
 
-			if (File.Exists(filePath)) return;
-			try
-			{
-				byte[] rawData = null;
-				if (item.ItemType == ClipboardItemType.Text || item.ItemType == ClipboardItemType.Path)
-					rawData = Encoding.UTF8.GetBytes(item.Content);
-				else if (item.ItemType == ClipboardItemType.Image && item.ImageContent != null)
-				{
-					using (var ms = new MemoryStream())
-					{
-						item.ImageContent.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-						rawData = ms.ToArray();
-					}
-				}
+            string filePath = Path.Combine(historyDir, item.Id + extension);
 
-				if (rawData != null)
-				{
-					byte[] encryptedData = CryptoHelper.Encrypt(rawData);
-					File.WriteAllBytes(filePath, encryptedData);
-				}
-			}
-			catch (Exception) { /* Debug.WriteLine(ex.Message); */ }
-		}
+            if (File.Exists(filePath)) return;
+            try
+            {
+                byte[] rawData = null;
+                if (item.ItemType == ClipboardItemType.Text || item.ItemType == ClipboardItemType.Path)
+                    rawData = Encoding.UTF8.GetBytes(item.Content);
+                else if (item.ItemType == ClipboardItemType.Image && item.ImageContent != null)
+                {
+                    using (var ms = new MemoryStream())
+                    {
+                        item.ImageContent.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                        rawData = ms.ToArray();
+                    }
+                }
 
-		public void DeleteItemFromFile(string id) 
-		{
-			if (string.IsNullOrWhiteSpace(id)) return;
-			string historyDir = Constants.HistoryDirectory;
-			try
-			{
-				var filesToDelete = Directory.GetFiles(historyDir, id + ".*");
-				foreach (var file in filesToDelete) File.Delete(file);
-			}
-			catch (Exception) { /* Debug.WriteLine(ex.Message); */ }
-		}
+                if (rawData != null)
+                {
+                    byte[] encryptedData = CryptoHelper.Encrypt(rawData);
+                    File.WriteAllBytes(filePath, encryptedData);
+                }
+            }
+            catch (Exception) { /* Debug.WriteLine(ex.Message); */ }
+        }
 
-		public List<ClipboardItem> LoadHistoryFromFiles()
-		{
-			string historyDir = Constants.HistoryDirectory;
-			if (!Directory.Exists(historyDir)) return new List<ClipboardItem>();
+        public void DeleteItemFromFile(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id)) return;
+            string historyDir = Constants.HistoryDirectory;
+            try
+            {
+                var filesToDelete = Directory.GetFiles(historyDir, id + ".*");
+                foreach (var file in filesToDelete) File.Delete(file);
+            }
+            catch (Exception) { /* Debug.WriteLine(ex.Message); */ }
+        }
 
-			EnforceDiskLimitOnDisk(historyDir);
+        public List<ClipboardItem> LoadHistoryFromFiles()
+        {
+            string historyDir = Constants.HistoryDirectory;
+            if (!Directory.Exists(historyDir)) return new List<ClipboardItem>();
 
-			var loadedCache = new List<ClipboardItem>();
-		
+            EnforceDiskLimitOnDisk(historyDir);
 
-			var files = Directory.GetFiles(historyDir)
-							 .Select(f => new FileInfo(f))
-							 .OrderBy(f => f.LastWriteTime)
-							 .ToList();
-
-			foreach (var fileInfo in files)
-			{
-				if (fileInfo.Name.Equals("secret.key", StringComparison.OrdinalIgnoreCase)) continue;
-
-				string fileName = Path.GetFileNameWithoutExtension(fileInfo.Name);
-				string extension = Path.GetExtension(fileInfo.Name);
-				ClipboardItemType type = FileExtensionHelper.GetItemTypeFromExtension(extension);
-
-				try
-				{
-					byte[] decryptedBytes = CryptoHelper.Decrypt(File.ReadAllBytes(fileInfo.FullName));
-					if (decryptedBytes == null) continue;
-
-					string content = null;
-					Image imageContent = null;
-
-					if (type == ClipboardItemType.Text || type == ClipboardItemType.Path)
-					{
-						content = Encoding.UTF8.GetString(decryptedBytes);
-					}
-					else
-					{
-						using (var ms = new MemoryStream(decryptedBytes)) imageContent = Image.FromStream(ms);
-					}
+            var loadedCache = new List<ClipboardItem>();
 
 
-					string newTitle = TitleHelper.Generate(type, content);
+            var files = Directory.GetFiles(historyDir)
+                             .Select(f => new FileInfo(f))
+                             .OrderBy(f => f.LastWriteTime)
+                             .ToList();
 
-					string hashPart = fileName.Contains("_") ? fileName.Split('_')[1] : fileName;
+            foreach (var fileInfo in files)
+            {
+                if (fileInfo.Name.Equals("secret.key", StringComparison.OrdinalIgnoreCase)) continue;
 
-					var item = new ClipboardItem(type, content, newTitle, imageContent, hashPart);
-					item.Id = fileName;
-					item.Timestamp = fileInfo.LastWriteTime;
-					loadedCache.Add(item);
-				}
-				catch { try { File.Delete(fileInfo.FullName); } catch { } }
-			}
-			return loadedCache;
-		}
+                string fileName = Path.GetFileNameWithoutExtension(fileInfo.Name);
+                string extension = Path.GetExtension(fileInfo.Name);
+                ClipboardItemType type = FileExtensionHelper.GetItemTypeFromExtension(extension);
+
+                try
+                {
+                    byte[] decryptedBytes = CryptoHelper.Decrypt(File.ReadAllBytes(fileInfo.FullName));
+                    if (decryptedBytes == null) continue;
+
+                    string content = null;
+                    Image imageContent = null;
+
+                    if (type == ClipboardItemType.Text || type == ClipboardItemType.Path)
+                    {
+                        content = Encoding.UTF8.GetString(decryptedBytes);
+                    }
+                    else
+                    {
+                        using (var ms = new MemoryStream(decryptedBytes)) imageContent = Image.FromStream(ms);
+                    }
 
 
-		public int GetStoredItemCount()
-		{
-			string historyDir = Constants.HistoryDirectory;
-			if (!Directory.Exists(historyDir)) return 0;
+                    string newTitle = TitleHelper.Generate(type, content);
 
-			// secret.key dosyası hariç diğer dosyaları say
-			return Directory.GetFiles(historyDir)
-							.Count(f => !Path.GetFileName(f).Equals("secret.key", StringComparison.OrdinalIgnoreCase));
-		}
+                    string hashPart = fileName.Contains("_") ? fileName.Split('_')[1] : fileName;
 
-		private void EnforceDiskLimitOnDisk(string historyDir)
-		{
-			try
-			{
-				var pinnedIds = TempConfigLoader.Current.PinnedHashes;
+                    var item = new ClipboardItem(type, content, newTitle, imageContent, hashPart);
+                    item.Id = fileName;
+                    item.Timestamp = fileInfo.LastWriteTime;
+                    loadedCache.Add(item);
+                }
+                catch { try { File.Delete(fileInfo.FullName); } catch { } }
+            }
+            return loadedCache;
+        }
 
-				var unpinnedFiles = Directory.GetFiles(historyDir)
-					.Select(f => new FileInfo(f))
-					.Where(f => !f.Name.Equals("secret.key", StringComparison.OrdinalIgnoreCase))
-					.Where(f => !pinnedIds.Contains(Path.GetFileNameWithoutExtension(f.Name)))
-					.OrderBy(f => f.LastWriteTime) 
-					.ToList();
 
-				if (unpinnedFiles.Count > _maxHistoryCount)
-				{
-					int toDeleteCount = unpinnedFiles.Count - _maxHistoryCount;
+        public int GetStoredItemCount()
+        {
+            string historyDir = Constants.HistoryDirectory;
+            if (!Directory.Exists(historyDir)) return 0;
 
-					for (int i = 0; i < toDeleteCount; i++)
-					{
-						try
-						{
-							unpinnedFiles[i].Delete();
-						}
-						catch { /* Skip */ }
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				System.Diagnostics.Debug.WriteLine($"Error occured when startup cleaning: {ex.Message}");
-			}
-		}
+            // secret.key dosyası hariç diğer dosyaları say
+            return Directory.GetFiles(historyDir)
+                            .Count(f => !Path.GetFileName(f).Equals("secret.key", StringComparison.OrdinalIgnoreCase));
+        }
 
-	
+        private void EnforceDiskLimitOnDisk(string historyDir)
+        {
+            try
+            {
+                var pinnedIds = TempConfigLoader.Current.PinnedHashes;
 
-	
+                var unpinnedFiles = Directory.GetFiles(historyDir)
+                    .Select(f => new FileInfo(f))
+                    .Where(f => !f.Name.Equals("secret.key", StringComparison.OrdinalIgnoreCase))
+                    .Where(f => !pinnedIds.Contains(Path.GetFileNameWithoutExtension(f.Name)))
+                    .OrderBy(f => f.LastWriteTime)
+                    .ToList();
 
-	}
+                if (unpinnedFiles.Count > _maxHistoryCount)
+                {
+                    int toDeleteCount = unpinnedFiles.Count - _maxHistoryCount;
+
+                    for (int i = 0; i < toDeleteCount; i++)
+                    {
+                        try
+                        {
+                            unpinnedFiles[i].Delete();
+                        }
+                        catch { /* Skip */ }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error occured when startup cleaning: {ex.Message}");
+            }
+        }
+
+
+
+
+
+    }
 }

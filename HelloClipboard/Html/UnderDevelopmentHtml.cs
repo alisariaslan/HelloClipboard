@@ -1,14 +1,14 @@
 ﻿namespace HelloClipboard.Html
 {
-	internal class UnderDevelopmentHtml
-	{
-		public static string GetTitle()
-		{
-			return "Under Development - HelloClipboard";
-		}
-		public static string GetHtml(string featureName,float fontsize = 12)
-		{
-			string html = $@"
+    internal class UnderDevelopmentHtml
+    {
+        public static string GetTitle()
+        {
+            return "Under Development - HelloClipboard";
+        }
+        public static string GetHtml(string featureName, float fontsize = 12)
+        {
+            string html = $@"
 <!doctype html>
 <html>
 <head>
@@ -32,7 +32,7 @@
   </div>
 </body>
 </html>";
-			return html;
-		}
-	}
+            return html;
+        }
+    }
 }

@@ -1,16 +1,17 @@
-﻿using System.Windows.Forms;
+﻿using HelloClipboard.Utils;
+using System.Windows.Forms;
 
 namespace HelloClipboard.Html
 {
-	internal class AboutHtml
-	{
-		public static string GetTitle()
-		{
-			return "About - HelloClipboard";
-		}
-		public static string GetHtml(float fontSize = 12)
-		{
-			string aboutHtml = $@"
+    internal class AboutHtml
+    {
+        public static string GetTitle()
+        {
+            return "About - HelloClipboard";
+        }
+        public static string GetHtml(float fontSize = 12)
+        {
+            string aboutHtml = $@"
 <!doctype html>
 <html>
 <head>
@@ -27,7 +28,7 @@ namespace HelloClipboard.Html
 </head>
 <body>
   <h1>HelloClipboard</h1>
-  <div class='meta'>Version: {Application.ProductVersion}</div>
+  <div class='meta'>Version: {AppVersionHelper.GetAppVersion()}</div>
   <p>A modern, lightweight clipboard sharing tool for Windows.</p>
   <p>Synchronize your clipboard securely across platforms with ease.</p>
   <p>Developed by <strong>Ali SARIASLAN</strong> &amp; <strong>Bahadır Düzcan</strong></p>
@@ -37,7 +38,7 @@ namespace HelloClipboard.Html
   </div>
 </body>
 </html>";
-			return aboutHtml;
-		}
-	}
+            return aboutHtml;
+        }
+    }
 }
