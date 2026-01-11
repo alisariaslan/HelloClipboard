@@ -1,46 +1,53 @@
 # HelloClipboard
 
-**A modern Windows clipboard history manager** — designed to make copying, pasting, searching, and managing your clipboard content fast and effortless.
-HelloClipboard runs in the background, tracks your clipboard history, lets you search instantly, preview details, and manage entries with a clean UI and powerful tray integration.
+> A lightweight Windows clipboard history manager that captures, searches, and previews your clipboard content instantly.
 
-## 🧩 Features
+## 🚀 Features
 
-* 📋 **Automatic Clipboard History**
-  Captures text copied anywhere in Windows instantly.
-* 🔍 **Instant Search**
-  Quickly find any previous clipboard entry using real‑time search.
-* 🪟 **Detail Preview Window**
-  Click an item to open the *ClipDetail* window and view the raw content with horizontal scrolling.
-* 🖱️ **System Tray Support**
-  Runs silently in the background with a tray icon for quick access.
-* ⚙️ **Customizable Settings**
-  * Max history count
-  * Auto-start with Windows
-  * UI behavior
-  * Clear history
-* 📥 **Lightweight & Fast**
-  Optimized for minimal resource usage and instant response.
+- **Automatic History** – records every text copy without user intervention.
+- **Instant Search** – type to filter past items in real‑time.
+- **Detail Preview** – open a dedicated window with raw content and horizontal scrolling.
+- **Tray Integration** – runs silently; access via system tray icon.
+- **Custom Settings** – tweak history size, auto‑start, UI behavior, and clear history.
 
-## 🖼️ Screenshots
+## 📸 Screenshots
 
-<img width="851" height="728" alt="image" src="https://github.com/user-attachments/assets/e17aa396-9896-4c19-a226-0181ed602b47" />
-
+![Main Window](https://github.com/user-attachments/assets/e17aa396-9896-4c19-a226-0181ed602b47)
 
 ## ⚙️ Installation
 
-1. Download installer from latest tag.
-2. Run `HelloClipboard_Installer.exe`.
+```bash
+# Download the latest installer from the releases page
+# Then run HelloClipboard_Installer.exe
+```
 
-## Developers
+### Auto‑start
 
-- Ali SARIASLAN  
-- Bahadır Düzcan
+The app can be configured to launch at Windows startup via its settings dialog.
 
-## 📬 Contact
+## 📚 Developer Guide
 
-Report bugs or request features via GitHub Issues:
-[https://github.com/alisariaslan/HelloClipboard/issues]()
+| Role | Where to start |
+|------|----------------|
+| **Build** | `HelloClipboard.sln` – use Visual Studio 2026 or newer. |
+| **Code Structure** | - `Core/TrayApplicationContext.cs` – main entry point.- `Services/ClipboardMonitor.cs` – core clipboard logic.- `Views/*` – UI forms and controls. |
+| **Configuration** | `HelloClipboard/Constants/Constants.cs` – shared constants and paths.`latest_version.json` – version metadata. |
+| **Hotkeys & Privileges** | `TrayApplicationContext.ReloadGlobalHotkey()` handles hotkey registration; see `Utils/PriviligesHelper.cs`. |
 
-For other inquiries:
-**[dev@alisariaslan.com](mailto:dev@alisariaslan.com)**
+### Running Locally
+
+```bash
+dotnet build HelloClipboard.sln
+```
+
+The built executable is in `HelloClipboard/bin/Debug/net10.0-windows/`.
+
+## 📄 License
+
+MIT – see the [LICENSE](LICENSE) file.
+
+---
+
+**Contributing**
+Feel free to open issues or pull requests. Please follow the PR template in `.github/pull_request_template.md` for consistency.
 
