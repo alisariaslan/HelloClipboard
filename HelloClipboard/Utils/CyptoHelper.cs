@@ -42,10 +42,7 @@ namespace HelloClipboard.Utils
 
             // STEP 2: Create a NEW key if it doesn't exist or is corrupted
             byte[] newKey = new byte[32]; // 256-bit
-            using (var rng = new RNGCryptoServiceProvider())
-            {
-                rng.GetBytes(newKey);
-            }
+            RandomNumberGenerator.Fill(newKey);
 
             // STEP 3: Encrypt the new key with DPAPI and save it to the Registry
             try
