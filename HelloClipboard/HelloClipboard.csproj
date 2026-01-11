@@ -2,6 +2,7 @@
 	<PropertyGroup>
 		<TargetFramework>net10.0-windows</TargetFramework>
 		<OutputType>WinExe</OutputType>
+
 		<IsWebBootstrapper>false</IsWebBootstrapper>
 		<PublishUrl>C:\Users\yearn\Downloads\</PublishUrl>
 		<Install>true</Install>
@@ -14,21 +15,12 @@
 		<UpdateRequired>false</UpdateRequired>
 		<MapFileExtensions>true</MapFileExtensions>
 
-		<!-- ClickOnce / manifest fields -->
-		<ApplicationRevision>13</ApplicationRevision>
-		<ApplicationVersion>1.2.3.13</ApplicationVersion>
-
+		<Version>1.2.4.14</Version>
+		
+		
 		<UseApplicationTrust>false</UseApplicationTrust>
 		<BootstrapperEnabled>true</BootstrapperEnabled>
-
-		<!-- Enable SDK assembly info generation so MSBuild will embed these values -->
 		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-
-		<!-- Explicit version metadata for SDK-style projects -->
-		<Version>1.2.3</Version>
-		<AssemblyVersion>1.2.3.0</AssemblyVersion>
-		<FileVersion>1.2.3.13</FileVersion>
-		<InformationalVersion>1.2.3</InformationalVersion>
 
 		<UseWindowsForms>true</UseWindowsForms>
 		<ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>

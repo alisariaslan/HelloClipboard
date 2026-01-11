@@ -12,8 +12,8 @@ namespace HelloClipboard
 {
     public class UpdateInfo
     {
-        public int BuildNumber { get; set; }
         public string Version { get; set; }
+        public int BuildNumber { get; set; }
         public string Notes { get; set; }
     }
 

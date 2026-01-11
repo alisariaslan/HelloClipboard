@@ -50,6 +50,8 @@ namespace HelloClipboard
             textDrawPanel.MouseMove += TextDrawPanel_MouseMove;
             textDrawPanel.MouseUp += TextDrawPanel_MouseUp;
             textDrawPanel.Paint += textDrawPanel_Paint;
+            textDrawPanel.MouseEnter += TextDrawPanel_MouseEnter;
+            textDrawPanel.MouseLeave += TextDrawPanel_MouseLeave;
 
             SetupTextMode(item.Content);
         }
@@ -432,6 +434,18 @@ namespace HelloClipboard
 
         private void ContextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e) => e.Cancel = string.IsNullOrEmpty(GetSelectedText());
 
+        private void TextDrawPanel_MouseEnter(object sender, EventArgs e)
+        {
+            // Panel üzerine gelindiğinde imleci metin seçim imlecine ayarla
+            textDrawPanel.Cursor = Cursors.IBeam;
+        }
+
+        private void TextDrawPanel_MouseLeave(object sender, EventArgs e)
+        {
+            // Panelden ayrılınca imleci varsayılana geri ayarla
+            textDrawPanel.Cursor = Cursors.Default;
+
+        }
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             _autoScrollTimer?.Dispose();

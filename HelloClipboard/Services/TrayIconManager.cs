@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace HelloClipboard
@@ -68,9 +69,9 @@ namespace HelloClipboard
         /// <param name="text">The body content of the notification.</param>
         /// <param name="icon">The type of icon to display (Info, Warning, Error).</param>
         /// <param name="onClick">Optional callback action when the notification is clicked.</param>
-        public void ShowNotification(string title, string text, ToolTipIcon icon = ToolTipIcon.Info, Action onClick = null)
+        public void ShowNotification(string title, string text, ToolTipIcon icon = ToolTipIcon.Info, Action onClick = null,int timeout = 3000)
         {
-            _trayIcon.ShowBalloonTip(3000, title, text, icon);
+            _trayIcon.ShowBalloonTip(timeout, title, text, icon);
 
             if (onClick != null)
             {

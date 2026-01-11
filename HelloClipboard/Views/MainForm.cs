@@ -530,7 +530,7 @@ namespace HelloClipboard
 
             if (update != null)
             {
-                var result = MessageBox.Show($"New version v{update.Version} is available!\n\nNotes: {update.Notes}\n\nDownload now?", "Update Found", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+                var result = MessageBox.Show($"New version v{update.Version} ({update.BuildNumber}) is available!\n\nNotes: {update.Notes}\n\nDownload now?", "Update Found", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
                 if (result == DialogResult.Yes) await updateService.DownloadAndRunUpdateAsync();
             }
             else MessageBox.Show("Your application is up to date.", "No Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
