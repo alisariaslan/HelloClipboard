@@ -307,6 +307,7 @@
             poisonTextBox1_search.MinimumSize = new System.Drawing.Size(155, 24);
             poisonTextBox1_search.Name = "poisonTextBox1_search";
             poisonTextBox1_search.PasswordChar = '\0';
+            poisonTextBox1_search.PromptText = "Search...";
             poisonTextBox1_search.ScrollBars = System.Windows.Forms.ScrollBars.None;
             poisonTextBox1_search.SelectedText = "";
             poisonTextBox1_search.SelectionLength = 0;

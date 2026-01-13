@@ -44,7 +44,7 @@ namespace HelloClipboard.Services
 
                     _detailFileForm.KeyDown += DetailForm_KeyDown;
                     _detailFileForm.KeyPreview = SettingsLoader.Current.FocusDetailWindow;
-
+               
                 }
                 else
                 {
@@ -88,7 +88,7 @@ namespace HelloClipboard.Services
 
                     _detailTextForm.KeyDown += DetailForm_KeyDown;
                     _detailTextForm.KeyPreview = SettingsLoader.Current.FocusDetailWindow;
-
+                    _detailTextForm.ThemeChanged();
                 }
                 else
                 {
@@ -204,6 +204,32 @@ namespace HelloClipboard.Services
             _detailFileForm?.Hide();
             _activeForm = null;
         }
+
+        /// <summary>
+        /// Aktif tüm detay pencerelerine geçerli temayı uygular.
+        /// ClipDetailText, ClipDetailImage ve ClipDetailFile formları destekleniyor.
+        /// </summary>
+        public void ApplyThemeToDetailWindows()
+        {
+            // Text formu
+            if (_detailTextForm != null && !_detailTextForm.IsDisposed)
+            {
+                _detailTextForm.ThemeChanged();
+            }
+
+            // Image formu
+            if (_detailImageForm != null && !_detailImageForm.IsDisposed)
+            {
+                //_detailImageForm.ApplyTheme();
+            }
+
+            // File formu
+            if (_detailFileForm != null && !_detailFileForm.IsDisposed)
+            {
+                //_detailFileForm.ApplyTheme();
+            }
+        }
+
 
         public Form GetActiveForm() => _activeForm;
         public bool IsAnyVisible() => _activeForm != null && _activeForm.Visible;

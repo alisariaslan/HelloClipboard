@@ -1,9 +1,9 @@
-﻿using System;
+﻿using HelloClipboard.Constants;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using HelloClipboard.Constants;
 
 namespace HelloClipboard.Utils
 {
@@ -11,20 +11,7 @@ namespace HelloClipboard.Utils
     {
         private static Color GetZebraColor(int index)
         {
-            var theme = ThemeHelper.GetTheme();
-            switch (theme)
-            {
-                case ReaLTaiizor.Enum.Poison.ThemeStyle.Light:
-                    return (index % 2 == 0)
-                        ? AppColors.LightBackColor
-                        : AppColors.LightAlternateColor;
-                case ReaLTaiizor.Enum.Poison.ThemeStyle.Dark:
-                    return (index % 2 == 0)
-                        ? AppColors.DarkBackColor
-                        : AppColors.DarkAlternateColor;
-                default:
-                    return (index % 2 == 0) ? Color.White : Color.LightGray;
-            }
+            return (index % 2 == 0) ? AppColors.GetBackColor() : AppColors.GetAlternateColor();
         }
 
         public static void RenderClipboardItem(
@@ -40,20 +27,16 @@ namespace HelloClipboard.Utils
 
             bool selected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
 
-            // Arka plan rengi
-            Color backColor = selected ? SystemColors.Highlight : GetZebraColor(e.Index);
 
+            // Arka plan rengi
+            Color backColor = selected ? AppColors.GetSelectionColor() : GetZebraColor(e.Index);
             using (SolidBrush brush = new SolidBrush(backColor))
             {
                 e.Graphics.FillRectangle(brush, e.Bounds);
             }
 
             // Metin rengi
-            Color textColor = selected
-                ? SystemColors.HighlightText
-                : (ThemeHelper.GetTheme() == ReaLTaiizor.Enum.Poison.ThemeStyle.Dark
-                    ? AppColors.DarkForeColor
-                    : AppColors.LightForeColor);
+            Color textColor = AppColors.GetForeColor();
 
             // Metin oluşturma
             string displayText = item.Title ?? string.Empty;
@@ -63,7 +46,7 @@ namespace HelloClipboard.Utils
                 displayText = "[PIN] " + displayText;
 
             // Metni çiz
-            DrawingHelper.DrawTextWithHighlight(
+            DrawTextWithHighlight(
                 e.Graphics,
                 displayText,
                 e.Font,
@@ -93,7 +76,6 @@ namespace HelloClipboard.Utils
 
             var format = TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis;
 
-            // If there is no search term, perform normal drawing
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
                 TextRenderer.DrawText(g, text, font, bounds, textColor, format);
@@ -109,11 +91,9 @@ namespace HelloClipboard.Utils
                 {
                     if (m.Index > lastIndex)
                         parts.Add((text.Substring(lastIndex, m.Index - lastIndex), false));
-
                     parts.Add((text.Substring(m.Index, m.Length), true));
                     lastIndex = m.Index + m.Length;
                 }
-
                 if (lastIndex < text.Length)
                     parts.Add((text.Substring(lastIndex), false));
             }
@@ -131,7 +111,6 @@ namespace HelloClipboard.Utils
                     }
                     if (idx > start)
                         parts.Add((text.Substring(start, idx - start), false));
-
                     parts.Add((text.Substring(idx, searchTerm.Length), true));
                     start = idx + searchTerm.Length;
                     if (start >= text.Length) break;
@@ -148,8 +127,8 @@ namespace HelloClipboard.Utils
 
                 if (highlight)
                 {
-                    Color back = selected ? AppColors.SelectedHighlightColor : AppColors.HighlightColor;
-                    using (var brush = new SolidBrush(back))
+                    Color highlightBack = AppColors.GetHighlightColor(selected);
+                    using (var brush = new SolidBrush(highlightBack))
                     {
                         g.FillRectangle(brush, rect);
                     }
@@ -161,5 +140,6 @@ namespace HelloClipboard.Utils
                 if (x > bounds.Right) break;
             }
         }
+
     }
 }

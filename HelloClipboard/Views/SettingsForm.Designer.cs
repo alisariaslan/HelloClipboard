@@ -241,7 +241,7 @@
             poisonTile1_autoHide.Name = "poisonTile1_autoHide";
             poisonTile1_autoHide.Size = new System.Drawing.Size(420, 60);
             poisonTile1_autoHide.TabIndex = 26;
-            poisonTile1_autoHide.Text = "Auto hide when unfocused";
+            poisonTile1_autoHide.Text = "Automatically hide the app when it loses focus.";
             poisonTile1_autoHide.UseSelectable = true;
             // 
             // poisonToggle1_autoHide
@@ -276,7 +276,7 @@
             poisonTile1_hideToSystemTray.Name = "poisonTile1_hideToSystemTray";
             poisonTile1_hideToSystemTray.Size = new System.Drawing.Size(420, 60);
             poisonTile1_hideToSystemTray.TabIndex = 24;
-            poisonTile1_hideToSystemTray.Text = "Automatically check for the latest software updates.";
+            poisonTile1_hideToSystemTray.Text = "Minimize the app to the tray instead of closing it.";
             poisonTile1_hideToSystemTray.UseSelectable = true;
             // 
             // poisonToggle1_hideToSystemTray
@@ -326,7 +326,7 @@
             poisonTile1_theme.Name = "poisonTile1_theme";
             poisonTile1_theme.Size = new System.Drawing.Size(420, 60);
             poisonTile1_theme.TabIndex = 20;
-            poisonTile1_theme.Text = "Switch between themes";
+            poisonTile1_theme.Text = "Shows the theme currently applied.";
             poisonTile1_theme.UseSelectable = true;
             // 
             // poisonDropDownButton1_selectTheme
@@ -389,7 +389,7 @@
             poisonTile1_showTimeStamps.Name = "poisonTile1_showTimeStamps";
             poisonTile1_showTimeStamps.Size = new System.Drawing.Size(420, 60);
             poisonTile1_showTimeStamps.TabIndex = 19;
-            poisonTile1_showTimeStamps.Text = "Automatically check for the latest software updates.";
+            poisonTile1_showTimeStamps.Text = "Display the date/time before each item in the list.";
             poisonTile1_showTimeStamps.UseSelectable = true;
             // 
             // poisonToggle1_showTimeStamps
@@ -424,7 +424,7 @@
             poisonTile1_showInTaskbar.Name = "poisonTile1_showInTaskbar";
             poisonTile1_showInTaskbar.Size = new System.Drawing.Size(420, 60);
             poisonTile1_showInTaskbar.TabIndex = 18;
-            poisonTile1_showInTaskbar.Text = "Automatically check for the latest software updates.";
+            poisonTile1_showInTaskbar.Text = "Display the app in the windows taskbar.";
             poisonTile1_showInTaskbar.UseSelectable = true;
             // 
             // poisonToggle1_showInTaskbar
@@ -459,7 +459,7 @@
             poisonTile1_alwaysTopMost.Name = "poisonTile1_alwaysTopMost";
             poisonTile1_alwaysTopMost.Size = new System.Drawing.Size(420, 60);
             poisonTile1_alwaysTopMost.TabIndex = 17;
-            poisonTile1_alwaysTopMost.Text = "Automatically check for the latest software updates.";
+            poisonTile1_alwaysTopMost.Text = "Keep the app above all other apps.";
             poisonTile1_alwaysTopMost.UseSelectable = true;
             // 
             // poisonToggle1_alwaysTopMost
@@ -494,7 +494,7 @@
             poisonTile1_invertClipboard.Name = "poisonTile1_invertClipboard";
             poisonTile1_invertClipboard.Size = new System.Drawing.Size(420, 60);
             poisonTile1_invertClipboard.TabIndex = 16;
-            poisonTile1_invertClipboard.Text = "Automatically check for the latest software updates.";
+            poisonTile1_invertClipboard.Text = "Reverse the clipboard list. Items and pins go the opposite way.";
             poisonTile1_invertClipboard.UseSelectable = true;
             // 
             // poisonToggle1_invertClipboard
@@ -540,7 +540,7 @@
             poisonTile1_maxHistoryCount.Name = "poisonTile1_maxHistoryCount";
             poisonTile1_maxHistoryCount.Size = new System.Drawing.Size(420, 60);
             poisonTile1_maxHistoryCount.TabIndex = 18;
-            poisonTile1_maxHistoryCount.Text = "Automatically check for the latest software updates.";
+            poisonTile1_maxHistoryCount.Text = "Max clipboard items; oldest unpinned removed when exceeded.";
             poisonTile1_maxHistoryCount.UseSelectable = true;
             // 
             // poisonTextBox1_maxHistoryCount
@@ -596,7 +596,7 @@
             poisonTile1_saveHistory.Name = "poisonTile1_saveHistory";
             poisonTile1_saveHistory.Size = new System.Drawing.Size(420, 60);
             poisonTile1_saveHistory.TabIndex = 17;
-            poisonTile1_saveHistory.Text = "Automatically check for the latest software updates.";
+            poisonTile1_saveHistory.Text = "Safely save the clipboard history to disk.";
             poisonTile1_saveHistory.UseSelectable = true;
             // 
             // poisonToggle1_enableHistory
@@ -644,7 +644,7 @@
             poisonTile1_privateDuration.Name = "poisonTile1_privateDuration";
             poisonTile1_privateDuration.Size = new System.Drawing.Size(420, 60);
             poisonTile1_privateDuration.TabIndex = 28;
-            poisonTile1_privateDuration.Text = "Automatically check for the latest software updates.";
+            poisonTile1_privateDuration.Text = "Set how many minutes Private Mode lasts.";
             poisonTile1_privateDuration.UseSelectable = true;
             // 
             // poisonTextBox1_privateModeDuration
@@ -700,7 +700,7 @@
             poisonTile1_focusDetail.Name = "poisonTile1_focusDetail";
             poisonTile1_focusDetail.Size = new System.Drawing.Size(420, 60);
             poisonTile1_focusDetail.TabIndex = 27;
-            poisonTile1_focusDetail.Text = "Automatically check for the latest software updates.";
+            poisonTile1_focusDetail.Text = "Focus the preview window instead of the search box when opened.";
             poisonTile1_focusDetail.UseSelectable = true;
             // 
             // poisonToggle1_focusDetailWindow
@@ -721,9 +721,9 @@
             poisonLabel1_focusDetail.FontWeight = ReaLTaiizor.Extension.Poison.PoisonLabelWeight.Bold;
             poisonLabel1_focusDetail.Location = new System.Drawing.Point(4, 8);
             poisonLabel1_focusDetail.Name = "poisonLabel1_focusDetail";
-            poisonLabel1_focusDetail.Size = new System.Drawing.Size(148, 19);
+            poisonLabel1_focusDetail.Size = new System.Drawing.Size(163, 19);
             poisonLabel1_focusDetail.TabIndex = 5;
-            poisonLabel1_focusDetail.Text = "Focus Detail Window";
+            poisonLabel1_focusDetail.Text = "Focus Preview Window";
             // 
             // poisonTile1_suppressEvents
             // 
@@ -735,7 +735,7 @@
             poisonTile1_suppressEvents.Name = "poisonTile1_suppressEvents";
             poisonTile1_suppressEvents.Size = new System.Drawing.Size(420, 60);
             poisonTile1_suppressEvents.TabIndex = 26;
-            poisonTile1_suppressEvents.Text = "Automatically check for the latest software updates.";
+            poisonTile1_suppressEvents.Text = "Ignore clipboard actions performed within this app.";
             poisonTile1_suppressEvents.UseSelectable = true;
             // 
             // poisonToggle1_suppressClipboardEvents
@@ -770,7 +770,7 @@
             poisonTile1_preventDup.Name = "poisonTile1_preventDup";
             poisonTile1_preventDup.Size = new System.Drawing.Size(420, 60);
             poisonTile1_preventDup.TabIndex = 25;
-            poisonTile1_preventDup.Text = "Automatically check for the latest software updates.";
+            poisonTile1_preventDup.Text = "Remove the old item if a duplicate is copied.";
             poisonTile1_preventDup.UseSelectable = true;
             // 
             // poisonToggle1_preventDuplication
@@ -816,7 +816,7 @@
             poisonTile1_showWindowHotkey.Name = "poisonTile1_showWindowHotkey";
             poisonTile1_showWindowHotkey.Size = new System.Drawing.Size(420, 60);
             poisonTile1_showWindowHotkey.TabIndex = 26;
-            poisonTile1_showWindowHotkey.Text = "Automatically check for the latest software updates.";
+            poisonTile1_showWindowHotkey.Text = "Key combination to open HelloClipboard.";
             poisonTile1_showWindowHotkey.UseSelectable = true;
             // 
             // poisonTextBox1_showWindowHotkey
@@ -873,7 +873,7 @@
             poisonTile1_globalHotkey.Name = "poisonTile1_globalHotkey";
             poisonTile1_globalHotkey.Size = new System.Drawing.Size(420, 60);
             poisonTile1_globalHotkey.TabIndex = 25;
-            poisonTile1_globalHotkey.Text = "Automatically check for the latest software updates.";
+            poisonTile1_globalHotkey.Text = "Capture a key combination system-wide in Windows.";
             poisonTile1_globalHotkey.UseSelectable = true;
             // 
             // poisonToggle1_globalHotkeys
@@ -894,9 +894,9 @@
             poisonLabel1_globalHotkey.FontWeight = ReaLTaiizor.Extension.Poison.PoisonLabelWeight.Bold;
             poisonLabel1_globalHotkey.Location = new System.Drawing.Point(4, 8);
             poisonLabel1_globalHotkey.Name = "poisonLabel1_globalHotkey";
-            poisonLabel1_globalHotkey.Size = new System.Drawing.Size(112, 19);
+            poisonLabel1_globalHotkey.Size = new System.Drawing.Size(106, 19);
             poisonLabel1_globalHotkey.TabIndex = 5;
-            poisonLabel1_globalHotkey.Text = "Global Hotkeys";
+            poisonLabel1_globalHotkey.Text = "Global Hotkey";
             // 
             // poisonStyleManager1
             // 

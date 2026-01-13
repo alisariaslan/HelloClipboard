@@ -1,4 +1,7 @@
-﻿using System;
+﻿using HelloClipboard.Constants;
+using HelloClipboard.Utils;
+using ReaLTaiizor.Forms;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -8,28 +11,26 @@ using System.Windows.Forms;
 
 namespace HelloClipboard
 {
-    public partial class ClipDetailText : Form
+    public partial class ClipDetailText : PoisonForm
     {
         private readonly MainForm _mainForm;
         private List<string> _lines = new List<string>();
         private string _fullText = string.Empty;
         private float _baseFontSize = 0.75f;
-
         private float _textZoom = 0.9f;
         private const int LinePadding = 4;
         private Font _drawFont;
+        private Color _textColor = Color.Black;
         private SolidBrush _selectionBrush = new SolidBrush(Color.FromArgb(100, Color.DeepSkyBlue));
         private SolidBrush _lineNumBrush = new SolidBrush(Color.DimGray);
-
-        private SolidBrush _zebraBrushOdd = new SolidBrush(Color.White); // Tek satırlar için (Varsayılan Form rengi)
-        private SolidBrush _zebraBrushEven = new SolidBrush(Color.FromArgb(245, 245, 245)); // Çift satırlar için çok açık gri
-
+        private SolidBrush _zebraBrushOdd = new SolidBrush(Color.White);
+        private SolidBrush _zebraBrushEven = new SolidBrush(Color.FromArgb(245, 245, 245));
         private int _maxLineWidth = 0;
         private int _selStartLine = -1, _selStartChar = -1;
         private int _selEndLine = -1, _selEndChar = -1;
         private bool _isSelecting = false;
-
         private Timer _autoScrollTimer;
+        private Rectangle _lastNormalBounds;
 
         public ClipDetailText(MainForm mainForm, ClipboardItem item)
         {
@@ -53,14 +54,16 @@ namespace HelloClipboard
             textDrawPanel.MouseEnter += TextDrawPanel_MouseEnter;
             textDrawPanel.MouseLeave += TextDrawPanel_MouseLeave;
 
+
             SetupTextMode(item.Content);
         }
 
-        // --- KLAVYE KISAYOLLARI (Ctrl+A, Ctrl+C) ---
-        // --- KLAVYE KISAYOLLARI VE NAVİGASYON ---
+
+
+
+
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            // Mevcut Ctrl+A ve Ctrl+C işlemleri
             if (keyData == (Keys.Control | Keys.A))
             {
                 SelectAll();
@@ -71,11 +74,9 @@ namespace HelloClipboard
                 CopySelection();
                 return true;
             }
-
-            // Scroll İşlemleri
             bool handled = false;
-            int vStep = 1; // Ok tuşları için 1 satır
-            int hStep = 20; // Yatayda 20 piksel
+            int vStep = 1;
+            int hStep = 20;
 
             switch (keyData)
             {
@@ -104,17 +105,14 @@ namespace HelloClipboard
                     handled = true;
                     break;
             }
-
             if (handled)
             {
                 textDrawPanel.Invalidate();
                 return true;
             }
-
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
-        // Yardımcı metodlar: Scroll değerlerini sınırlar içinde tutar
         private void ScrollVertical(int delta)
         {
             int newVal = vScrollBar1.Value + delta;
@@ -276,7 +274,7 @@ namespace HelloClipboard
                 DrawSelectionForLine(e.Graphics, lineIdx, yPos, textX, lineHeight);
 
                 // Metnin Kendisi
-                TextRenderer.DrawText(e.Graphics, _lines[lineIdx], _drawFont, new Point(textX, yPos), Color.Black);
+                TextRenderer.DrawText(e.Graphics, _lines[lineIdx], _drawFont, new Point(textX, yPos), _textColor);
             }
 
             // --- AŞAMA 2: ARAYÜZ KATMANI (UI LAYER) ---
@@ -420,32 +418,78 @@ namespace HelloClipboard
             while (Math.Round(number / 1024) >= 1) { number /= 1024; counter++; }
             return $"{number:n1} {suffixes[counter]}";
         }
-        public void UpdateItem(ClipboardItem item)
 
+        #region THEME
+        public void ThemeChanged()
         {
+            ThemeHelper.ApplySavedThemeToForm(this, poisonStyleManager1);
 
-            SetupTextMode(item.Content);
-
+            textDrawPanel.BackColor = AppColors.GetBackColor();
+            _zebraBrushOdd.Color = AppColors.GetBackColor();
+            _zebraBrushEven.Color = AppColors.GetAlternateColor();
+            _lineNumberBackgroundBrush.Color = AppColors.GetLineNumberBackground();
+            _selectionBrush.Color = AppColors.GetSelectionColor();
+            _textColor = AppColors.GetForeColor();
+            textDrawPanel.Invalidate();
         }
-        private void btn_copyAsText_Click(object sender, EventArgs e) => _mainForm?.CopyCliked();
+
+        #endregion
+
+        public void UpdateItem(ClipboardItem item)
+        {
+            SetupTextMode(item.Content);
+        }
+
         private void copySelectedTextToolStripMenuItem_Click(object sender, EventArgs e) => CopySelection();
-
-        private void btn_copyAsObject_Click(object sender, EventArgs e) => _mainForm?.CopyCliked(asObject: true);
-
+        
         private void ContextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e) => e.Cancel = string.IsNullOrEmpty(GetSelectedText());
 
         private void TextDrawPanel_MouseEnter(object sender, EventArgs e)
         {
-            // Panel üzerine gelindiğinde imleci metin seçim imlecine ayarla
             textDrawPanel.Cursor = Cursors.IBeam;
         }
 
         private void TextDrawPanel_MouseLeave(object sender, EventArgs e)
         {
-            // Panelden ayrılınca imleci varsayılana geri ayarla
             textDrawPanel.Cursor = Cursors.Default;
 
         }
+
+        #region MANUAL RESIZE (BORDERLESS SUPPORT)
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (this.WindowState == FormWindowState.Normal)
+            {
+                _lastNormalBounds = this.Bounds;
+            }
+            if (this.WindowState == FormWindowState.Maximized)
+            {
+                var screen = Screen.FromControl(this).WorkingArea;
+                this.Bounds = screen;
+            }
+        }
+        protected override void WndProc(ref Message m)
+        {
+            const int WM_SYSCOMMAND = 0x0112;
+            const int SC_MOVE = 0xF010;
+            if (m.Msg == WM_SYSCOMMAND)
+            {
+                int command = m.WParam.ToInt32() & 0xFFF0;
+                if (command == SC_MOVE && this.WindowState == FormWindowState.Maximized)
+                {
+                    this.WindowState = FormWindowState.Normal;
+                    this.Bounds = _lastNormalBounds;
+                    Point cursorPos = Cursor.Position;
+                    int dx = cursorPos.X - this.Width / 2;
+                    int dy = cursorPos.Y - 15;
+                    this.Location = new Point(dx, dy);
+                }
+            }
+            base.WndProc(ref m);
+        }
+        #endregion
+
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             _autoScrollTimer?.Dispose();
@@ -457,5 +501,9 @@ namespace HelloClipboard
             _lineNumberBackgroundBrush?.Dispose();
             base.OnFormClosing(e);
         }
+
+        private void poisonButton1_copyAsText_Click(object sender, EventArgs e) => _mainForm?.CopyCliked(asObject: false);
+
+        private void poisonButton1_copyAsObject_Click(object sender, EventArgs e) => _mainForm?.CopyCliked(asObject: true);
     }
 }

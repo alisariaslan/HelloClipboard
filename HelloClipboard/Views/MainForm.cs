@@ -39,6 +39,7 @@ namespace HelloClipboard
             // ListBox Events
             MessagesListBox.DisplayMember = "Title";
             MessagesListBox.DrawMode = DrawMode.OwnerDrawFixed;
+            MessagesListBox.ItemHeight = 24;
             MessagesListBox.DrawItem += MessagesListBox_DrawItem;
             MessagesListBox.Resize += (s, e) => MessagesListBox.Invalidate();
             MessagesListBox.SelectedIndexChanged += MessagesListBox_SelectedIndexChanged;
@@ -504,9 +505,10 @@ namespace HelloClipboard
         #endregion
 
         #region THEME
-        public void ThemeUpdated()
+        public void ThemeChanged()
         {
             ThemeHelper.ApplySavedThemeToForm(this, poisonStyleManager1);
+            _detailManager.ApplyThemeToDetailWindows();
         }
         #endregion
     }

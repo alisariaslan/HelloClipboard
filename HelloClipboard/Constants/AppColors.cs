@@ -1,40 +1,45 @@
 ﻿using HelloClipboard.Utils;
 using ReaLTaiizor.Enum.Poison;
-using System;
 using System.Drawing;
 
 namespace HelloClipboard.Constants
 {
     internal static class AppColors
     {
-        // Light Theme
+        // ----- Light Theme -----
         public static Color LightBackColor { get; } = Color.White;
         public static Color LightForeColor { get; } = Color.Black;
-        public static Color LightAlternateColor { get; } = Color.FromArgb(230, 245, 255); // Örnek zebra rengi
-        public static Color LightButtonActive { get; } = Color.LightBlue;
+        public static Color LightAlternateColor { get; } = Color.FromArgb(230, 245, 255); // Zebra
+        public static Color LightLineNumberBackground { get; } = Color.FromArgb(220, 220, 220);
+        public static Color LightButtonActive { get; } = Color.DeepSkyBlue;
+        public static Color LightSelection { get; } = Color.LightSkyBlue;
 
-        // Dark Theme
+        // ----- Dark Theme -----
         public static Color DarkBackColor { get; } = Color.FromArgb(30, 30, 30);
         public static Color DarkForeColor { get; } = Color.White;
-        public static Color DarkBackControlColor { get; } = Color.FromArgb(45, 45, 45);
-        public static Color DarkAlternateColor { get; } = Color.FromArgb(70, 70, 70); // Örnek zebra rengi
+        public static Color DarkAlternateColor { get; } = Color.FromArgb(55, 55, 55); // Zebra
+        public static Color DarkLineNumberBackground { get; } = Color.FromArgb(50, 50, 50);
         public static Color DarkButtonActive { get; } = Color.DodgerBlue;
+        public static Color DarkSelection { get; } = Color.DodgerBlue;
 
-        // Selected / Highlight
+        // ----- Highlight / Selection -----
         public static Color HighlightColor { get; } = Color.Yellow;
         public static Color SelectedHighlightColor { get; } = Color.Gold;
 
-        public static Color GetBackColor() =>
-         ThemeHelper.GetTheme() == ThemeStyle.Dark ? DarkBackColor : LightBackColor;
-        public static Color GetForeColor() =>
-                ThemeHelper.GetTheme() == ThemeStyle.Dark ? DarkForeColor : LightForeColor;
-        public static Color GetAlternateColor() =>
-              ThemeHelper.GetTheme() == ThemeStyle.Dark ? DarkAlternateColor : LightAlternateColor;
-        public static Color GetBackControlColor() =>
-             ThemeHelper.GetTheme() == ThemeStyle.Dark ? DarkBackControlColor : LightBackColor;
-        public static Color GetButtonActiveColor() =>
-               ThemeHelper.GetTheme() == ThemeStyle.Dark ? DarkButtonActive : LightButtonActive;
-        public static Color GetHighlightColor(bool selected) =>
-            selected ? SelectedHighlightColor : HighlightColor;
+
+        // ----- Helper Properties -----
+        public static bool IsDark => GetTheme() == ThemeStyle.Dark;
+
+        public static Color GetBackColor() => IsDark ? DarkBackColor : LightBackColor;
+        public static Color GetForeColor() => IsDark ? DarkForeColor : LightForeColor;
+        public static Color GetAlternateColor() => IsDark ? DarkAlternateColor : LightAlternateColor;
+        public static Color GetBackControlColor() => IsDark ? DarkLineNumberBackground : LightBackColor;
+        public static Color GetButtonActiveColor() => IsDark ? DarkButtonActive : LightButtonActive;
+        public static Color GetSelectionColor() => IsDark ? DarkSelection : LightSelection;
+        public static Color GetLineNumberBackground() => IsDark ? DarkLineNumberBackground : LightLineNumberBackground;
+
+        public static Color GetHighlightColor(bool selected) => selected ? SelectedHighlightColor : HighlightColor;
+
+        private static ThemeStyle GetTheme() => ThemeHelper.GetTheme();
     }
 }

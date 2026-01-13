@@ -28,5 +28,6 @@ namespace HelloClipboard.Utils
 
             return new Point(newX, newY);
         }
+
     }
 }

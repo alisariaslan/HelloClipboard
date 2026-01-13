@@ -479,7 +479,7 @@ namespace HelloClipboard
         {
             ThemeHelper.SaveTheme(ThemeStyle.Default);
             ThemeHelper.ApplySavedThemeToForm(this, poisonStyleManager1);
-            _mainForm.ThemeUpdated();
+            _mainForm.ThemeChanged();
             UpdateThemeDropdownText();
         }
 
@@ -487,7 +487,7 @@ namespace HelloClipboard
         {
             ThemeHelper.SaveTheme(ThemeStyle.Light);
             ThemeHelper.ApplySavedThemeToForm(this, poisonStyleManager1);
-            _mainForm.ThemeUpdated();
+            _mainForm.ThemeChanged();
             UpdateThemeDropdownText();
         }
 
@@ -495,7 +495,7 @@ namespace HelloClipboard
         {
             ThemeHelper.SaveTheme(ThemeStyle.Dark);
             ThemeHelper.ApplySavedThemeToForm(this, poisonStyleManager1);
-            _mainForm.ThemeUpdated();
+            _mainForm.ThemeChanged();
             UpdateThemeDropdownText();
         }
         #endregion

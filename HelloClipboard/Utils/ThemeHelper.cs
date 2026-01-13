@@ -63,7 +63,7 @@ namespace HelloClipboard.Utils
                     control.ForeColor = AppColors.LightForeColor;
                     break;
                 case ThemeStyle.Dark:
-                    control.BackColor = AppColors.DarkBackControlColor;
+                    control.BackColor = AppColors.DarkBackColor;
                     control.ForeColor = AppColors.DarkForeColor;
                     break;
                 default:
