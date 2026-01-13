@@ -4,234 +4,233 @@ using System.Windows.Forms;
 
 namespace HelloClipboard.Services
 {
-    /// <summary>
-    /// Manages the detail preview windows for clipboard items.
-    /// Handles specialized forms for text and images, ensuring proper positioning and visibility.
-    /// </summary>
     public class DetailWindowManager
     {
+        #region Fields & Constructor
         private readonly MainForm _owner;
         private readonly EventHandler _deactivateHandler;
         private Form _activeForm;
         private ClipDetailText _detailTextForm;
         private ClipDetailImage _detailImageForm;
         private ClipDetailFile _detailFileForm;
-
         public DetailWindowManager(MainForm owner, EventHandler deactivateHandler)
         {
             _owner = owner;
             _deactivateHandler = deactivateHandler;
+
+            // Owner kapanırsa tüm detail formlar kesin olarak dispose edilir
+            _owner.FormClosed += Owner_FormClosed;
         }
+        #endregion
 
-        /// <summary>
-        /// Displays the detail window for a specific clipboard item.
-        /// Switches between Text and Image detail forms based on the item type.
-        /// </summary>
-        public void ShowDetail(ClipboardItem item, Rectangle previousBounds = default)
+        #region PUBLIC API
+        public void ShowDetail(ClipboardItem item)
         {
-            if (item == null) return;
+            if (item == null || _owner.IsDisposed)
+                return;
 
-            Form targetForm;
+            Form targetForm = null;
 
-            // 1. Dosya Tipi Kontrolü (Yeni)
-            if (item.ItemType == ClipboardItemType.Path)
+            switch (item.ItemType)
             {
-                if (_detailFileForm == null || _detailFileForm.IsDisposed)
-                {
-                    _detailFileForm = new ClipDetailFile(_owner, item);
-                    _detailFileForm.Deactivate += _deactivateHandler;
-                    _detailFileForm.Owner = _owner;
+                case ClipboardItemType.Path:
+                    EnsureFileForm(item);
+                    targetForm = _detailFileForm;
+                    HideOthers(_detailTextForm, _detailImageForm);
+                    break;
 
-                    _detailFileForm.KeyDown += DetailForm_KeyDown;
-                    _detailFileForm.KeyPreview = SettingsLoader.Current.FocusDetailWindow;
-               
-                }
-                else
-                {
-                    _detailFileForm.UpdateItem(item);
-                }
+                case ClipboardItemType.Image:
+                    EnsureImageForm(item);
+                    targetForm = _detailImageForm;
+                    HideOthers(_detailTextForm, _detailFileForm);
+                    break;
 
-                targetForm = _detailFileForm;
-                _detailTextForm?.Hide();
-                _detailImageForm?.Hide();
+                default:
+                    EnsureTextForm(item);
+                    targetForm = _detailTextForm;
+                    HideOthers(_detailImageForm, _detailFileForm);
+                    break;
             }
-            // 2. Resim Tipi Kontrolü
-            else if (item.ItemType == ClipboardItemType.Image)
-            {
-                if (_detailImageForm == null || _detailImageForm.IsDisposed)
-                {
-                    _detailImageForm = new ClipDetailImage(_owner, item);
-                    _detailImageForm.Deactivate += _deactivateHandler;
-                    _detailImageForm.Owner = _owner;
 
-                    _detailImageForm.KeyDown += DetailForm_KeyDown;
-                    _detailImageForm.KeyPreview = SettingsLoader.Current.FocusDetailWindow;
-
-                }
-                else
-                {
-                    _detailImageForm.UpdateItem(item);
-                }
-
-                targetForm = _detailImageForm;
-                _detailTextForm?.Hide();
-                _detailFileForm?.Hide(); // Dosya formunu gizle
-            }
-            // 3. Metin veya Diğer Tipler
-            else
-            {
-                if (_detailTextForm == null || _detailTextForm.IsDisposed)
-                {
-                    _detailTextForm = new ClipDetailText(_owner, item);
-                    _detailTextForm.Deactivate += _deactivateHandler;
-                    _detailTextForm.Owner = _owner;
-
-                    _detailTextForm.KeyDown += DetailForm_KeyDown;
-                    _detailTextForm.KeyPreview = SettingsLoader.Current.FocusDetailWindow;
-                    _detailTextForm.ThemeChanged();
-                }
-                else
-                {
-                    _detailTextForm.UpdateItem(item);
-                }
-
-                targetForm = _detailTextForm;
-                _detailImageForm?.Hide();
-                _detailFileForm?.Hide(); // Dosya formunu gizle
-            }
+            if (!IsFormUsable(targetForm))
+                return;
 
             _activeForm = targetForm;
+
             PositionFormNextToOwner(targetForm);
 
-
-            // Sync "Always on Top" setting with the main window
             targetForm.TopMost = _owner.TopMost;
 
-            if (!targetForm.Visible) targetForm.Show();
+            if (!targetForm.Visible)
+                targetForm.Show();
 
             if (SettingsLoader.Current.FocusDetailWindow)
+                targetForm.Activate();
+        }
+        public void CloseAll()
+        {
+            HideSafe(_detailTextForm);
+            HideSafe(_detailImageForm);
+            HideSafe(_detailFileForm);
+            _activeForm = null;
+        }
+        public void SetKeyPreview(bool enabled)
+        {
+            SetKeyPreviewSafe(_detailTextForm, enabled);
+            SetKeyPreviewSafe(_detailImageForm, enabled);
+            SetKeyPreviewSafe(_detailFileForm, enabled);
+        }
+        public void ApplyThemeToDetailWindows()
+        {
+            if (IsFormUsable(_detailTextForm))
+                _detailTextForm.RefreshTheme();
+            if (IsFormUsable(_detailFileForm))
+                _detailFileForm.RefreshTheme();
+        }
+        public Form GetActiveForm() => IsFormUsable(_activeForm) ? _activeForm : null;
+        public bool IsAnyVisible() => IsFormUsable(_activeForm) && _activeForm.Visible;
+        #endregion
+
+        #region ENSURE FORMS
+        private void EnsureTextForm(ClipboardItem item)
+        {
+            if (!IsFormUsable(_detailTextForm))
             {
-                targetForm.Activate(); // Detay penceresini ön plana çıkar ve odakla
+                _detailTextForm = new ClipDetailText(_owner, item);
+                _detailTextForm.RefreshTheme();
+                InitDetailForm(_detailTextForm);
             }
             else
             {
-                // Eğer odaklanma istenmiyorsa, MainForm'un odağı kaybetmediğinden emin olalım
-                _owner.Activate();
+                _detailTextForm.UpdateItem(item);
             }
         }
-
-        private void DetailForm_KeyDown(object sender, KeyEventArgs e)
+        private void EnsureImageForm(ClipboardItem item)
         {
-            if (!SettingsLoader.Current.FocusDetailWindow)
+            if (!IsFormUsable(_detailImageForm))
             {
-                return;
+                _detailImageForm = new ClipDetailImage(_owner, item);
+                InitDetailForm(_detailImageForm);
             }
-
-
-            if (e.KeyCode == Keys.Delete)
+            else
             {
-                if (_owner != null)
-                {
-                    _owner.CallDeleteFromDetailWindow(sender, e);
-                }
-                e.Handled = true;
+                _detailImageForm.UpdateItem(item);
             }
         }
+        private void EnsureFileForm(ClipboardItem item)
+        {
+            if (!IsFormUsable(_detailFileForm))
+            {
+                _detailFileForm = new ClipDetailFile(_owner, item);
+                _detailFileForm.RefreshTheme();
+                InitDetailForm(_detailFileForm);
+            }
+            else
+            {
+                _detailFileForm.UpdateItem(item);
+            }
+        }
+        #endregion
 
-        /// <summary>
-        /// Calculates the optimal position for the detail window relative to the main window.
-        /// Tries to place it: Right -> Left -> Bottom -> Top -> Center (Fallback).
-        /// </summary>
+        #region INIT & LIFECYCLE
+        private void InitDetailForm(Form form)
+        {
+            form.Deactivate += _deactivateHandler;
+            form.KeyDown += DetailForm_KeyDown;
+            form.KeyPreview = SettingsLoader.Current.FocusDetailWindow;
+            form.ShowInTaskbar = false;
+        }
+        private void Owner_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            DisposeAll();
+        }
+        private void DisposeAll()
+        {
+            DisposeSafe(ref _detailTextForm);
+            DisposeSafe(ref _detailImageForm);
+            DisposeSafe(ref _detailFileForm);
+            _activeForm = null;
+        }
+        #endregion
+
+        #region HELPERS (SAFE GUARDS)
+        private static bool IsFormUsable(Form form)
+        {
+            return form != null && !form.IsDisposed;
+        }
+        private static void HideSafe(Form form)
+        {
+            if (IsFormUsable(form) && form.Visible)
+                form.Hide();
+        }
+        private static void DisposeSafe<T>(ref T form) where T : Form
+        {
+            if (form == null) return;
+
+            try
+            {
+                form.Hide();
+                form.Dispose();
+            }
+            catch { }
+
+            form = null;
+        }
+        private static void SetKeyPreviewSafe(Form form, bool enabled)
+        {
+            if (IsFormUsable(form))
+                form.KeyPreview = enabled;
+        }
+        private static void HideOthers(params Form[] forms)
+        {
+            foreach (var form in forms)
+                HideSafe(form);
+        }
+        #endregion
+
+        #region POSITIONING
         public void PositionFormNextToOwner(Form detailForm)
         {
-            if (detailForm == null || detailForm.IsDisposed) return;
+            if (!IsFormUsable(detailForm))
+                return;
 
             var mainRect = _owner.Bounds;
             var screen = Screen.FromControl(_owner).WorkingArea;
-            int padding = 1;
+            const int padding = 1;
+
             Point location;
 
-            // Try placing to the RIGHT of the main window
             if (mainRect.Right + detailForm.Width + padding <= screen.Right)
                 location = new Point(mainRect.Right + padding, mainRect.Top);
-            // Try placing to the LEFT
             else if (mainRect.Left - detailForm.Width - padding >= screen.Left)
                 location = new Point(mainRect.Left - detailForm.Width - padding, mainRect.Top);
-            // Try placing to the BOTTOM
             else if (mainRect.Bottom + detailForm.Height + padding <= screen.Bottom)
                 location = new Point(mainRect.Left, mainRect.Bottom + padding);
-            // Try placing to the TOP
             else if (mainRect.Top - detailForm.Height - padding >= screen.Top)
                 location = new Point(mainRect.Left, mainRect.Top - detailForm.Height - padding);
-            // Fallback: Center of the current screen
             else
                 location = new Point(
-                    Math.Max(screen.Left, screen.Left + (screen.Width - detailForm.Width) / 2),
-                    Math.Max(screen.Top, screen.Top + (screen.Height - detailForm.Height) / 2)
+                    screen.Left + (screen.Width - detailForm.Width) / 2,
+                    screen.Top + (screen.Height - detailForm.Height) / 2
                 );
 
             detailForm.StartPosition = FormStartPosition.Manual;
             detailForm.Location = location;
         }
+        #endregion
 
-        /// <summary>
-        /// Detay pencerelerinin KeyPreview özelliğini ayarlar.
-        /// Bu özellik, kısayol tuşlarının (örneğin Silme tuşu) pencere tarafından yakalanmasını sağlar.
-        /// </summary>
-        public void SetKeyPreview(bool enabled)
+        #region INPUT
+        private void DetailForm_KeyDown(object sender, KeyEventArgs e)
         {
-            if (_detailTextForm != null && !_detailTextForm.IsDisposed)
+            if (!SettingsLoader.Current.FocusDetailWindow)
+                return;
+
+            if (e.KeyCode == Keys.Delete)
             {
-                _detailTextForm.KeyPreview = enabled;
-            }
-            if (_detailImageForm != null && !_detailImageForm.IsDisposed)
-            {
-                _detailImageForm.KeyPreview = enabled;
-            }
-            if (_detailFileForm != null && !_detailFileForm.IsDisposed)
-            {
-                _detailFileForm.KeyPreview = enabled;
+                _owner?.CallDeleteFromDetailWindow(sender, e);
+                e.Handled = true;
             }
         }
-
-        /// <summary>
-        /// Hides all open detail windows and clears the active reference.
-        /// </summary>
-        public void CloseAll()
-        {
-            _detailTextForm?.Hide();
-            _detailImageForm?.Hide();
-            _detailFileForm?.Hide();
-            _activeForm = null;
-        }
-
-        /// <summary>
-        /// Aktif tüm detay pencerelerine geçerli temayı uygular.
-        /// ClipDetailText, ClipDetailImage ve ClipDetailFile formları destekleniyor.
-        /// </summary>
-        public void ApplyThemeToDetailWindows()
-        {
-            // Text formu
-            if (_detailTextForm != null && !_detailTextForm.IsDisposed)
-            {
-                _detailTextForm.ThemeChanged();
-            }
-
-            // Image formu
-            if (_detailImageForm != null && !_detailImageForm.IsDisposed)
-            {
-                //_detailImageForm.ApplyTheme();
-            }
-
-            // File formu
-            if (_detailFileForm != null && !_detailFileForm.IsDisposed)
-            {
-                //_detailFileForm.ApplyTheme();
-            }
-        }
-
-
-        public Form GetActiveForm() => _activeForm;
-        public bool IsAnyVisible() => _activeForm != null && _activeForm.Visible;
+        #endregion
     }
 }

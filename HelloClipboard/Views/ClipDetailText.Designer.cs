@@ -51,14 +51,12 @@
             contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { copySelectedTextToolStripMenuItem });
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new System.Drawing.Size(103, 26);
-            contextMenuStrip1.Opening += ContextMenuStrip1_Opening;
             // 
             // copySelectedTextToolStripMenuItem
             // 
             copySelectedTextToolStripMenuItem.Name = "copySelectedTextToolStripMenuItem";
             copySelectedTextToolStripMenuItem.Size = new System.Drawing.Size(102, 22);
             copySelectedTextToolStripMenuItem.Text = "Copy";
-            copySelectedTextToolStripMenuItem.Click += copySelectedTextToolStripMenuItem_Click;
             // 
             // statusStrip1
             // 

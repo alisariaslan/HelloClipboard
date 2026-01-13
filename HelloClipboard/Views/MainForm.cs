@@ -14,14 +14,12 @@ namespace HelloClipboard
     public partial class MainForm : PoisonForm
     {
         #region FIELDS & CONSTRUCTOR
-
         private readonly TrayApplicationContext _trayApplicationContext;
         private readonly MainFormViewModel _viewModel;
         private DetailWindowManager _detailManager;
         private FormLayoutManager _layoutManager;
         private string _currentSearchTerm = string.Empty;
         private bool _suppressAutoHide = false;
-
         public MainForm(TrayApplicationContext trayApplicationContext)
         {
             InitializeComponent();
@@ -109,7 +107,6 @@ namespace HelloClipboard
                 }
             }));
         }
-
         #endregion
 
         #region LISTBOX OPERATIONS
@@ -185,25 +182,33 @@ namespace HelloClipboard
         }
         private void MessagesListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (MessagesListBox.SelectedIndex >= 0)
+            if (MessagesListBox.SelectedIndex < 0) return;
+
+            OpenDetail(MessagesListBox.SelectedIndex);
+
+            if (!SettingsLoader.Current.FocusDetailWindow)
+                poisonTextBox1_search.Focus();
+
+            UpdateMenuStates();
+        }
+        private void OpenDetail(int index)
+        {
+            if (MessagesListBox.SelectedItem is ClipboardItem selectedItem)
             {
-                OpenDetailForIndex(MessagesListBox.SelectedIndex);
-                if (!SettingsLoader.Current.FocusDetailWindow)
-                {
-                    poisonTextBox1_search.Focus();
-                }
-                UpdateMenuStates();
+                Rectangle currentBounds =
+                    _detailManager.GetActiveForm()?.Bounds ?? Rectangle.Empty;
+
+                _detailManager.ShowDetail(selectedItem);
             }
         }
         private void MessagesListBox_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button != MouseButtons.Left) return;
+
             int index = MessagesListBox.IndexFromPoint(e.Location);
-            OpenDetailForIndex(index);
-            if (!SettingsLoader.Current.FocusDetailWindow)
-            {
-                poisonTextBox1_search.Focus();
-            }
+            if (index < 0) return;
+
+            MessagesListBox.SelectedIndex = index; // sadece seçim
         }
         private void MessagesListBox_DrawItem(object sender, DrawItemEventArgs e)
         {
@@ -216,7 +221,7 @@ namespace HelloClipboard
             if (MessagesListBox.SelectedItem is ClipboardItem selectedItem)
             {
                 Rectangle currentBounds = _detailManager.GetActiveForm()?.Bounds ?? Rectangle.Empty;
-                _detailManager.ShowDetail(selectedItem, currentBounds);
+                _detailManager.ShowDetail(selectedItem);
             }
         }
         #endregion
@@ -456,7 +461,6 @@ namespace HelloClipboard
         : Properties.Resources.unlock_40px;
             pcbox_topMost.BackColor = _viewModel.IsLocked ? AppColors.GetButtonActiveColor() : Color.Transparent;
         }
-
         public void UpdatePrivacyStatusUI()
         {
             bool isActive = _trayApplicationContext.IsPrivacyModeActive;
@@ -481,7 +485,6 @@ namespace HelloClipboard
         {
             const int WM_NCHITTEST = 0x84;
             const int HTCLIENT = 1;
-
             if (m.Msg == WM_NCHITTEST)
             {
                 base.WndProc(ref m);
@@ -499,7 +502,6 @@ namespace HelloClipboard
                 }
                 return;
             }
-
             base.WndProc(ref m);
         }
         #endregion
