@@ -41,8 +41,8 @@ namespace HelloClipboard
 
             SetupShortcutHelp();
             _mainForm = mainForm;
-            string shortTitle = item.Title.Length > Constants.MaxDetailFormTitleLength ? item.Title.Substring(0, Constants.MaxDetailFormTitleLength) + "…" : item.Title;
-            this.Text = $"{shortTitle} - {Constants.AppName}";
+            string shortTitle = item.Title.Length > AppConstants.MaxDetailFormTitleLength ? item.Title.Substring(0, AppConstants.MaxDetailFormTitleLength) + "…" : item.Title;
+            this.Text = $"{shortTitle} - {AppConstants.AppName}";
 
             panel1.Paint += panel1_Paint;
             panel1.MouseWheel += Panel1_MouseWheel;
@@ -99,8 +99,8 @@ namespace HelloClipboard
             _paths.Clear();
             _currentPath = null;
 
-            string shortTitle = item.Title.Length > Constants.MaxDetailFormTitleLength ? item.Title.Substring(0, Constants.MaxDetailFormTitleLength) + "…" : item.Title;
-            this.Text = $"{shortTitle} - {Constants.AppName}";
+            string shortTitle = item.Title.Length > AppConstants.MaxDetailFormTitleLength ? item.Title.Substring(0, AppConstants.MaxDetailFormTitleLength) + "…" : item.Title;
+            this.Text = $"{shortTitle} - {AppConstants.AppName}";
 
             _imageOffset = Point.Empty;
             _imageZoom = 1.0f;

@@ -23,8 +23,8 @@ namespace HelloClipboard
             InitializeComponent();
 
             _mainForm = mainForm;
-            string shortTitle = item.Title.Length > Constants.MaxDetailFormTitleLength ? item.Title.Substring(0, Constants.MaxDetailFormTitleLength) + "…" : item.Title;
-            this.Text = $"{shortTitle} - {Constants.AppName}";
+            string shortTitle = item.Title.Length > AppConstants.MaxDetailFormTitleLength ? item.Title.Substring(0, AppConstants.MaxDetailFormTitleLength) + "…" : item.Title;
+            this.Text = $"{shortTitle} - {AppConstants.AppName}";
 
             this.MouseWheel += ClipDetail_MouseWheel;
             richTextBox1.MouseWheel += ClipDetail_MouseWheel;
@@ -60,8 +60,8 @@ namespace HelloClipboard
 
         public void UpdateItem(ClipboardItem item)
         {
-            string shortTitle = item.Title.Length > Constants.MaxDetailFormTitleLength ? item.Title.Substring(0, Constants.MaxDetailFormTitleLength) + "…" : item.Title;
-            this.Text = $"{shortTitle} - {Constants.AppName}";
+            string shortTitle = item.Title.Length > AppConstants.MaxDetailFormTitleLength ? item.Title.Substring(0, AppConstants.MaxDetailFormTitleLength) + "…" : item.Title;
+            this.Text = $"{shortTitle} - {AppConstants.AppName}";
             SetupTextMode(item.Content);
             UpdateCopyFileButton(item.Content);
             UpdateStatusInfo(item.Content);

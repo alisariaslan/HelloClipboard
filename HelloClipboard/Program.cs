@@ -13,11 +13,11 @@ namespace HelloClipboard
         {
             TempConfigLoader.LoadSettings();
             bool skipMutexCheck = TempConfigLoader.Current.AdminPriviligesRequested;
-            using (Mutex mutex = new Mutex(true, $"{Constants.AppName}_SingleInstance", out bool isNewInstance))
+            using (Mutex mutex = new Mutex(true, $"{AppConstants.AppName}_SingleInstance", out bool isNewInstance))
             {
                 if (!isNewInstance && !skipMutexCheck)
                 {
-                    using (var client = new NamedPipeClientStream(".", $"{Constants.AppName}_ShowWindow", PipeDirection.Out))
+                    using (var client = new NamedPipeClientStream(".", $"{AppConstants.AppName}_ShowWindow", PipeDirection.Out))
                     {
                         try
                         {
@@ -43,7 +43,7 @@ namespace HelloClipboard
             while (true)
             {
                 using (
-                    var server = new NamedPipeServerStream($"{Constants.AppName}_ShowWindow", PipeDirection.In))
+                    var server = new NamedPipeServerStream($"{AppConstants.AppName}_ShowWindow", PipeDirection.In))
                 {
                     server.WaitForConnection();
                     using (var reader = new System.IO.StreamReader(server))

@@ -135,7 +135,7 @@ namespace HelloClipboard
                 _form.Hide();
                 if (!_trayMinimizedNotifyShown)
                 {
-                    _trayManager.ShowNotification(Constants.AppName, "Minimized to tray.");
+                    _trayManager.ShowNotification(AppConstants.AppName, "Minimized to tray.");
                     _trayMinimizedNotifyShown = true;
                 }
             });
@@ -193,7 +193,7 @@ namespace HelloClipboard
         private void OnPrivacyStateChanged(bool active)
         {
             UpdatePrivacyMenuText();
-            _trayManager.ShowNotification(Constants.AppName, $"Private Mode {(active ? "enabled" : "disabled")}.");
+            _trayManager.ShowNotification(AppConstants.AppName, $"Private Mode {(active ? "enabled" : "disabled")}.");
         }
 
         private void UpdatePrivacyMenuText()
@@ -208,7 +208,7 @@ namespace HelloClipboard
         private void OnUpdateAvailable(object sender, UpdateInfo e)
         {
             RunOnUI(() => _form.UpdateCheckUpdateNowBtnText("Update Now"));
-            _trayManager.ShowNotification($"{Constants.AppName} Update", $"Version v{e.Version} ({e.BuildNumber}) available.", ToolTipIcon.Info, ShowMainWindow, 8000);
+            _trayManager.ShowNotification($"{AppConstants.AppName} Update", $"Version v{e.Version} ({e.BuildNumber}) available.", ToolTipIcon.Info, ShowMainWindow, 8000);
         }
 
         #endregion

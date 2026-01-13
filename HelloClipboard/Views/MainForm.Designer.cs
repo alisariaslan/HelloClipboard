@@ -207,7 +207,7 @@
             poisonStyleExtender1.SetApplyPoisonTheme(statusStrip1, true);
             statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { toolStripStatusLabel1 });
             statusStrip1.LayoutStyle = System.Windows.Forms.ToolStripLayoutStyle.HorizontalStackWithOverflow;
-            statusStrip1.Location = new System.Drawing.Point(0, 421);
+            statusStrip1.Location = new System.Drawing.Point(0, 415);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Padding = new System.Windows.Forms.Padding(1, 0, 11, 0);
             statusStrip1.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
@@ -307,7 +307,6 @@
             poisonTextBox1_search.MinimumSize = new System.Drawing.Size(155, 24);
             poisonTextBox1_search.Name = "poisonTextBox1_search";
             poisonTextBox1_search.PasswordChar = '\0';
-            poisonTextBox1_search.PromptText = "Search...";
             poisonTextBox1_search.ScrollBars = System.Windows.Forms.ScrollBars.None;
             poisonTextBox1_search.SelectedText = "";
             poisonTextBox1_search.SelectionLength = 0;
@@ -371,7 +370,7 @@
             panel_searchSettings.Location = new System.Drawing.Point(20, 127);
             panel_searchSettings.Margin = new System.Windows.Forms.Padding(2);
             panel_searchSettings.Name = "panel_searchSettings";
-            panel_searchSettings.Size = new System.Drawing.Size(380, 50);
+            panel_searchSettings.Size = new System.Drawing.Size(380, 56);
             panel_searchSettings.TabIndex = 14;
             panel_searchSettings.Visible = false;
             // 
@@ -381,16 +380,16 @@
             panel2.Controls.Add(poisonLabel2);
             panel2.Controls.Add(poisonToggle2_caseSens);
             panel2.Dock = System.Windows.Forms.DockStyle.Top;
-            panel2.Location = new System.Drawing.Point(0, 25);
+            panel2.Location = new System.Drawing.Point(0, 28);
             panel2.Name = "panel2";
             panel2.Padding = new System.Windows.Forms.Padding(24, 0, 0, 0);
-            panel2.Size = new System.Drawing.Size(380, 25);
+            panel2.Size = new System.Drawing.Size(380, 28);
             panel2.TabIndex = 5;
             // 
             // poisonLabel2
             // 
             poisonLabel2.AutoSize = true;
-            poisonLabel2.Location = new System.Drawing.Point(27, 3);
+            poisonLabel2.Location = new System.Drawing.Point(27, 4);
             poisonLabel2.Name = "poisonLabel2";
             poisonLabel2.Size = new System.Drawing.Size(97, 19);
             poisonLabel2.TabIndex = 2;
@@ -399,9 +398,10 @@
             // 
             // poisonToggle2_caseSens
             // 
+            poisonToggle2_caseSens.AutoSize = true;
             poisonToggle2_caseSens.Location = new System.Drawing.Point(130, 4);
             poisonToggle2_caseSens.Name = "poisonToggle2_caseSens";
-            poisonToggle2_caseSens.Size = new System.Drawing.Size(60, 18);
+            poisonToggle2_caseSens.Size = new System.Drawing.Size(80, 21);
             poisonToggle2_caseSens.TabIndex = 3;
             poisonToggle2_caseSens.Text = "Off";
             poisonToggle2_caseSens.UseSelectable = true;
@@ -416,13 +416,13 @@
             panel1.Location = new System.Drawing.Point(0, 0);
             panel1.Name = "panel1";
             panel1.Padding = new System.Windows.Forms.Padding(24, 0, 0, 0);
-            panel1.Size = new System.Drawing.Size(380, 25);
+            panel1.Size = new System.Drawing.Size(380, 28);
             panel1.TabIndex = 4;
             // 
             // poisonLabel1
             // 
             poisonLabel1.AutoSize = true;
-            poisonLabel1.Location = new System.Drawing.Point(27, 3);
+            poisonLabel1.Location = new System.Drawing.Point(27, 4);
             poisonLabel1.Name = "poisonLabel1";
             poisonLabel1.Size = new System.Drawing.Size(91, 19);
             poisonLabel1.TabIndex = 0;
@@ -431,9 +431,10 @@
             // 
             // poisonToggle1_regex
             // 
+            poisonToggle1_regex.AutoSize = true;
             poisonToggle1_regex.Location = new System.Drawing.Point(130, 4);
             poisonToggle1_regex.Name = "poisonToggle1_regex";
-            poisonToggle1_regex.Size = new System.Drawing.Size(60, 18);
+            poisonToggle1_regex.Size = new System.Drawing.Size(80, 21);
             poisonToggle1_regex.TabIndex = 1;
             poisonToggle1_regex.Text = "Off";
             poisonToggle1_regex.UseSelectable = true;
@@ -447,9 +448,9 @@
             poisonPanel1.HorizontalScrollbarBarColor = true;
             poisonPanel1.HorizontalScrollbarHighlightOnWheel = false;
             poisonPanel1.HorizontalScrollbarSize = 10;
-            poisonPanel1.Location = new System.Drawing.Point(20, 177);
+            poisonPanel1.Location = new System.Drawing.Point(20, 183);
             poisonPanel1.Name = "poisonPanel1";
-            poisonPanel1.Size = new System.Drawing.Size(380, 443);
+            poisonPanel1.Size = new System.Drawing.Size(380, 437);
             poisonPanel1.TabIndex = 4;
             poisonPanel1.VerticalScrollbarBarColor = true;
             poisonPanel1.VerticalScrollbarHighlightOnWheel = false;
@@ -461,7 +462,7 @@
             panel4.Dock = System.Windows.Forms.DockStyle.Fill;
             panel4.Location = new System.Drawing.Point(0, 0);
             panel4.Name = "panel4";
-            panel4.Size = new System.Drawing.Size(380, 421);
+            panel4.Size = new System.Drawing.Size(380, 415);
             panel4.TabIndex = 4;
             // 
             // MessagesListBox
@@ -472,7 +473,7 @@
             MessagesListBox.Location = new System.Drawing.Point(0, 0);
             MessagesListBox.Margin = new System.Windows.Forms.Padding(0);
             MessagesListBox.Name = "MessagesListBox";
-            MessagesListBox.Size = new System.Drawing.Size(380, 421);
+            MessagesListBox.Size = new System.Drawing.Size(380, 415);
             MessagesListBox.TabIndex = 3;
             // 
             // MainForm
@@ -490,7 +491,7 @@
             Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             MinimumSize = new System.Drawing.Size(420, 480);
             Name = "MainForm";
-            ShadowType = ReaLTaiizor.Enum.Poison.FormShadowType.DropShadow;
+            ShadowType = ReaLTaiizor.Enum.Poison.FormShadowType.AeroShadow;
             Text = "HelloClipboard";
             contextMenuStrip1.ResumeLayout(false);
             menuStrip1.ResumeLayout(false);

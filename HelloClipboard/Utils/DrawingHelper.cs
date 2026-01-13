@@ -3,81 +3,72 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using HelloClipboard.Constants;
 
 namespace HelloClipboard.Utils
 {
-
     public static class DrawingHelper
     {
-
-        private static readonly Color ZebraOddRowColor = Color.FromArgb(245, 245, 245); // Açık gri
-        private static readonly Color ZebraEvenRowColor = Color.White; // Beyaz (Liste kutusu rengi de olabilir)
+        private static Color GetZebraColor(int index)
+        {
+            var theme = ThemeHelper.GetTheme();
+            switch (theme)
+            {
+                case ReaLTaiizor.Enum.Poison.ThemeStyle.Light:
+                    return (index % 2 == 0)
+                        ? AppColors.LightBackColor
+                        : AppColors.LightAlternateColor;
+                case ReaLTaiizor.Enum.Poison.ThemeStyle.Dark:
+                    return (index % 2 == 0)
+                        ? AppColors.DarkBackColor
+                        : AppColors.DarkAlternateColor;
+                default:
+                    return (index % 2 == 0) ? Color.White : Color.LightGray;
+            }
+        }
 
         public static void RenderClipboardItem(
-    DrawItemEventArgs e,
-    ListBox listBox,
-    string searchTerm,
-    MainFormViewModel viewModel)
+            DrawItemEventArgs e,
+            ListBox listBox,
+            string searchTerm,
+            MainFormViewModel viewModel)
         {
+            if (e.Index < 0 || e.Index >= listBox.Items.Count) return;
 
-            bool selectedd = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
-            Color backColor;
+            var item = listBox.Items[e.Index] as ClipboardItem;
+            if (item == null) return;
 
-            if (selectedd)
-            {
-                // Seçili öğe için varsayılan vurgu rengi
-                backColor = SystemColors.Highlight;
-            }
-            else
-            {
-                // Index'e göre zebra rengini seç
-                if (e.Index % 2 == 0) // Çift indeksler (0, 2, 4...)
-                {
-                    backColor = ZebraEvenRowColor;
-                }
-                else // Tek indeksler (1, 3, 5...)
-                {
-                    backColor = ZebraOddRowColor;
-                }
-            }
+            bool selected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
 
-            // Arka planı çiz
+            // Arka plan rengi
+            Color backColor = selected ? SystemColors.Highlight : GetZebraColor(e.Index);
+
             using (SolidBrush brush = new SolidBrush(backColor))
             {
                 e.Graphics.FillRectangle(brush, e.Bounds);
             }
 
-            if (e.Index < 0 || e.Index >= listBox.Items.Count)
-                return;
+            // Metin rengi
+            Color textColor = selected
+                ? SystemColors.HighlightText
+                : (ThemeHelper.GetTheme() == ReaLTaiizor.Enum.Poison.ThemeStyle.Dark
+                    ? AppColors.DarkForeColor
+                    : AppColors.LightForeColor);
 
-            var item = listBox.Items[e.Index] as ClipboardItem;
-            if (item == null)
-                return;
-
-            bool selected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
-            Color textColor = selected ? SystemColors.HighlightText : SystemColors.ControlText;
-            var bounds = e.Bounds;
-
-            // --- METİN OLUŞTURMA BAŞLANGICI ---
+            // Metin oluşturma
             string displayText = item.Title ?? string.Empty;
-
-            // 1. Önce Zaman Damgasını ekleyelim (Eğer ayar aktifse)
             if (SettingsLoader.Current.EnableTimeStamps)
-            {
                 displayText = $"[{item.Timestamp:HH:mm:ss}] " + displayText;
-            }
-
-            // 2. Sonra Pin bilgisini ekleyelim
             if (item.IsPinned)
                 displayText = "[PIN] " + displayText;
-            // --- METİN OLUŞTURMA SONU ---
 
+            // Metni çiz
             DrawingHelper.DrawTextWithHighlight(
                 e.Graphics,
                 displayText,
                 e.Font,
                 textColor,
-                bounds,
+                e.Bounds,
                 selected,
                 searchTerm,
                 viewModel.GetHighlightRegex(searchTerm),
@@ -111,7 +102,6 @@ namespace HelloClipboard.Utils
 
             List<(string part, bool highlight)> parts = new List<(string, bool)>();
 
-            // If a Regex is provided, split the text using Regex
             if (highlightRegex != null)
             {
                 int lastIndex = 0;
@@ -127,7 +117,6 @@ namespace HelloClipboard.Utils
                 if (lastIndex < text.Length)
                     parts.Add((text.Substring(lastIndex), false));
             }
-            // If no Regex is provided, split using standard string IndexOf
             else
             {
                 StringComparison comp = caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
@@ -145,25 +134,21 @@ namespace HelloClipboard.Utils
 
                     parts.Add((text.Substring(idx, searchTerm.Length), true));
                     start = idx + searchTerm.Length;
-                    if (start >= text.Length)
-                        break;
+                    if (start >= text.Length) break;
                 }
             }
 
-            // Draw the parts side-by-side
             int x = bounds.Left;
             foreach (var (part, highlight) in parts)
             {
-                if (string.IsNullOrEmpty(part))
-                    continue;
+                if (string.IsNullOrEmpty(part)) continue;
 
                 var size = TextRenderer.MeasureText(g, part, font, new Size(int.MaxValue, int.MaxValue), format);
                 var rect = new Rectangle(x, bounds.Top, size.Width, bounds.Height);
 
                 if (highlight)
                 {
-                    // Use Gold for selected items and Yellow for unselected items for better visibility
-                    Color back = selected ? Color.Gold : Color.Yellow;
+                    Color back = selected ? AppColors.SelectedHighlightColor : AppColors.HighlightColor;
                     using (var brush = new SolidBrush(back))
                     {
                         g.FillRectangle(brush, rect);
@@ -173,9 +158,7 @@ namespace HelloClipboard.Utils
                 TextRenderer.DrawText(g, part, font, rect, textColor, format);
                 x += size.Width;
 
-                // Stop drawing if the text exceeds bounds (for performance and Ellipsis handling)
-                if (x > bounds.Right)
-                    break;
+                if (x > bounds.Right) break;
             }
         }
     }

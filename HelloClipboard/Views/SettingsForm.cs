@@ -1,10 +1,15 @@
-﻿using Microsoft.Win32;
+﻿using HelloClipboard.Models;
+using HelloClipboard.Utils;
+using Microsoft.Win32;
+using ReaLTaiizor.Enum.Poison;
+using ReaLTaiizor.Forms;
 using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace HelloClipboard
 {
-    public partial class SettingsForm : Form
+    public partial class SettingsForm : PoisonForm
     {
         private Timer _debounceTimer;
         private MainForm _mainForm;
@@ -13,7 +18,11 @@ namespace HelloClipboard
 
         public SettingsForm(MainForm mainForm)
         {
+
             InitializeComponent();
+
+            ThemeHelper.ApplySavedThemeToForm(this, poisonStyleManager1);
+            UpdateThemeDropdownText();
 
             _mainForm = mainForm;
 
@@ -22,34 +31,34 @@ namespace HelloClipboard
             _debounceTimer.Tick += DebounceTimer_Tick;
 
             RemoveSettingEvents();
-            checkBox1_suppressClipboardEvents.Checked = SettingsLoader.Current.SuppressClipboardEvents;
-            checkBox2_hideToSystemTray.Checked = SettingsLoader.Current.HideToTray;
-            checkBox3_checkUpdates.Checked = SettingsLoader.Current.CheckUpdates;
-            checkBox1_startWithWindows.Checked = SettingsLoader.Current.StartWithWindows;
-            checkBox4_preventClipboardDuplication.Checked = SettingsLoader.Current.PreventClipboardDuplication;
-            textBox1_maxHistoryCount.Text = SettingsLoader.Current.MaxHistoryCount.ToString();
-            checkBox1_invertClipboardHistoryListing.Checked = SettingsLoader.Current.InvertClipboardHistoryListing;
-            checkBox1_clipboardHistory.Checked = SettingsLoader.Current.EnableClipboardHistory;
-            checkBox1_alwaysTopMost.Checked = SettingsLoader.Current.AlwaysTopMost;
-            checkBox1_showInTaskbar.Checked = SettingsLoader.Current.ShowInTaskbar;
-            checkBox1_autoHideWhenUnfocus.Checked = SettingsLoader.Current.AutoHideWhenUnfocus;
-            textBox_privacyDuration.Text = SettingsLoader.Current.PrivacyModeDurationMinutes.ToString();
-            checkBox_enableHotkey.Checked = SettingsLoader.Current.EnableGlobalHotkey;
-            textBox_hotkey.Text = FormatHotkey(SettingsLoader.Current.HotkeyModifiers, SettingsLoader.Current.HotkeyKey);
-            textBox_hotkey.Enabled = SettingsLoader.Current.EnableGlobalHotkey;
+
+            //GENERAL
+            poisonToggle1_checkUpdates.Checked = SettingsLoader.Current.CheckUpdates;
+            poisonToggle1_startWithWindows.Checked = SettingsLoader.Current.StartWithWindows;
+            //APPEARANCE
+            poisonToggle1_invertClipboard.Checked = SettingsLoader.Current.InvertClipboardHistoryListing;
+            poisonToggle1_alwaysTopMost.Checked = SettingsLoader.Current.AlwaysTopMost;
+            poisonToggle1_showInTaskbar.Checked = SettingsLoader.Current.ShowInTaskbar;
+            poisonToggle1_showTimeStamps.Checked = SettingsLoader.Current.EnableTimeStamps;
+            //HISTORY
+            poisonToggle1_enableHistory.Checked = SettingsLoader.Current.EnableClipboardHistory;
+            poisonTextBox1_maxHistoryCount.Text = SettingsLoader.Current.MaxHistoryCount.ToString();
+            //BEHAVIOUR
+            poisonToggle1_hideToSystemTray.Checked = SettingsLoader.Current.HideToTray;
+            poisonToggle1_autoHide.Checked = SettingsLoader.Current.AutoHideWhenUnfocus;
+            poisonToggle1_preventDuplication.Checked = SettingsLoader.Current.PreventClipboardDuplication;
+            poisonToggle1_suppressClipboardEvents.Checked = SettingsLoader.Current.SuppressClipboardEvents;
+            poisonToggle1_focusDetailWindow.Checked = SettingsLoader.Current.FocusDetailWindow;
+            poisonTextBox1_privateModeDuration.Text = SettingsLoader.Current.PrivacyModeDurationMinutes.ToString();
+            //HOTKEY
+            poisonToggle1_globalHotkeys.Checked = SettingsLoader.Current.EnableGlobalHotkey;
+            poisonTextBox1_showWindowHotkey.Text = FormatHotkey(SettingsLoader.Current.HotkeyModifiers, SettingsLoader.Current.HotkeyKey);
+            poisonTextBox1_showWindowHotkey.Enabled = SettingsLoader.Current.EnableGlobalHotkey;
             _pendingHotkeyKey = SettingsLoader.Current.HotkeyKey;
             _pendingHotkeyModifiers = SettingsLoader.Current.HotkeyModifiers;
-            checkBox2_enableTimeStamps.Checked = SettingsLoader.Current.EnableTimeStamps;
-            chbox_focusDetailWindow.Checked = SettingsLoader.Current.FocusDetailWindow;
+
             AddSettingEvents();
 
-        }
-
-
-        private void textBox1_maxHistoryCount_TextChanged(object sender, EventArgs e)
-        {
-            _debounceTimer.Stop();
-            _debounceTimer.Start();
         }
 
         private void textBox1_maxHistoryCount_KeyPress(object sender, KeyPressEventArgs e)
@@ -74,7 +83,7 @@ namespace HelloClipboard
 
         private void SaveMaxHistory()
         {
-            string text = textBox1_maxHistoryCount.Text.Trim();
+            string text = poisonTextBox1_maxHistoryCount.Text.Trim();
 
             if (string.IsNullOrEmpty(text))
                 return;
@@ -88,6 +97,8 @@ namespace HelloClipboard
             if (value > 10000)
                 value = 10000;
 
+            poisonTextBox1_maxHistoryCount.Text = value.ToString();
+
             if (SettingsLoader.Current.MaxHistoryCount == value)
                 return;
 
@@ -97,81 +108,106 @@ namespace HelloClipboard
 
         private void RemoveSettingEvents()
         {
-            checkBox1_suppressClipboardEvents.CheckedChanged -= checkBox1_suppressClipboardEvents_CheckedChanged;
-            textBox1_maxHistoryCount.TextChanged -= textBox1_maxHistoryCount_TextChanged;
-            checkBox3_checkUpdates.CheckedChanged -= checkBox3_checkUpdates_CheckedChanged;
-            checkBox1_startWithWindows.CheckedChanged -= checkBox1_startWithWindows_CheckedChanged;
-            checkBox2_hideToSystemTray.CheckedChanged -= checkBox2_hideToSystemTray_CheckedChanged;
-            checkBox4_preventClipboardDuplication.CheckedChanged -= checkBox4_preventClipboardDuplication_CheckedChanged;
-            checkBox1_invertClipboardHistoryListing.CheckedChanged -= checkBox1_invertClipboardHistoryListing_CheckedChanged;
-            checkBox1_clipboardHistory.CheckedChanged -= checkBox1_clipboardHistory_CheckedChanged;
-            checkBox1_alwaysTopMost.CheckedChanged -= checkBox1_alwaysTopMost_CheckedChanged;
-            checkBox1_showInTaskbar.CheckedChanged -= checkBox1_showInTaskbar_CheckedChanged;
-            checkBox1_autoHideWhenUnfocus.CheckedChanged -= checkBox1_autoHideWhenUnfocus_CheckedChanged;
-            textBox_privacyDuration.KeyPress -= textBox_privacyDuration_KeyPress;
-            textBox_privacyDuration.Leave -= textBox_privacyDuration_Leave;
-            checkBox_enableHotkey.CheckedChanged -= checkBox_enableHotkey_CheckedChanged;
-            textBox_hotkey.KeyDown -= textBox_hotkey_KeyDown;
-            checkBox2_enableTimeStamps.CheckedChanged -= checkBox2_enableTimeStamps_CheckedChanged;
-            chbox_focusDetailWindow.CheckedChanged -= chbox_focusDetailWindow_CheckedChanged;
+            //GENERAL
+            poisonToggle1_checkUpdates.CheckedChanged -= poisonToggle1_checkUpdates_CheckedChanged;
+            poisonToggle1_startWithWindows.CheckedChanged -= poisonToggle1_startWithWindows_CheckedChanged;
+            //APPEARANCE
+            poisonToggle1_invertClipboard.CheckedChanged -= poisonToggle1_invertClipboard_CheckedChanged;
+            poisonToggle1_alwaysTopMost.CheckedChanged -= poisonToggle1_alwaysTopMost_CheckedChanged;
+            poisonToggle1_showInTaskbar.CheckedChanged -= poisonToggle1_showInTaskbar_CheckedChanged;
+            poisonToggle1_showTimeStamps.CheckedChanged -= poisonToggle1_showTimeStamps_CheckedChanged;
+            //HISTORY
+            poisonToggle1_enableHistory.CheckedChanged -= poisonToggle1_enableHistory_CheckedChanged;
+            poisonTextBox1_maxHistoryCount.TextChanged -= poisonTextBox1_maxHistoryCount_TextChanged;
+            //BEHAVIOUR
+            poisonToggle1_hideToSystemTray.CheckedChanged -= poisonToggle1_hideToSystemTray_CheckedChanged;
+            poisonToggle1_autoHide.CheckedChanged -= poisonToggle1_autoHide_CheckedChanged;
+            poisonToggle1_preventDuplication.CheckedChanged -= poisonToggle1_preventDuplication_CheckedChanged;
+            poisonToggle1_suppressClipboardEvents.CheckedChanged -= poisonToggle1_suppressClipboardEvents_CheckedChanged;
+            poisonToggle1_focusDetailWindow.CheckedChanged -= poisonToggle1_focusDetailWindow_CheckedChanged;
+            poisonTextBox1_privateModeDuration.KeyPress -= poisonTextBox1_privateModeDuration_KeyPress;
+            poisonTextBox1_privateModeDuration.Leave -= poisonTextBox1_privateModeDuration_Leave;
+            //HOTKEY
+            poisonToggle1_globalHotkeys.CheckedChanged -= poisonToggle1_globalHotkeys_CheckedChanged;
+            poisonTextBox1_showWindowHotkey.KeyDown -= poisonTextBox1_showWindowHotkey_KeyDown;
         }
 
         private void AddSettingEvents()
         {
-            checkBox1_suppressClipboardEvents.CheckedChanged += checkBox1_suppressClipboardEvents_CheckedChanged;
-            textBox1_maxHistoryCount.TextChanged += textBox1_maxHistoryCount_TextChanged;
-            checkBox3_checkUpdates.CheckedChanged += checkBox3_checkUpdates_CheckedChanged;
-            checkBox1_startWithWindows.CheckedChanged += checkBox1_startWithWindows_CheckedChanged;
-            checkBox2_hideToSystemTray.CheckedChanged += checkBox2_hideToSystemTray_CheckedChanged;
-            checkBox4_preventClipboardDuplication.CheckedChanged += checkBox4_preventClipboardDuplication_CheckedChanged;
-            checkBox1_invertClipboardHistoryListing.CheckedChanged += checkBox1_invertClipboardHistoryListing_CheckedChanged;
-            checkBox1_clipboardHistory.CheckedChanged += checkBox1_clipboardHistory_CheckedChanged;
-            checkBox1_alwaysTopMost.CheckedChanged += checkBox1_alwaysTopMost_CheckedChanged;
-            checkBox1_showInTaskbar.CheckedChanged += checkBox1_showInTaskbar_CheckedChanged;
-            checkBox1_autoHideWhenUnfocus.CheckedChanged += checkBox1_autoHideWhenUnfocus_CheckedChanged;
-            textBox_privacyDuration.KeyPress += textBox_privacyDuration_KeyPress;
-            textBox_privacyDuration.Leave += textBox_privacyDuration_Leave;
-            checkBox_enableHotkey.CheckedChanged += checkBox_enableHotkey_CheckedChanged;
-            textBox_hotkey.KeyDown += textBox_hotkey_KeyDown;
-            checkBox2_enableTimeStamps.CheckedChanged += checkBox2_enableTimeStamps_CheckedChanged;
-            chbox_focusDetailWindow.CheckedChanged += chbox_focusDetailWindow_CheckedChanged;
+            //GENERAL
+            poisonToggle1_checkUpdates.CheckedChanged += poisonToggle1_checkUpdates_CheckedChanged;
+            poisonToggle1_startWithWindows.CheckedChanged += poisonToggle1_startWithWindows_CheckedChanged;
+            //APPEARANCE
+            poisonToggle1_invertClipboard.CheckedChanged += poisonToggle1_invertClipboard_CheckedChanged;
+            poisonToggle1_alwaysTopMost.CheckedChanged += poisonToggle1_alwaysTopMost_CheckedChanged;
+            poisonToggle1_showInTaskbar.CheckedChanged += poisonToggle1_showInTaskbar_CheckedChanged;
+            poisonToggle1_showTimeStamps.CheckedChanged += poisonToggle1_showTimeStamps_CheckedChanged;
+            //HISTORY
+            poisonToggle1_enableHistory.CheckedChanged += poisonToggle1_enableHistory_CheckedChanged;
+            poisonTextBox1_maxHistoryCount.TextChanged += poisonTextBox1_maxHistoryCount_TextChanged;
+            //BEHAVIOUR
+            poisonToggle1_hideToSystemTray.CheckedChanged += poisonToggle1_hideToSystemTray_CheckedChanged;
+            poisonToggle1_autoHide.CheckedChanged += poisonToggle1_autoHide_CheckedChanged;
+            poisonToggle1_preventDuplication.CheckedChanged += poisonToggle1_preventDuplication_CheckedChanged;
+            poisonToggle1_suppressClipboardEvents.CheckedChanged += poisonToggle1_suppressClipboardEvents_CheckedChanged;
+            poisonToggle1_focusDetailWindow.CheckedChanged += poisonToggle1_focusDetailWindow_CheckedChanged;
+            poisonTextBox1_privateModeDuration.KeyPress += poisonTextBox1_privateModeDuration_KeyPress;
+            poisonTextBox1_privateModeDuration.Leave += poisonTextBox1_privateModeDuration_Leave;
+            //HOTKEY
+            poisonToggle1_globalHotkeys.CheckedChanged += poisonToggle1_globalHotkeys_CheckedChanged;
+            poisonTextBox1_showWindowHotkey.KeyDown += poisonTextBox1_showWindowHotkey_KeyDown;
         }
 
-        private async void button2_Defaults_Click(object sender, EventArgs e)
+        private async void poisonButton1_resetDefaults_Click(object sender, EventArgs e)
         {
-            if (!await PrivilegesHelper.EnsureAdministrator())
+            //if (!await PrivilegesHelper.EnsureAdministrator())
+            //    return;
+
+            var result = MessageBox.Show(
+      "Are you sure you want to reset all settings to default?",
+      "Confirm Reset",
+      MessageBoxButtons.YesNo,
+      MessageBoxIcon.Warning
+  );
+
+            if (result != DialogResult.Yes)
                 return;
 
             var def = new SettingsModel();
 
             RemoveSettingEvents();
-            checkBox1_suppressClipboardEvents.Checked = def.SuppressClipboardEvents;
-            textBox1_maxHistoryCount.Text = def.MaxHistoryCount.ToString();
-            checkBox3_checkUpdates.Checked = def.CheckUpdates;
-            checkBox1_startWithWindows.Checked = def.StartWithWindows;
-            checkBox2_hideToSystemTray.Checked = def.HideToTray;
-            checkBox4_preventClipboardDuplication.Checked = def.PreventClipboardDuplication;
-            checkBox1_invertClipboardHistoryListing.Checked = def.InvertClipboardHistoryListing;
-            checkBox1_clipboardHistory.Checked = def.EnableClipboardHistory;
-            checkBox1_alwaysTopMost.Checked = def.AlwaysTopMost;
-            checkBox1_showInTaskbar.Checked = def.ShowInTaskbar;
-            checkBox1_autoHideWhenUnfocus.Checked = def.AutoHideWhenUnfocus;
-            textBox_privacyDuration.Text = def.PrivacyModeDurationMinutes.ToString();
-            checkBox_enableHotkey.Checked = def.EnableGlobalHotkey;
-            textBox_hotkey.Text = FormatHotkey(def.HotkeyModifiers, def.HotkeyKey);
-            textBox_hotkey.Enabled = def.EnableGlobalHotkey;
-            checkBox2_enableTimeStamps.Checked = def.EnableTimeStamps;
-            chbox_focusDetailWindow.Checked = def.FocusDetailWindow;
-            AddSettingEvents();
 
+            //GENERAL
+            poisonToggle1_checkUpdates.Checked = def.CheckUpdates;
+            poisonToggle1_startWithWindows.Checked = def.StartWithWindows;
+            //APPEARANCE
+            poisonToggle1_invertClipboard.Checked = def.InvertClipboardHistoryListing;
+            poisonToggle1_alwaysTopMost.Checked = def.AlwaysTopMost;
+            poisonToggle1_showInTaskbar.Checked = def.ShowInTaskbar;
+            poisonToggle1_showTimeStamps.Checked = def.EnableTimeStamps;
+            //HISTORY
+            poisonToggle1_enableHistory.Checked = def.EnableClipboardHistory;
+            poisonTextBox1_maxHistoryCount.Text = def.MaxHistoryCount.ToString();
+            //BEHAVIOUR
+            poisonToggle1_hideToSystemTray.Checked = def.HideToTray;
+            poisonToggle1_autoHide.Checked = def.AutoHideWhenUnfocus;
+            poisonToggle1_preventDuplication.Checked = def.PreventClipboardDuplication;
+            poisonToggle1_suppressClipboardEvents.Checked = def.SuppressClipboardEvents;
+            poisonTextBox1_privateModeDuration.Text = def.PrivacyModeDurationMinutes.ToString();
+            poisonToggle1_focusDetailWindow.Checked = def.FocusDetailWindow;
+            //HOTKEY
+            poisonToggle1_globalHotkeys.Checked = def.EnableGlobalHotkey;
+            poisonTextBox1_showWindowHotkey.Text = FormatHotkey(def.HotkeyModifiers, def.HotkeyKey);
+            poisonTextBox1_showWindowHotkey.Enabled = def.EnableGlobalHotkey;
+
+            AddSettingEvents();
             SettingsLoader.Current = def;
             SettingsLoader.Save();
             TrayApplicationContext.Instance?.ReloadGlobalHotkey();
             TrayApplicationContext.Instance?.RefreshPrivacyMenuLabel();
-
             try
             {
-                string appName = Constants.AppName;
+                string appName = AppConstants.AppName;
                 using (RegistryKey key = Registry.CurrentUser.OpenSubKey(
                            @"Software\Microsoft\Windows\CurrentVersion\Run", writable: true))
                 {
@@ -188,24 +224,28 @@ namespace HelloClipboard
                     "Failed to update application startup (Registry)",
                     MessageBoxButtons.OK);
             }
-
             MessageBox.Show("All settings have been reset to default.", "Defaults", MessageBoxButtons.OK);
-
         }
 
+        #region GENERAL
+        private void poisonToggle1_checkUpdates_CheckedChanged(object sender, EventArgs e)
+        {
+            SettingsLoader.Current.CheckUpdates = poisonToggle1_checkUpdates.Checked;
+            SettingsLoader.Save();
+        }
 
-        private async void checkBox1_startWithWindows_CheckedChanged(object sender, EventArgs e)
+        private async void poisonToggle1_startWithWindows_CheckedChanged(object sender, EventArgs e)
         {
             if (!await PrivilegesHelper.EnsureAdministrator())
                 return;
             try
             {
-                string appName = Constants.AppName;
+                string appName = AppConstants.AppName;
                 string exePath = $"\"{Application.ExecutablePath}\"";
                 using (RegistryKey key = Registry.CurrentUser.OpenSubKey(
                            @"Software\Microsoft\Windows\CurrentVersion\Run", writable: true))
                 {
-                    if (checkBox1_startWithWindows.Checked)
+                    if (poisonToggle1_startWithWindows.Checked)
                     {
                         key.SetValue(appName, exePath);
                     }
@@ -215,7 +255,7 @@ namespace HelloClipboard
                             key.DeleteValue(appName);
                     }
                 }
-                SettingsLoader.Current.StartWithWindows = checkBox1_startWithWindows.Checked;
+                SettingsLoader.Current.StartWithWindows = poisonToggle1_startWithWindows.Checked;
                 SettingsLoader.Save();
             }
             catch (Exception ex)
@@ -226,145 +266,146 @@ namespace HelloClipboard
                     MessageBoxButtons.OK);
             }
         }
-        private void checkBox2_hideToSystemTray_CheckedChanged(object sender, EventArgs e)
-        {
-            SettingsLoader.Current.HideToTray = checkBox2_hideToSystemTray.Checked;
-            SettingsLoader.Save();
-        }
+        #endregion
 
-        private void checkBox3_checkUpdates_CheckedChanged(object sender, EventArgs e)
+        #region APPARANCE
+        private void poisonToggle1_invertClipboard_CheckedChanged(object sender, EventArgs e)
         {
-            SettingsLoader.Current.CheckUpdates = checkBox3_checkUpdates.Checked;
+            SettingsLoader.Current.InvertClipboardHistoryListing = poisonToggle1_invertClipboard.Checked;
+            SettingsLoader.Save();
+            _mainForm.RefreshList();
+        }
+        private void poisonToggle1_alwaysTopMost_CheckedChanged(object sender, EventArgs e)
+        {
+            _mainForm.TopMost = poisonToggle1_alwaysTopMost.Checked;
+            _mainForm.CheckAndUpdateTopMostImage();
+            SettingsLoader.Current.AlwaysTopMost = poisonToggle1_alwaysTopMost.Checked;
             SettingsLoader.Save();
         }
-        private void checkBox4_preventClipboardDuplication_CheckedChanged(object sender, EventArgs e)
+        private void poisonToggle1_showInTaskbar_CheckedChanged(object sender, EventArgs e)
         {
-            SettingsLoader.Current.PreventClipboardDuplication = checkBox4_preventClipboardDuplication.Checked;
+            SettingsLoader.Current.ShowInTaskbar = poisonToggle1_showInTaskbar.Checked;
             SettingsLoader.Save();
+            _mainForm.UpdateTaskbarVisibility(poisonToggle1_showInTaskbar.Checked);
         }
+        private void poisonToggle1_showTimeStamps_CheckedChanged(object sender, EventArgs e)
+        {
+            SettingsLoader.Current.EnableTimeStamps = poisonToggle1_showTimeStamps.Checked;
+            SettingsLoader.Save();
+            _mainForm.RefreshList();
+        }
+        #endregion
 
-        private void textBox_privacyDuration_KeyPress(object sender, KeyPressEventArgs e)
+        #region HISTORY
+        private void poisonToggle1_enableHistory_CheckedChanged(object sender, EventArgs e)
+        {
+            SettingsLoader.Current.EnableClipboardHistory = poisonToggle1_enableHistory.Checked;
+            SettingsLoader.Save();
+        }
+        private void poisonTextBox1_maxHistoryCount_TextChanged(object sender, EventArgs e)
+        {
+            _debounceTimer.Stop();
+            _debounceTimer.Start();
+        }
+        #endregion
+
+        #region BEHAVIOURS
+        private void poisonToggle1_hideToSystemTray_CheckedChanged(object sender, EventArgs e)
+        {
+            SettingsLoader.Current.HideToTray = poisonToggle1_hideToSystemTray.Checked;
+            SettingsLoader.Save();
+        }
+        private void poisonToggle1_autoHide_CheckedChanged(object sender, EventArgs e)
+        {
+            SettingsLoader.Current.AutoHideWhenUnfocus = poisonToggle1_autoHide.Checked;
+            SettingsLoader.Save();
+        }
+        private void poisonToggle1_preventDuplication_CheckedChanged(object sender, EventArgs e)
+        {
+            SettingsLoader.Current.PreventClipboardDuplication = poisonToggle1_preventDuplication.Checked;
+            SettingsLoader.Save();
+        }
+        private void poisonToggle1_suppressClipboardEvents_CheckedChanged(object sender, EventArgs e)
+        {
+            SettingsLoader.Current.SuppressClipboardEvents = poisonToggle1_suppressClipboardEvents.Checked;
+            SettingsLoader.Save();
+        }
+        private void poisonToggle1_focusDetailWindow_CheckedChanged(object sender, EventArgs e)
+        {
+            SettingsLoader.Current.FocusDetailWindow = poisonToggle1_focusDetailWindow.Checked;
+            SettingsLoader.Save();
+            _mainForm.UpdateDetailWindowKeyPreview(poisonToggle1_focusDetailWindow.Checked);
+        }
+        private void poisonTextBox1_privateModeDuration_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (char.IsControl(e.KeyChar))
                 return;
-
             var tb = sender as TextBox;
             if (!char.IsDigit(e.KeyChar))
             {
                 e.Handled = true;
                 return;
             }
-
             var existingLength = tb?.Text?.Length ?? 0;
             var selectionLength = tb?.SelectionLength ?? 0;
             if (selectionLength == 0 && existingLength >= 2)
                 e.Handled = true;
         }
-
-        private void textBox_privacyDuration_Leave(object sender, EventArgs e)
+        private void poisonTextBox1_privateModeDuration_Leave(object sender, EventArgs e)
         {
             SavePrivacyDuration();
         }
-
         private void SavePrivacyDuration()
         {
-            var text = textBox_privacyDuration.Text.Trim();
+            var text = poisonTextBox1_privateModeDuration.Text.Trim();
             if (string.IsNullOrEmpty(text))
                 return;
-
             if (!int.TryParse(text, out var minutes))
                 return;
-
             if (minutes < 1)
                 minutes = 1;
-            if (minutes > 99)
-                minutes = 99;
-
-            textBox_privacyDuration.Text = minutes.ToString();
-
+            if (minutes > 60)
+                minutes = 60;
+            poisonTextBox1_privateModeDuration.Text = minutes.ToString();
             if (SettingsLoader.Current.PrivacyModeDurationMinutes == minutes)
                 return;
-
             SettingsLoader.Current.PrivacyModeDurationMinutes = minutes;
             SettingsLoader.Save();
             TrayApplicationContext.Instance?.RefreshPrivacyMenuLabel();
+
         }
+        #endregion
 
-        private void checkBox1_invertClipboardHistoryListing_CheckedChanged(object sender, EventArgs e)
+        #region HOTKEYS
+        private void poisonToggle1_globalHotkeys_CheckedChanged(object sender, EventArgs e)
         {
-            SettingsLoader.Current.InvertClipboardHistoryListing = checkBox1_invertClipboardHistoryListing.Checked;
-            SettingsLoader.Save();
-            _mainForm.RefreshList();
-        }
-
-        private void checkBox1_clipboardHistory_CheckedChanged(object sender, EventArgs e)
-        {
-            SettingsLoader.Current.EnableClipboardHistory = checkBox1_clipboardHistory.Checked;
-            SettingsLoader.Save();
-        }
-
-        private void checkBox1_alwaysTopMost_CheckedChanged(object sender, EventArgs e)
-        {
-            _mainForm.TopMost = checkBox1_alwaysTopMost.Checked;
-            _mainForm.CheckAndUpdateTopMostImage();
-            SettingsLoader.Current.AlwaysTopMost = checkBox1_alwaysTopMost.Checked;
-            SettingsLoader.Save();
-        }
-
-        private void checkBox1_showInTaskbar_CheckedChanged(object sender, EventArgs e)
-        {
-            SettingsLoader.Current.ShowInTaskbar = checkBox1_showInTaskbar.Checked;
-            SettingsLoader.Save();
-
-            _mainForm.UpdateTaskbarVisibility(checkBox1_showInTaskbar.Checked);
-
-            // Ayar değiştiğinde bu form açık kalmasın; yeni duruma göre ana pencere davranışı uygular
-            this.Close();
-        }
-
-        private void checkBox1_autoHideWhenUnfocus_CheckedChanged(object sender, EventArgs e)
-        {
-            SettingsLoader.Current.AutoHideWhenUnfocus = checkBox1_autoHideWhenUnfocus.Checked;
-            SettingsLoader.Save();
-        }
-
-        private void checkBox_enableHotkey_CheckedChanged(object sender, EventArgs e)
-        {
-            SettingsLoader.Current.EnableGlobalHotkey = checkBox_enableHotkey.Checked;
-            textBox_hotkey.Enabled = checkBox_enableHotkey.Checked;
+            SettingsLoader.Current.EnableGlobalHotkey = poisonToggle1_globalHotkeys.Checked;
+            poisonTextBox1_showWindowHotkey.Enabled = poisonToggle1_globalHotkeys.Checked;
             SettingsLoader.Save();
             TrayApplicationContext.Instance?.ReloadGlobalHotkey();
         }
-
-        private void textBox_hotkey_KeyDown(object sender, KeyEventArgs e)
+        private void poisonTextBox1_showWindowHotkey_KeyDown(object sender, KeyEventArgs e)
         {
             e.SuppressKeyPress = true;
             var key = e.KeyCode;
             var mods = NormalizeModifiers(e.Modifiers);
-
-            // Sadece mod tuşuna basılmışsa bekle (uyarı verme)
             if (IsModifierKey(key))
                 return;
-
             if (mods == Keys.None)
             {
                 MessageBox.Show("En az bir mod tuşu (Ctrl, Alt, Shift veya Win) kullanmalısınız.", "Geçersiz kısayol", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-
             _pendingHotkeyKey = key;
             _pendingHotkeyModifiers = mods;
-
             SettingsLoader.Current.HotkeyKey = _pendingHotkeyKey;
             SettingsLoader.Current.HotkeyModifiers = _pendingHotkeyModifiers;
             SettingsLoader.Current.EnableGlobalHotkey = true;
-
-            checkBox_enableHotkey.Checked = true;
-            textBox_hotkey.Text = FormatHotkey(_pendingHotkeyModifiers, _pendingHotkeyKey);
+            poisonToggle1_globalHotkeys.Checked = true;
+            poisonTextBox1_showWindowHotkey.Text = FormatHotkey(_pendingHotkeyModifiers, _pendingHotkeyKey);
             SettingsLoader.Save();
             TrayApplicationContext.Instance?.ReloadGlobalHotkey();
         }
-
         private string FormatHotkey(Keys modifiers, Keys key)
         {
             var parts = new System.Collections.Generic.List<string>();
@@ -372,48 +413,91 @@ namespace HelloClipboard
             if (modifiers.HasFlag(Keys.Shift)) parts.Add("Shift");
             if (modifiers.HasFlag(Keys.Alt)) parts.Add("Alt");
             if (modifiers.HasFlag(Keys.LWin) || modifiers.HasFlag(Keys.RWin)) parts.Add("Win");
-
             if (key != Keys.None)
             {
                 parts.Add(key.ToString());
             }
             return string.Join(" + ", parts);
         }
-
         private Keys NormalizeModifiers(Keys modifiers)
         {
             Keys result = Keys.None;
             if (modifiers.HasFlag(Keys.Control)) result |= Keys.Control;
             if (modifiers.HasFlag(Keys.Shift)) result |= Keys.Shift;
             if (modifiers.HasFlag(Keys.Alt)) result |= Keys.Alt;
-            if (modifiers.HasFlag(Keys.LWin) || modifiers.HasFlag(Keys.RWin)) result |= Keys.LWin;
+            if (modifiers.HasFlag(Keys.LWin)) result |= Keys.LWin;
+            if (modifiers.HasFlag(Keys.RWin)) result |= Keys.RWin;
             return result;
         }
-
         private bool IsModifierKey(Keys key)
         {
             return key == Keys.ControlKey || key == Keys.ShiftKey || key == Keys.Menu || key == Keys.LWin || key == Keys.RWin;
         }
+        #endregion
 
-        private void checkBox1_suppressClipboardEvents_CheckedChanged(object sender, EventArgs e)
+        protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            SettingsLoader.Current.SuppressClipboardEvents = checkBox1_suppressClipboardEvents.Checked;
-            SettingsLoader.Save();
+            _debounceTimer?.Stop();
+            _debounceTimer?.Dispose();
+            base.OnFormClosed(e);
         }
 
-        private void checkBox2_enableTimeStamps_CheckedChanged(object sender, EventArgs e)
+        #region MANUAL RESIZE (BORDERLESS SUPPORT)
+        protected override void WndProc(ref Message m)
         {
-            SettingsLoader.Current.EnableTimeStamps = checkBox2_enableTimeStamps.Checked;
-            SettingsLoader.Save();
-            // Liste görünümünü anında güncellemek için
-            _mainForm.RefreshList();
+            const int WM_NCHITTEST = 0x84;
+            const int HTCLIENT = 1;
+
+            if (m.Msg == WM_NCHITTEST)
+            {
+                base.WndProc(ref m);
+
+                if ((int)m.Result == HTCLIENT)
+                {
+                    Point cursor = PointToClient(Cursor.Position);
+
+                    IntPtr hit = ResizeHitTestHelper.GetHitTest(this, cursor, 8);
+                    if (hit != IntPtr.Zero)
+                    {
+                        m.Result = hit;
+                        return;
+                    }
+                }
+                return;
+            }
+
+            base.WndProc(ref m);
+        }
+        #endregion
+
+        #region THEMES
+        private void UpdateThemeDropdownText()
+        {
+            poisonDropDownButton1_selectTheme.Text = ThemeHelper.GetTheme().ToString();
+        }
+        private void defaultToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ThemeHelper.SaveTheme(ThemeStyle.Default);
+            ThemeHelper.ApplySavedThemeToForm(this, poisonStyleManager1);
+            _mainForm.ThemeUpdated();
+            UpdateThemeDropdownText();
         }
 
-        private void chbox_focusDetailWindow_CheckedChanged(object sender, EventArgs e)
+        private void lightToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            SettingsLoader.Current.FocusDetailWindow = chbox_focusDetailWindow.Checked;
-            SettingsLoader.Save();
-            _mainForm.UpdateDetailWindowKeyPreview(chbox_focusDetailWindow.Checked);
+            ThemeHelper.SaveTheme(ThemeStyle.Light);
+            ThemeHelper.ApplySavedThemeToForm(this, poisonStyleManager1);
+            _mainForm.ThemeUpdated();
+            UpdateThemeDropdownText();
         }
+
+        private void darkToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ThemeHelper.SaveTheme(ThemeStyle.Dark);
+            ThemeHelper.ApplySavedThemeToForm(this, poisonStyleManager1);
+            _mainForm.ThemeUpdated();
+            UpdateThemeDropdownText();
+        }
+        #endregion
     }
 }

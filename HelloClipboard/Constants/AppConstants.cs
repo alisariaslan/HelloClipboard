@@ -3,7 +3,7 @@ using System.IO;
 
 namespace HelloClipboard
 {
-    public static class Constants
+    public static class AppConstants
     {
         public static readonly string AppName = "HelloClipboard";
 

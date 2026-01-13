@@ -26,7 +26,7 @@ namespace HelloClipboard
 
         public static void LoadSettings()
         {
-            string path = Constants.TempConfigsPath;
+            string path = AppConstants.TempConfigsPath;
 
             if (!File.Exists(path))
             {
@@ -52,7 +52,7 @@ namespace HelloClipboard
         {
             try
             {
-                string path = Constants.TempConfigsPath;
+                string path = AppConstants.TempConfigsPath;
                 string folder = Path.GetDirectoryName(path);
 
                 if (!Directory.Exists(folder))

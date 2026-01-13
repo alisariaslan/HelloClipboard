@@ -1,4 +1,5 @@
-﻿using HelloClipboard.Html;
+﻿using HelloClipboard.Constants;
+using HelloClipboard.Html;
 using HelloClipboard.Services;
 using HelloClipboard.Utils;
 using ReaLTaiizor.Forms;
@@ -24,6 +25,7 @@ namespace HelloClipboard
         public MainForm(TrayApplicationContext trayApplicationContext)
         {
             InitializeComponent();
+            ThemeHelper.ApplySavedThemeToForm(this, poisonStyleManager1);
             this.Text = $"{Application.ProductName}";
             _trayApplicationContext = trayApplicationContext;
             _viewModel = new MainFormViewModel(trayApplicationContext);
@@ -223,7 +225,7 @@ namespace HelloClipboard
         {
 
             panel_searchSettings.Visible = !panel_searchSettings.Visible;
-            pictureBox2_searchSettings.BackColor = panel_searchSettings.Visible ? Color.LightBlue : Color.Transparent;
+            pictureBox2_searchSettings.BackColor = panel_searchSettings.Visible ? AppColors.GetButtonActiveColor() : Color.Transparent;
         }
         private void poisonToggle2_caseSens_CheckedChanged(object sender, EventArgs e)
         {
@@ -451,14 +453,14 @@ namespace HelloClipboard
             pcbox_topMost.Image = _viewModel.IsLocked
         ? Properties.Resources.lock_40px
         : Properties.Resources.unlock_40px;
-            pcbox_topMost.BackColor = _viewModel.IsLocked ? Color.LightBlue : Color.Transparent;
+            pcbox_topMost.BackColor = _viewModel.IsLocked ? AppColors.GetButtonActiveColor() : Color.Transparent;
         }
 
         public void UpdatePrivacyStatusUI()
         {
             bool isActive = _trayApplicationContext.IsPrivacyModeActive;
             pcbox_togglePrivacy.Image = isActive ? Properties.Resources.invisible_40px : Properties.Resources.eye_40px;
-            pcbox_togglePrivacy.BackColor = isActive ? Color.LightBlue : Color.Transparent;
+            pcbox_togglePrivacy.BackColor = isActive ? AppColors.GetButtonActiveColor() : Color.Transparent;
             RefreshList();
 
         }
@@ -501,5 +503,11 @@ namespace HelloClipboard
         }
         #endregion
 
+        #region THEME
+        public void ThemeUpdated()
+        {
+            ThemeHelper.ApplySavedThemeToForm(this, poisonStyleManager1);
+        }
+        #endregion
     }
 }
