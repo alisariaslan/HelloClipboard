@@ -294,7 +294,7 @@ namespace HelloClipboard
         {
             SettingsLoader.Current.InvertClipboardHistoryListing = checkBox1_invertClipboardHistoryListing.Checked;
             SettingsLoader.Save();
-            _mainForm.RefreshCacheView();
+            _mainForm.RefreshList();
         }
 
         private void checkBox1_clipboardHistory_CheckedChanged(object sender, EventArgs e)
@@ -406,7 +406,7 @@ namespace HelloClipboard
             SettingsLoader.Current.EnableTimeStamps = checkBox2_enableTimeStamps.Checked;
             SettingsLoader.Save();
             // Liste görünümünü anında güncellemek için
-            _mainForm.RefreshCacheView();
+            _mainForm.RefreshList();
         }
 
         private void chbox_focusDetailWindow_CheckedChanged(object sender, EventArgs e)

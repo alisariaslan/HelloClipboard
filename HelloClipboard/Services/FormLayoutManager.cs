@@ -13,7 +13,8 @@ namespace HelloClipboard.Services
     public class FormLayoutManager
     {
         private readonly Form _form;
-        private readonly DetailWindowManager _detailManager;
+        private readonly DetailWindowManager _detailManager; private Rectangle _restoreBounds;
+
 
         private bool _isLoaded;
         private FormWindowState _previousWindowState = FormWindowState.Normal;
@@ -29,12 +30,10 @@ namespace HelloClipboard.Services
 
         public void OnLoad()
         {
-            // CRITICAL: Designer settings like CenterScreen will override stored coordinates.
-            // To ensure persistence works, we must force the StartPosition to Manual first.
             _form.StartPosition = FormStartPosition.Manual;
-
-            // Apply previously saved window size and location
             FormPersistence.ApplyStoredGeometry(_form);
+
+            _restoreBounds = _form.Bounds; // 🔥 EKLE
 
             _form.ShowInTaskbar = SettingsLoader.Current.ShowInTaskbar;
 
@@ -43,6 +42,7 @@ namespace HelloClipboard.Services
 
             _isLoaded = true;
         }
+
 
         public void OnShown()
         {
@@ -65,39 +65,53 @@ namespace HelloClipboard.Services
 
         #region Window Events
 
-        public async void OnResize()
+        public void OnResize()
         {
             if (!_isLoaded)
                 return;
 
-            FormPersistence.SaveGeometry(_form);
-
-            // Special handling for restoring from a Maximized state to ensure coordinates are applied correctly
-            if (_form.WindowState == FormWindowState.Normal &&
-                _previousWindowState == FormWindowState.Maximized)
+            if (_form.WindowState == FormWindowState.Normal)
             {
-                await Task.Delay(10);
-                FormPersistence.ApplyStoredGeometry(_form);
+                // 🔥 gerçek restore edilecek ölçü BURASI
+                _restoreBounds = _form.Bounds;
+                FormPersistence.SaveGeometry(_form);
             }
 
             _previousWindowState = _form.WindowState;
-
             RepositionDetailIfNeeded();
         }
+
+
+
+        public void ToggleMaximize()
+        {
+            if (_form.WindowState == FormWindowState.Maximized)
+            {
+                _form.WindowState = FormWindowState.Normal;
+                _form.Bounds = _restoreBounds; // 🔥 esas nokta
+            }
+            else
+            {
+                _restoreBounds = _form.Bounds;
+                _form.WindowState = FormWindowState.Maximized;
+            }
+        }
+
 
         public void OnMove()
         {
             if (!_isLoaded)
                 return;
 
-            // Handle window snapping (magnet effect) to screen edges
-            _form.Location = WindowHelper.GetSnappedLocation(_form);
+            if (_form.WindowState != FormWindowState.Normal)
+                return;
 
-            // Persist the new location immediately (Crucial for unexpected shutdowns/crashes)
+            _form.Location = WindowHelper.GetSnappedLocation(_form);
             FormPersistence.SaveGeometry(_form);
 
             RepositionDetailIfNeeded();
         }
+
 
         #endregion
 

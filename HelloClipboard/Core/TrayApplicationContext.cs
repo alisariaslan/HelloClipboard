@@ -53,6 +53,7 @@ namespace HelloClipboard
             TryRegisterGlobalHotkey();
             UpdatePrivacyMenuText();
             HandleInitialVisibility();
+
         }
 
         #region Initialization & Binding
@@ -80,7 +81,7 @@ namespace HelloClipboard
 
             _clipboardMonitor.ClipboardCleared += () => RunOnUI(() =>
             {
-                _form.RefreshCacheView();
+                _form.RefreshList();
                 _form.ClearSearchBox();
                 _form.UpdateStatusLabel(); // ✅
             });
