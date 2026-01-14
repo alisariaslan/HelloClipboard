@@ -25,6 +25,7 @@ namespace HelloClipboard
         {
             InitializeComponent();
             ThemeHelper.ApplySavedThemeToForm(this, poisonStyleManager1);
+            this.MessagesListBox.BackColor = this.BackColor;
             this.Text = $"{Application.ProductName}";
             _trayApplicationContext = trayApplicationContext;
             _viewModel = new MainFormViewModel(trayApplicationContext);
@@ -511,6 +512,7 @@ namespace HelloClipboard
         public void ThemeChanged()
         {
             ThemeHelper.ApplySavedThemeToForm(this, poisonStyleManager1);
+            this.MessagesListBox.BackColor = this.BackColor;
             _detailManager.ApplyThemeToDetailWindows();
         }
         #endregion

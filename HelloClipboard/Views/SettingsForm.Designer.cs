@@ -340,6 +340,7 @@
             poisonDropDownButton1_selectTheme.TabIndex = 6;
             poisonDropDownButton1_selectTheme.Text = "Select Theme";
             poisonDropDownButton1_selectTheme.UseSelectable = true;
+            poisonDropDownButton1_selectTheme.Click += poisonDropDownButton1_selectTheme_Click;
             // 
             // contextMenuStrip1_themes
             // 
@@ -524,9 +525,9 @@
             tabPage3_history.BackColor = System.Drawing.Color.Transparent;
             tabPage3_history.Controls.Add(poisonTile1_maxHistoryCount);
             tabPage3_history.Controls.Add(poisonTile1_saveHistory);
-            tabPage3_history.Location = new System.Drawing.Point(4, 38);
+            tabPage3_history.Location = new System.Drawing.Point(4, 35);
             tabPage3_history.Name = "tabPage3_history";
-            tabPage3_history.Size = new System.Drawing.Size(432, 368);
+            tabPage3_history.Size = new System.Drawing.Size(432, 371);
             tabPage3_history.TabIndex = 2;
             tabPage3_history.Text = "History";
             // 
@@ -628,9 +629,9 @@
             tabPage4_behaviours.Controls.Add(poisonTile1_focusDetail);
             tabPage4_behaviours.Controls.Add(poisonTile1_suppressEvents);
             tabPage4_behaviours.Controls.Add(poisonTile1_preventDup);
-            tabPage4_behaviours.Location = new System.Drawing.Point(4, 38);
+            tabPage4_behaviours.Location = new System.Drawing.Point(4, 35);
             tabPage4_behaviours.Name = "tabPage4_behaviours";
-            tabPage4_behaviours.Size = new System.Drawing.Size(432, 368);
+            tabPage4_behaviours.Size = new System.Drawing.Size(432, 371);
             tabPage4_behaviours.TabIndex = 5;
             tabPage4_behaviours.Text = "Behaviours";
             // 
@@ -800,9 +801,9 @@
             tabPage5_hotkey.BackColor = System.Drawing.Color.Transparent;
             tabPage5_hotkey.Controls.Add(poisonTile1_showWindowHotkey);
             tabPage5_hotkey.Controls.Add(poisonTile1_globalHotkey);
-            tabPage5_hotkey.Location = new System.Drawing.Point(4, 38);
+            tabPage5_hotkey.Location = new System.Drawing.Point(4, 35);
             tabPage5_hotkey.Name = "tabPage5_hotkey";
-            tabPage5_hotkey.Size = new System.Drawing.Size(432, 368);
+            tabPage5_hotkey.Size = new System.Drawing.Size(432, 371);
             tabPage5_hotkey.TabIndex = 4;
             tabPage5_hotkey.Text = "Hotkeys";
             // 
