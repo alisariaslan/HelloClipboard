@@ -133,7 +133,7 @@
             poisonButton1_copyImage.Name = "poisonButton1_copyImage";
             poisonButton1_copyImage.Size = new System.Drawing.Size(320, 30);
             poisonButton1_copyImage.TabIndex = 8;
-            poisonButton1_copyImage.Text = "Copy (Image)";
+            poisonButton1_copyImage.Text = "Copy";
             poisonButton1_copyImage.UseSelectable = true;
             // 
             // ClipDetailImage

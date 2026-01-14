@@ -15,7 +15,7 @@
 		<UpdateRequired>false</UpdateRequired>
 		<MapFileExtensions>true</MapFileExtensions>
 
-		<Version>1.3.0.16</Version>
+		<Version>1.3.1.17</Version>
 		
 		
 		<UseApplicationTrust>false</UseApplicationTrust>
@@ -36,6 +36,7 @@
 		<GenerateManifests>true</GenerateManifests>
 	</PropertyGroup>
 	<ItemGroup>
+		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3650.58" />
 		<PackageReference Include="ReaLTaiizor" Version="3.8.1.4" />
 		<PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
 		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.1" />

@@ -116,6 +116,8 @@ namespace HelloClipboard
             _imageOffset = Point.Empty;
 
             SetupImageMode(item.ImageContent);
+
+            UpdateCopyButtonText();
         }
 
         private void SetupImageMode(Image img)
@@ -380,7 +382,7 @@ namespace HelloClipboard
 
         private void UpdateCopyButtonText()
         {
-            string text = _paths.Count > 0 ? "Copy (New Image)" : "Copy (Image)";
+            string text = _paths.Count > 0 ? "Copy (New Image)" : "Copy";
             poisonButton1_copyImage.Text = text;
             copyImageToolStripMenuItem.Text = text;
         }

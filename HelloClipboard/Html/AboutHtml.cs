@@ -32,7 +32,7 @@ namespace HelloClipboard.Html
   <p>Synchronize your clipboard securely across platforms with ease.</p>
   <p>Developed by <strong>Ali SARIASLAN</strong> </p>
     <p>Contributions:
-        <p>-<strong>Bahadır Düzcan</strong> <a href='https://github.com/bahadirduzcan'>github.com/bahadirduzcan</a></p>
+        <p>-<strong>Bahadır Düzcan</strong> <a target='_blank' href='https://github.com/bahadirduzcan'>github.com/bahadirduzcan</a></p>
     </p>
   <p>Contact: <a href='mailto:dev@alisariaslan.com'>dev@alisariaslan.com</a></p>
   <div class='footer'>

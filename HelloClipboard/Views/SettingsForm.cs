@@ -1,10 +1,12 @@
 ﻿using HelloClipboard.Models;
 using HelloClipboard.Utils;
 using Microsoft.Win32;
+using ReaLTaiizor.Controls;
 using ReaLTaiizor.Enum.Poison;
 using ReaLTaiizor.Forms;
 using System;
 using System.Drawing;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace HelloClipboard
@@ -499,5 +501,11 @@ namespace HelloClipboard
             UpdateThemeDropdownText();
         }
         #endregion
+
+        private void poisonDropDownButton1_selectTheme_Click(object sender, EventArgs e)
+        {
+            poisonDropDownButton1_selectTheme.OpenDropDown();
+
+        }
     }
 }
