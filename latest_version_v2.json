@@ -1,5 +1,5 @@
 {
-  "Version": "1.2.4",
-  "BuildNumber": 15,
-  "Notes": "UI issues fixed"
+  "Version": "1.3.0",
+  "BuildNumber": 16,
+  "Notes": "**\ud83d\ude80 Features**\n- Introduced a new design overhaul via PR #11, enhancing the overall UI experience.\n- Added automatic theme selection from system settings when no custom theme is defined.\n- Applied the selected theme to web dialogs for consistent styling across the application.\n- Extended theming support to image previews, ensuring visual consistency.\n- Updated detail text and file form themes to align with the new design guidelines.\n\n**\ud83d\udc1e Bug Fixes**\n- Resolved owner-related issues that were causing incorrect behavior or data inconsistencies.\n\n**\ud83d\udee0\ufe0f Maintenance & Refactoring**\n- *(No maintenance or refactoring changes identified in this release.)*"
 }
