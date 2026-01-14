@@ -18,11 +18,11 @@ namespace HelloClipboard.Utils
             try
             {
                 // Looking under HKCU (HKEY_CURRENT_USER). This does not require administrator privileges.
-                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(Constants.RegistryKeyPath))
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(AppConstants.RegistryKeyPath))
                 {
                     if (key != null)
                     {
-                        object value = key.GetValue(Constants.RegistryKeyValueName);
+                        object value = key.GetValue(AppConstants.RegistryKeyValueName);
                         if (value != null && value is byte[] encryptedKey)
                         {
                             // Decrypt using DPAPI (Only the current Windows user can decrypt this)
@@ -50,11 +50,11 @@ namespace HelloClipboard.Utils
                 byte[] keyToSave = ProtectedData.Protect(newKey, null, DataProtectionScope.CurrentUser);
 
                 // CreateSubKey: Creates the key if it doesn't exist, or opens it if it does (in Write mode)
-                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(Constants.RegistryKeyPath))
+                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(AppConstants.RegistryKeyPath))
                 {
                     if (key != null)
                     {
-                        key.SetValue(Constants.RegistryKeyValueName, keyToSave, RegistryValueKind.Binary);
+                        key.SetValue(AppConstants.RegistryKeyValueName, keyToSave, RegistryValueKind.Binary);
                     }
                 }
             }

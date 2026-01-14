@@ -30,7 +30,7 @@ namespace HelloClipboard
             {
                 Icon = Properties.Resources.favicon,
                 Visible = true,
-                Text = Constants.AppName,
+                Text = AppConstants.AppName,
                 ContextMenuStrip = trayMenu
             };
 

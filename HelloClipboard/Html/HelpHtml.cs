@@ -4,7 +4,7 @@
     {
         public static string GetTitle()
         {
-            return "Help - HelloClipboard";
+            return "Help";
         }
         public static string GetHtml(float fontsize = 12)
         {
@@ -15,11 +15,11 @@
   <meta charset='utf-8'/>
   <title>Help - HelloClipboard</title>
   <style>
-    body {{  font-size: {fontsize}px; font-family: Segoe UI, Tahoma, Arial; padding:16px; color:#222; }}
+    body {{  font-size: {fontsize}px; font-family: Segoe UI, Tahoma, Arial; padding:16px; }}
     h2 {{ margin-top:0; }}
     ul {{ line-height:1.6; }}
-    a {{ color:#1a73e8; text-decoration:none; }}
-    .note {{ margin-top:12px; color:#555; }}
+    a {{  text-decoration:none; }}
+    .note {{ margin-top:12px;  }}
   </style>
 </head>
 <body>

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using HelloClipboard.Models;
+using ReaLTaiizor.Enum.Poison;
+using System;
 using System.IO;
 using System.Text.Json;
 using System.Windows.Forms;
@@ -24,6 +26,7 @@ namespace HelloClipboard
         public System.Windows.Forms.Keys HotkeyKey { get; set; } = System.Windows.Forms.Keys.H;
         public bool SuppressClipboardEvents { get; set; } = true;
         public bool FocusDetailWindow { get; set; } = false;
+        public ThemeStyle SelectedTheme { get; set; } = ThemeStyle.Default;
     }
 
     public static class SettingsLoader
@@ -32,7 +35,7 @@ namespace HelloClipboard
 
         public static void LoadSettings()
         {
-            string path = Constants.AppSettingsPath;
+            string path = AppConstants.AppSettingsPath;
 
             if (!File.Exists(path))
             {
@@ -56,7 +59,7 @@ namespace HelloClipboard
         {
             try
             {
-                string path = Constants.AppSettingsPath;
+                string path = AppConstants.AppSettingsPath;
                 string folder = Path.GetDirectoryName(path);
 
                 if (!Directory.Exists(folder))

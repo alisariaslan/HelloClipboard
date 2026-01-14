@@ -19,7 +19,7 @@ namespace HelloClipboard
 
         public void ClearAllHistoryFiles()
         {
-            string historyDir = Constants.HistoryDirectory;
+            string historyDir = AppConstants.HistoryDirectory;
             if (!Directory.Exists(historyDir)) return;
 
             try
@@ -43,7 +43,7 @@ namespace HelloClipboard
         {
             if (string.IsNullOrEmpty(item.Id)) return;
 
-            string historyDir = Constants.HistoryDirectory;
+            string historyDir = AppConstants.HistoryDirectory;
             if (!Directory.Exists(historyDir)) Directory.CreateDirectory(historyDir);
 
             string extension = FileExtensionHelper.GetFileExtension(item.ItemType);
@@ -77,7 +77,7 @@ namespace HelloClipboard
         public void DeleteItemFromFile(string id)
         {
             if (string.IsNullOrWhiteSpace(id)) return;
-            string historyDir = Constants.HistoryDirectory;
+            string historyDir = AppConstants.HistoryDirectory;
             try
             {
                 var filesToDelete = Directory.GetFiles(historyDir, id + ".*");
@@ -88,7 +88,7 @@ namespace HelloClipboard
 
         public List<ClipboardItem> LoadHistoryFromFiles()
         {
-            string historyDir = Constants.HistoryDirectory;
+            string historyDir = AppConstants.HistoryDirectory;
             if (!Directory.Exists(historyDir)) return new List<ClipboardItem>();
 
             EnforceDiskLimitOnDisk(historyDir);
@@ -144,7 +144,7 @@ namespace HelloClipboard
 
         public int GetStoredItemCount()
         {
-            string historyDir = Constants.HistoryDirectory;
+            string historyDir = AppConstants.HistoryDirectory;
             if (!Directory.Exists(historyDir)) return 0;
 
             // secret.key dosyası hariç diğer dosyaları say

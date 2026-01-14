@@ -42,7 +42,7 @@ namespace HelloClipboard
             _isChecking = true;
             _cts = new CancellationTokenSource();
 
-            Task.Run(async () =>
+            Task.Run((Func<Task>)(async () =>
             {
                 try
                 {
@@ -53,7 +53,7 @@ namespace HelloClipboard
                             var now = DateTime.UtcNow;
                             var last = TempConfigLoader.Current.LastUpdateCheck;
 
-                            if (last == default || (now - last) >= Constants.ApplicationUpdateInterval)
+                            if (last == default || (now - last) >= AppConstants.ApplicationUpdateInterval)
                             {
                                 var update = await CheckForUpdateAsync( true);
                                 if (update != null)
@@ -66,7 +66,7 @@ namespace HelloClipboard
                 }
                 catch (OperationCanceledException) { }
                 finally { _isChecking = false; }
-            }, _cts.Token);
+            }), _cts.Token);
         }
 
 

@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using ReaLTaiizor.Controls;
+using System.Windows.Forms;
 
 namespace HelloClipboard.Utils
 {
@@ -7,7 +8,7 @@ namespace HelloClipboard.Utils
         /// <summary>
         /// Deletes the word before the cursor (Ctrl + Backspace behavior).
         /// </summary>
-        public static void DeletePreviousWord(this TextBox tb)
+        public static void DeletePreviousWord(this PoisonTextBox tb)
         {
             int pos = tb.SelectionStart;
             if (pos == 0) return;
@@ -32,7 +33,7 @@ namespace HelloClipboard.Utils
         /// <summary>
         /// Deletes the word after the cursor (Ctrl + Delete behavior).
         /// </summary>
-        public static void DeleteNextWord(this TextBox tb)
+        public static void DeleteNextWord(this PoisonTextBox tb)
         {
             int pos = tb.SelectionStart;
             string text = tb.Text;
@@ -56,7 +57,7 @@ namespace HelloClipboard.Utils
         /// <summary>
         /// Handles Ctrl+Backspace and Ctrl+Delete (word deletion) logic for the TextBox.
         /// </summary>
-        public static bool HandleWordDeletion(this TextBox textBox, KeyEventArgs e)
+        public static bool HandleWordDeletion(this PoisonTextBox textBox, KeyEventArgs e)
         {
             if (e.Control && e.KeyCode == Keys.Back)
             {
