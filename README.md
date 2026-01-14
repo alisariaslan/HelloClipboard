@@ -12,7 +12,7 @@
 
 ## 📸 Screenshots
 
-![Main Window](https://github.com/user-attachments/assets/e17aa396-9896-4c19-a226-0181ed602b47)
+<img width="852" height="735" alt="image" src="https://github.com/user-attachments/assets/da4547d2-5ebe-4395-beba-95868b8c896d" />
 
 ## ⚙️ Installation
 
