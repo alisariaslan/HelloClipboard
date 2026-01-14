@@ -15,9 +15,10 @@ namespace HelloClipboard.Constants
         public static Color LightSelection { get; } = Color.LightSkyBlue;
 
         // ----- Dark Theme -----
+        public static Color DeepDarkBackColor { get; } = Color.FromArgb(17, 17, 17);
         public static Color DarkBackColor { get; } = Color.FromArgb(30, 30, 30);
         public static Color DarkForeColor { get; } = Color.White;
-        public static Color DarkAlternateColor { get; } = Color.FromArgb(55, 55, 55); // Zebra
+        public static Color DarkAlternateColor { get; } = Color.FromArgb(35, 35, 35); // Zebra
         public static Color DarkLineNumberBackground { get; } = Color.FromArgb(50, 50, 50);
         public static Color DarkButtonActive { get; } = Color.DodgerBlue;
         public static Color DarkSelection { get; } = Color.DodgerBlue;
@@ -30,6 +31,7 @@ namespace HelloClipboard.Constants
         // ----- Helper Properties -----
         public static bool IsDark => GetTheme() == ThemeStyle.Dark;
 
+        public static Color GetDeeperBackColor() => IsDark ? DeepDarkBackColor : LightBackColor;
         public static Color GetBackColor() => IsDark ? DarkBackColor : LightBackColor;
         public static Color GetForeColor() => IsDark ? DarkForeColor : LightForeColor;
         public static Color GetAlternateColor() => IsDark ? DarkAlternateColor : LightAlternateColor;

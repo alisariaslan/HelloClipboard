@@ -2,6 +2,7 @@
 using HelloClipboard.Html;
 using HelloClipboard.Services;
 using HelloClipboard.Utils;
+using HelloClipboard.Views;
 using ReaLTaiizor.Forms;
 using System;
 using System.ComponentModel;
@@ -430,7 +431,7 @@ namespace HelloClipboard
         private void ShowHtmlDialog(string title, string html)
         {
             _suppressAutoHide = true;
-            using (var dlg = new InfoDialog(title, html))
+            using (var dlg = new WebDialog(title, html))
             {
                 dlg.StartPosition = FormStartPosition.CenterParent;
                 dlg.TopMost = true;

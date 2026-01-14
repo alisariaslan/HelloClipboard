@@ -4,7 +4,7 @@
     {
         public static string GetTitle()
         {
-            return "Under Development - HelloClipboard";
+            return "Under Development";
         }
         public static string GetHtml(string featureName, float fontsize = 12)
         {
@@ -15,12 +15,12 @@
   <meta charset='utf-8'/>
   <title>{featureName}</title>
   <style>
-    body {{ font-size: {fontsize}px; font-family: Segoe UI, Tahoma, Arial; padding: 16px; color:#222; }}
+    body {{ font-size: {fontsize}px; font-family: Segoe UI, Tahoma, Arial; padding: 16px;  }}
     h2 {{ margin-top:0; font-size: 20px; }}
-    p {{ margin-top:12px; color:#555; }}
-    a {{ color:#1a73e8; text-decoration:none; }}
+    p {{ margin-top:12px;  }}
+    a {{  text-decoration:none; }}
     a:hover {{ text-decoration:underline; }}
-    .footer {{ margin-top:20px; font-size:90%; color:#666; }}
+    .footer {{ margin-top:20px; font-size:90%;  }}
   </style>
 </head>
 <body>
