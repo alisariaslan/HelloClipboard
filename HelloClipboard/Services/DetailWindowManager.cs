@@ -59,13 +59,31 @@ namespace HelloClipboard.Services
 
             PositionFormNextToOwner(targetForm);
 
-            targetForm.TopMost = _owner.TopMost;
+            bool ownerMaximized = _owner.WindowState == FormWindowState.Maximized;
+
+            // Owner ilişkisi
+            if (ownerMaximized)
+            {
+                targetForm.Owner = _owner;
+                targetForm.TopMost = true;
+            }
+            else
+            {
+                targetForm.Owner = null;
+                targetForm.TopMost = _owner.TopMost;
+            }
 
             if (!targetForm.Visible)
-                targetForm.Show();
+            {
+                if (ownerMaximized)
+                    targetForm.Show(_owner); // owner ile göster
+                else
+                    targetForm.Show();
+            }
 
             if (SettingsLoader.Current.FocusDetailWindow)
                 targetForm.Activate();
+
         }
         public void CloseAll()
         {
