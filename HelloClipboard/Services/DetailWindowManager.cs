@@ -86,6 +86,8 @@ namespace HelloClipboard.Services
                 _detailTextForm.RefreshTheme();
             if (IsFormUsable(_detailFileForm))
                 _detailFileForm.RefreshTheme();
+            if (IsFormUsable(_detailImageForm))
+                _detailImageForm.RefreshTheme();
         }
         public Form GetActiveForm() => IsFormUsable(_activeForm) ? _activeForm : null;
         public bool IsAnyVisible() => IsFormUsable(_activeForm) && _activeForm.Visible;
@@ -110,6 +112,7 @@ namespace HelloClipboard.Services
             if (!IsFormUsable(_detailImageForm))
             {
                 _detailImageForm = new ClipDetailImage(_owner, item);
+                _detailImageForm.RefreshTheme();
                 InitDetailForm(_detailImageForm);
             }
             else

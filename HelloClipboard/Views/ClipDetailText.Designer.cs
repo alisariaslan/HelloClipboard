@@ -50,13 +50,13 @@
             // 
             contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { copySelectedTextToolStripMenuItem });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new System.Drawing.Size(103, 26);
+            contextMenuStrip1.Size = new System.Drawing.Size(181, 48);
             // 
             // copySelectedTextToolStripMenuItem
             // 
             copySelectedTextToolStripMenuItem.Name = "copySelectedTextToolStripMenuItem";
-            copySelectedTextToolStripMenuItem.Size = new System.Drawing.Size(102, 22);
-            copySelectedTextToolStripMenuItem.Text = "Copy";
+            copySelectedTextToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            copySelectedTextToolStripMenuItem.Text = "Copy Selected";
             // 
             // statusStrip1
             // 
@@ -86,35 +86,35 @@
             textDrawPanel.ContextMenuStrip = contextMenuStrip1;
             textDrawPanel.Controls.Add(vScrollBar1);
             textDrawPanel.Controls.Add(hScrollBar1);
-            textDrawPanel.Location = new System.Drawing.Point(22, 62);
+            textDrawPanel.Location = new System.Drawing.Point(20, 62);
             textDrawPanel.Margin = new System.Windows.Forms.Padding(2);
             textDrawPanel.Name = "textDrawPanel";
-            textDrawPanel.Size = new System.Drawing.Size(316, 201);
+            textDrawPanel.Size = new System.Drawing.Size(320, 218);
             textDrawPanel.TabIndex = 9;
             textDrawPanel.Paint += textDrawPanel_Paint;
             // 
             // vScrollBar1
             // 
             vScrollBar1.Dock = System.Windows.Forms.DockStyle.Right;
-            vScrollBar1.Location = new System.Drawing.Point(297, 0);
+            vScrollBar1.Location = new System.Drawing.Point(301, 0);
             vScrollBar1.Name = "vScrollBar1";
-            vScrollBar1.Size = new System.Drawing.Size(17, 182);
+            vScrollBar1.Size = new System.Drawing.Size(17, 199);
             vScrollBar1.TabIndex = 0;
             // 
             // hScrollBar1
             // 
             hScrollBar1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            hScrollBar1.Location = new System.Drawing.Point(0, 182);
+            hScrollBar1.Location = new System.Drawing.Point(0, 199);
             hScrollBar1.Name = "hScrollBar1";
-            hScrollBar1.Size = new System.Drawing.Size(314, 17);
+            hScrollBar1.Size = new System.Drawing.Size(318, 17);
             hScrollBar1.TabIndex = 1;
             // 
             // poisonButton1_copyAsText
             // 
             poisonButton1_copyAsText.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            poisonButton1_copyAsText.Location = new System.Drawing.Point(138, 269);
+            poisonButton1_copyAsText.Location = new System.Drawing.Point(146, 285);
             poisonButton1_copyAsText.Name = "poisonButton1_copyAsText";
-            poisonButton1_copyAsText.Size = new System.Drawing.Size(199, 30);
+            poisonButton1_copyAsText.Size = new System.Drawing.Size(194, 30);
             poisonButton1_copyAsText.TabIndex = 11;
             poisonButton1_copyAsText.Text = "Copy (Text)";
             poisonButton1_copyAsText.UseSelectable = true;
@@ -123,9 +123,9 @@
             // poisonButton1_copyAsObject
             // 
             poisonButton1_copyAsObject.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left;
-            poisonButton1_copyAsObject.Location = new System.Drawing.Point(22, 269);
+            poisonButton1_copyAsObject.Location = new System.Drawing.Point(20, 285);
             poisonButton1_copyAsObject.Name = "poisonButton1_copyAsObject";
-            poisonButton1_copyAsObject.Size = new System.Drawing.Size(110, 30);
+            poisonButton1_copyAsObject.Size = new System.Drawing.Size(120, 30);
             poisonButton1_copyAsObject.TabIndex = 12;
             poisonButton1_copyAsObject.Text = "Copy (Object)";
             poisonButton1_copyAsObject.UseSelectable = true;

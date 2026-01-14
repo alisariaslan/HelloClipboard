@@ -49,10 +49,10 @@
             richTextBox1.BackColor = System.Drawing.Color.LightBlue;
             richTextBox1.BorderStyle = System.Windows.Forms.BorderStyle.None;
             richTextBox1.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            richTextBox1.Location = new System.Drawing.Point(22, 62);
+            richTextBox1.Location = new System.Drawing.Point(20, 62);
             richTextBox1.Margin = new System.Windows.Forms.Padding(2);
             richTextBox1.Name = "richTextBox1";
-            richTextBox1.Size = new System.Drawing.Size(316, 201);
+            richTextBox1.Size = new System.Drawing.Size(320, 218);
             richTextBox1.TabIndex = 1;
             richTextBox1.Text = "";
             // 
@@ -60,13 +60,13 @@
             // 
             contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { copySelectedTextToolStripMenuItem });
             contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new System.Drawing.Size(171, 26);
+            contextMenuStrip1.Size = new System.Drawing.Size(181, 48);
             // 
             // copySelectedTextToolStripMenuItem
             // 
             copySelectedTextToolStripMenuItem.Name = "copySelectedTextToolStripMenuItem";
-            copySelectedTextToolStripMenuItem.Size = new System.Drawing.Size(170, 22);
-            copySelectedTextToolStripMenuItem.Text = "Copy selected text";
+            copySelectedTextToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            copySelectedTextToolStripMenuItem.Text = "Copy Selected";
             copySelectedTextToolStripMenuItem.Click += copySelectedTextToolStripMenuItem_Click;
             // 
             // statusStrip1
@@ -92,9 +92,9 @@
             // poisonButton1_copyPath
             // 
             poisonButton1_copyPath.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            poisonButton1_copyPath.Location = new System.Drawing.Point(22, 269);
+            poisonButton1_copyPath.Location = new System.Drawing.Point(20, 285);
             poisonButton1_copyPath.Name = "poisonButton1_copyPath";
-            poisonButton1_copyPath.Size = new System.Drawing.Size(316, 30);
+            poisonButton1_copyPath.Size = new System.Drawing.Size(320, 30);
             poisonButton1_copyPath.TabIndex = 8;
             poisonButton1_copyPath.Text = "Copy (Path)";
             poisonButton1_copyPath.UseSelectable = true;
