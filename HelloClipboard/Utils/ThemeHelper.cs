@@ -1,10 +1,11 @@
-﻿using ReaLTaiizor.Enum.Poison;
+﻿using HelloClipboard.Constants; // AppColors
+using Microsoft.Win32;
+using ReaLTaiizor.Enum.Poison;
 using ReaLTaiizor.Forms;
 using ReaLTaiizor.Manager;
 using System;
 using System.Drawing;
 using System.Windows.Forms;
-using HelloClipboard.Constants; // AppColors
 
 namespace HelloClipboard.Utils
 {
@@ -18,7 +19,12 @@ namespace HelloClipboard.Utils
 
         public static ThemeStyle GetTheme()
         {
-            return SettingsLoader.Current.SelectedTheme;
+            var savedTheme = SettingsLoader.Current.SelectedTheme;
+            if (savedTheme == ThemeStyle.Default)
+            {
+                return GetSystemTheme();
+            }
+            return savedTheme;
         }
 
         public static void ApplySavedThemeToForm(Form form, PoisonStyleManager poisonStyleManager)
@@ -74,6 +80,27 @@ namespace HelloClipboard.Utils
 
             foreach (Control child in control.Controls)
                 ApplyThemeToControl(child, theme);
+        }
+
+        public static ThemeStyle GetSystemTheme()
+        {
+            try
+            {
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"))
+                {
+                    if (key != null)
+                    {
+                        object registryValue = key.GetValue("AppsUseLightTheme");
+                        if (registryValue != null)
+                        {
+                            return (int)registryValue == 0 ? ThemeStyle.Dark : ThemeStyle.Light;
+                        }
+                    }
+                }
+            }
+            catch {  }
+
+            return ThemeStyle.Light;
         }
     }
 }
