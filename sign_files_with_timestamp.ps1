@@ -1,6 +1,6 @@
 # save as sign_with_timestamp.ps1
 param(
-    [string] $releasePath = "HelloClipboard\bin\Release\net10.0-windows\publish",
+    [string] $releasePath = "HelloClipboard\bin\Release\net10.0-windows",
     [string] $pfxPasswordFile = "pfx_password.txt",
     [string] $pfxOut = "HelloClipboard_files_codesign.pfx",
     [string] $certSubject = "CN=Ali SARIASLAN",
