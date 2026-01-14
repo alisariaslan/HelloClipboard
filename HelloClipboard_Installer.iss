@@ -2,7 +2,7 @@
 
 [Setup]
 AppName=HelloClipboard
-AppVersion=1.2.4.15
+AppVersion=1.3.0.16
 DefaultDirName={commonpf}\HelloClipboard
 DefaultGroupName=HelloClipboard
 OutputBaseFilename=HelloClipboard_Installer
@@ -13,14 +13,14 @@ DisableDirPage=yes
 
 [Files]
 ; Main exe
-Source: ".\HelloClipboard\bin\Release\net10.0-windows\publish\HelloClipboard.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: ".\HelloClipboard\bin\Release\net10.0-windows\HelloClipboard.exe"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Managed & native dll's
-Source: ".\HelloClipboard\bin\Release\net10.0-windows\publish\*.dll"; DestDir: "{app}"; Flags: ignoreversion restartreplace
+Source: ".\HelloClipboard\bin\Release\net10.0-windows\*.dll"; DestDir: "{app}"; Flags: ignoreversion restartreplace
 
 ; Framework JSON's (Required)
-Source: ".\HelloClipboard\bin\Release\net10.0-windows\publish\HelloClipboard.runtimeconfig.json"; DestDir: "{app}"; Flags: ignoreversion
-Source: ".\HelloClipboard\bin\Release\net10.0-windows\publish\HelloClipboard.deps.json"; DestDir: "{app}"; Flags: ignoreversion
+Source: ".\HelloClipboard\bin\Release\net10.0-windows\HelloClipboard.runtimeconfig.json"; DestDir: "{app}"; Flags: ignoreversion
+Source: ".\HelloClipboard\bin\Release\net10.0-windows\HelloClipboard.deps.json"; DestDir: "{app}"; Flags: ignoreversion
 
 
 [Icons]
