@@ -1,13 +1,14 @@
 ﻿using HelloClipboard.Constants;
 using HelloClipboard.Utils;
+using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.WinForms;
 using ReaLTaiizor.Forms;
 using System;
 using System.Diagnostics;
 using System.Drawing;
-using System.Windows.Forms;
-using Microsoft.Web.WebView2.WinForms;
-using Microsoft.Web.WebView2.Core;
+using System.IO;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace HelloClipboard.Views
 {
@@ -60,23 +61,38 @@ namespace HelloClipboard.Views
         {
             try
             {
-                // 1. Ensure WebView2 Runtime is installed and initialize the core
-                if (webView21.CoreWebView2 == null)
+                // 1. WebView2 için güvenli bir veri klasörü yolu oluştur (AppData/Local/HelloClipboard)
+                string userDataFolder = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "HelloClipboard",
+                    "WebView2Data"
+                );
+
+                // Eğer klasör yoksa oluştur
+                if (!Directory.Exists(userDataFolder))
                 {
-                    await webView21.EnsureCoreWebView2Async(null);
+                    Directory.CreateDirectory(userDataFolder);
                 }
 
-                // 2. Register events safely after initialization
+                // 2. WebView2 Runtime kontrolü ve Environment oluşturma
+                if (webView21.CoreWebView2 == null)
+                {
+                    // null geçmek yerine userDataFolder yolunu içeren environment oluşturuyoruz
+                    var env = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
+                    await webView21.EnsureCoreWebView2Async(env);
+                }
+
+                // 3. Eventleri bağla
                 webView21.CoreWebView2.NewWindowRequested += CoreWebView2_NewWindowRequested;
 
-                // 3. Inject theme and navigate
+                // 4. İçeriği yükle
                 string processedHtml = ApplyThemeToHtml(content);
                 webView21.CoreWebView2.NavigateToString(processedHtml);
             }
             catch (Exception ex)
             {
-                // Most common cause: WebView2 Runtime is not installed
-                MessageBox.Show("The browser engine failed to start. Please ensure 'WebView2 Runtime' is installed.\n\n" +
+                MessageBox.Show("The browser engine failed to start. This is usually due to permission issues " +
+                                "or the WebView2 Runtime missing.\n\n" +
                                 $"Details: {ex.Message}", "Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 this.Close();
             }
