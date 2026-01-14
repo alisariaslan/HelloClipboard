@@ -32,7 +32,6 @@ namespace HelloClipboard
             // Form Events
             this.Load += MainForm_Load;
             this.Shown += MainForm_Shown;
-            this.FormClosing += MainForm_FormClosing;
             this.Resize += MainForm_Resize;
             this.Move += MainForm_Move;
             this.Deactivate += (s, e) => MainFormDeactivated();
@@ -75,14 +74,13 @@ namespace HelloClipboard
         {
             _layoutManager?.OnMove();
         }
-        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            _layoutManager.OnClosing();
-        }
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            if (_trayApplicationContext.ApplicationExiting) return;
-
+            _layoutManager.OnClosing();
+            if (_trayApplicationContext.ApplicationExiting)
+            {
+                return;
+            }
             if (!SettingsLoader.Current.HideToTray || TempConfigLoader.Current.AdminPriviligesRequested)
             {
                 _trayApplicationContext.ExitApplication();
@@ -485,6 +483,8 @@ namespace HelloClipboard
         #region MANUAL RESIZE (BORDERLESS SUPPORT)
         protected override void WndProc(ref Message m)
         {
+            if (_trayApplicationContext.ApplicationExiting)
+                return;
             const int WM_NCHITTEST = 0x84;
             const int HTCLIENT = 1;
             if (m.Msg == WM_NCHITTEST)
@@ -516,5 +516,6 @@ namespace HelloClipboard
             _detailManager.ApplyThemeToDetailWindows();
         }
         #endregion
+
     }
 }

@@ -29,22 +29,10 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            webBrowser1 = new System.Windows.Forms.WebBrowser();
             poisonStyleManager1 = new ReaLTaiizor.Manager.PoisonStyleManager(components);
             poisonStyleExtender1 = new ReaLTaiizor.Controls.PoisonStyleExtender(components);
             ((System.ComponentModel.ISupportInitialize)poisonStyleManager1).BeginInit();
             SuspendLayout();
-            // 
-            // webBrowser1
-            // 
-            webBrowser1.AllowWebBrowserDrop = false;
-            webBrowser1.Dock = System.Windows.Forms.DockStyle.Fill;
-            webBrowser1.Location = new System.Drawing.Point(20, 60);
-            webBrowser1.MinimumSize = new System.Drawing.Size(20, 20);
-            webBrowser1.Name = "webBrowser1";
-            webBrowser1.ScriptErrorsSuppressed = true;
-            webBrowser1.Size = new System.Drawing.Size(500, 340);
-            webBrowser1.TabIndex = 1;
             // 
             // poisonStyleManager1
             // 
@@ -55,7 +43,6 @@
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(540, 420);
-            Controls.Add(webBrowser1);
             MinimumSize = new System.Drawing.Size(540, 420);
             Name = "WebDialog";
             ShadowType = ReaLTaiizor.Enum.Poison.FormShadowType.AeroShadow;
@@ -66,8 +53,6 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.WebBrowser webBrowser1;
         private ReaLTaiizor.Manager.PoisonStyleManager poisonStyleManager1;
         private ReaLTaiizor.Controls.PoisonStyleExtender poisonStyleExtender1;
     }
