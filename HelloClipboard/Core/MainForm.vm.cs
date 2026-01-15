@@ -333,16 +333,14 @@ namespace HelloClipboard
         {
             if (item == null) return null;
 
-            bool isUrl = item.ItemType == ClipboardItemType.Text &&
-                         UrlHelper.IsValidUrl(item.Content);
-
             bool isFile = File.Exists(item.Content);
             bool isDir = Directory.Exists(item.Content);
             bool isPathFound = isFile || isDir;
 
             bool canCopy = item.ItemType != ClipboardItemType.Path || isPathFound;
             bool canSave = item.ItemType != ClipboardItemType.Path || isFile;
-            bool canOpen = isUrl || isPathFound || item.ItemType != ClipboardItemType.Text;
+
+            bool canOpen = !(item.ItemType == ClipboardItemType.Path && !isPathFound);
 
             return new MenuState
             {
@@ -353,7 +351,7 @@ namespace HelloClipboard
                 PinText = item.IsPinned ? "Unpin" : "Pin"
             };
         }
-    
+
         public void Dispose()
         {
             // Clean up resources if necessary

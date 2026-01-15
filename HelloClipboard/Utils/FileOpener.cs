@@ -33,7 +33,7 @@ namespace HelloClipboard
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"General Error: {ex.Message}");
+                MessageBox.Show($"{ex.Message}","Open Error");
             }
         }
 

@@ -106,7 +106,6 @@
             openToolStripMenuItem.Name = "openToolStripMenuItem";
             openToolStripMenuItem.Size = new System.Drawing.Size(128, 22);
             openToolStripMenuItem.Text = "Open";
-            openToolStripMenuItem.Visible = false;
             openToolStripMenuItem.Click += openToolStripMenuItem_Click;
             // 
             // saveToolStripMenuItem
