@@ -44,6 +44,7 @@ namespace HelloClipboard
             MessagesListBox.SelectedIndexChanged += MessagesListBox_SelectedIndexChanged;
             MessagesListBox.MouseClick += MessagesListBox_MouseClick;
             MessagesListBox.MouseWheel += MessagesListBox_MouseWheel;
+            MessagesListBox.DoubleClick += MessagesListBox_DoubleClick;
             // Search Box Events
             poisonTextBox1_search.KeyDown += poisonTextBox1_search_KeyDown;
             poisonTextBox1_search.KeyPress += poisonTextBox1_search_KeyPress;
@@ -110,6 +111,21 @@ namespace HelloClipboard
         #endregion
 
         #region LISTBOX OPERATIONS
+        private void MessagesListBox_DoubleClick(object sender, EventArgs e)
+        {
+            if (MessagesListBox.SelectedItem is ClipboardItem selectedItem)
+            {
+                PasteItemToFocusedApp(selectedItem);
+            }
+        }
+        private async void PasteItemToFocusedApp(ClipboardItem item)
+        {
+            _viewModel.CopyClicked(item, asObject: false);
+            _trayApplicationContext.HideMainWindow();
+            await System.Threading.Tasks.Task.Delay(120);
+            NativeMethods.SendCtrlV();
+        }
+
         private void MessagesListBox_MouseWheel(object sender, MouseEventArgs e)
         {
             const int ScrollStep = 10;
