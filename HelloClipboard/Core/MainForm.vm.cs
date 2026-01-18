@@ -312,10 +312,6 @@ namespace HelloClipboard
         #endregion
 
         #region Validation & Helpers
-        public bool IsValidUrl(string content)
-        {
-            return !string.IsNullOrWhiteSpace(content) && UrlHelper.IsValidUrl(content);
-        }
         public string GetStatusText()
         {
             int memory = _trayApplicationContext.GetClipboardCache().Count;

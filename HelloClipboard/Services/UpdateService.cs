@@ -1,4 +1,5 @@
-﻿using HelloClipboard.Utils;
+﻿using HelloClipboard.Models;
+using HelloClipboard.Utils;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -10,13 +11,6 @@ using System.Windows.Forms;
 
 namespace HelloClipboard
 {
-    public class UpdateInfo
-    {
-        public string Version { get; set; }
-        public int BuildNumber { get; set; }
-        public string Notes { get; set; }
-    }
-
     public class UpdateService
     {
         private const string UpdateCheckUrl = "https://raw.githubusercontent.com/alisariaslan/HelloClipboard/main/latest_version_v2.json";
@@ -57,7 +51,7 @@ namespace HelloClipboard
                             {
                                 var update = await CheckForUpdateAsync( true);
                                 if (update != null)
-                                    UpdateAvailable?.Invoke(this, update);
+                                    UpdateAvailable?.Invoke(this, update.UpdateInfo);
                             }
                         }
 
@@ -76,39 +70,40 @@ namespace HelloClipboard
             _cts?.Dispose();
         }
 
-    
+
 
 
         /// <summary>
         /// Fetches the latest version info from GitHub and compares it with the current version.
         /// </summary>
-        public async Task<UpdateInfo> CheckForUpdateAsync( bool silent)
+        public async Task<UpdateInfoWrapper> CheckForUpdateAsync(bool silent = false)
         {
             try
             {
-                using (HttpClient client = new HttpClient())
-                {
-                    var json = await client.GetStringAsync(UpdateCheckUrl);
-                    var info = JsonSerializer.Deserialize<UpdateInfo>(json);
-                    if (info == null) throw new Exception("Failed to parse update information.");
+                using var client = new HttpClient();
+                var json = await client.GetStringAsync(UpdateCheckUrl);
+                var info = JsonSerializer.Deserialize<UpdateInfo>(json);
 
-                    SetUpdateDownloadUrl();
-                    var latestBuildNumber = info.BuildNumber;
-                    var currentBuildNumber = AppVersionHelper.GetBuildNumber();
-            
-                    // Update and save the last check timestamp
-                    TempConfigLoader.Current.LastUpdateCheck = DateTime.UtcNow;
-                    TempConfigLoader.Save();
+                if (info == null)
+                    throw new Exception("Failed to parse update information.");
 
-                    if (latestBuildNumber > currentBuildNumber) return info;
-                }
+                SetUpdateDownloadUrl();
+
+                var latestBuildNumber = info.BuildNumber;
+                var currentBuildNumber = AppVersionHelper.GetBuildNumber();
+
+                TempConfigLoader.Current.LastUpdateCheck = DateTime.UtcNow;
+                TempConfigLoader.Save();
+
+                if (latestBuildNumber > currentBuildNumber)
+                    return new UpdateInfoWrapper(true, updateInfo: info);
+
+                return new UpdateInfoWrapper(true); // Güncel
             }
             catch (Exception ex)
             {
-                if (!silent)
-                    MessageBox.Show($"Failed to check updates.\nError: {ex.Message}", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return new UpdateInfoWrapper(false, ex.Message);
             }
-            return null;
         }
 
         /// <summary>

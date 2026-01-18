@@ -151,7 +151,7 @@
             menuStrip1.Padding = new System.Windows.Forms.Padding(0);
             menuStrip1.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
             menuStrip1.Size = new System.Drawing.Size(380, 24);
-            menuStrip1.TabIndex = 4;
+            menuStrip1.TabIndex = 100;
             menuStrip1.Text = "Info";
             // 
             // infoToolStripMenuItem
@@ -164,7 +164,7 @@
             // aboutToolStripMenuItem
             // 
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            aboutToolStripMenuItem.Size = new System.Drawing.Size(111, 22);
+            aboutToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             aboutToolStripMenuItem.Text = "About";
             aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
@@ -306,7 +306,7 @@
             poisonTextBox1_search.ShortcutsEnabled = true;
             poisonTextBox1_search.ShowClearButton = true;
             poisonTextBox1_search.Size = new System.Drawing.Size(186, 24);
-            poisonTextBox1_search.TabIndex = 12;
+            poisonTextBox1_search.TabIndex = 1;
             poisonTextBox1_search.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             poisonTextBox1_search.UseSelectable = true;
             poisonTextBox1_search.WaterMark = "Search...";
@@ -394,7 +394,7 @@
             poisonToggle2_caseSens.Location = new System.Drawing.Point(130, 4);
             poisonToggle2_caseSens.Name = "poisonToggle2_caseSens";
             poisonToggle2_caseSens.Size = new System.Drawing.Size(80, 21);
-            poisonToggle2_caseSens.TabIndex = 3;
+            poisonToggle2_caseSens.TabIndex = 91;
             poisonToggle2_caseSens.Text = "Off";
             poisonToggle2_caseSens.UseSelectable = true;
             poisonToggle2_caseSens.CheckedChanged += poisonToggle2_caseSens_CheckedChanged;
@@ -427,7 +427,7 @@
             poisonToggle1_regex.Location = new System.Drawing.Point(130, 4);
             poisonToggle1_regex.Name = "poisonToggle1_regex";
             poisonToggle1_regex.Size = new System.Drawing.Size(80, 21);
-            poisonToggle1_regex.TabIndex = 1;
+            poisonToggle1_regex.TabIndex = 90;
             poisonToggle1_regex.Text = "Off";
             poisonToggle1_regex.UseSelectable = true;
             poisonToggle1_regex.CheckedChanged += poisonToggle1_regex_CheckedChanged;
@@ -466,7 +466,7 @@
             MessagesListBox.Margin = new System.Windows.Forms.Padding(0);
             MessagesListBox.Name = "MessagesListBox";
             MessagesListBox.Size = new System.Drawing.Size(380, 415);
-            MessagesListBox.TabIndex = 3;
+            MessagesListBox.TabIndex = 0;
             // 
             // MainForm
             // 

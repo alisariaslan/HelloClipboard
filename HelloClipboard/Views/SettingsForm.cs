@@ -52,6 +52,7 @@ namespace HelloClipboard
             poisonToggle1_suppressClipboardEvents.Checked = SettingsLoader.Current.SuppressClipboardEvents;
             poisonToggle1_focusDetailWindow.Checked = SettingsLoader.Current.FocusDetailWindow;
             poisonTextBox1_privateModeDuration.Text = SettingsLoader.Current.PrivacyModeDurationMinutes.ToString();
+            poisonToggle1_quickPaste.Checked = SettingsLoader.Current.QuickPasteOnEnter;
             //HOTKEY
             poisonToggle1_globalHotkeys.Checked = SettingsLoader.Current.EnableGlobalHotkey;
             poisonTextBox1_showWindowHotkey.Text = FormatHotkey(SettingsLoader.Current.HotkeyModifiers, SettingsLoader.Current.HotkeyKey);
@@ -129,6 +130,7 @@ namespace HelloClipboard
             poisonToggle1_focusDetailWindow.CheckedChanged -= poisonToggle1_focusDetailWindow_CheckedChanged;
             poisonTextBox1_privateModeDuration.KeyPress -= poisonTextBox1_privateModeDuration_KeyPress;
             poisonTextBox1_privateModeDuration.Leave -= poisonTextBox1_privateModeDuration_Leave;
+            poisonToggle1_quickPaste.CheckedChanged -= poisonToggle1_quickPaste_CheckedChanged;
             //HOTKEY
             poisonToggle1_globalHotkeys.CheckedChanged -= poisonToggle1_globalHotkeys_CheckedChanged;
             poisonTextBox1_showWindowHotkey.KeyDown -= poisonTextBox1_showWindowHotkey_KeyDown;
@@ -155,6 +157,7 @@ namespace HelloClipboard
             poisonToggle1_focusDetailWindow.CheckedChanged += poisonToggle1_focusDetailWindow_CheckedChanged;
             poisonTextBox1_privateModeDuration.KeyPress += poisonTextBox1_privateModeDuration_KeyPress;
             poisonTextBox1_privateModeDuration.Leave += poisonTextBox1_privateModeDuration_Leave;
+            poisonToggle1_quickPaste.CheckedChanged += poisonToggle1_quickPaste_CheckedChanged;
             //HOTKEY
             poisonToggle1_globalHotkeys.CheckedChanged += poisonToggle1_globalHotkeys_CheckedChanged;
             poisonTextBox1_showWindowHotkey.KeyDown += poisonTextBox1_showWindowHotkey_KeyDown;
@@ -197,6 +200,7 @@ namespace HelloClipboard
             poisonToggle1_suppressClipboardEvents.Checked = def.SuppressClipboardEvents;
             poisonTextBox1_privateModeDuration.Text = def.PrivacyModeDurationMinutes.ToString();
             poisonToggle1_focusDetailWindow.Checked = def.FocusDetailWindow;
+            poisonToggle1_quickPaste.Checked = def.QuickPasteOnEnter;
             //HOTKEY
             poisonToggle1_globalHotkeys.Checked = def.EnableGlobalHotkey;
             poisonTextBox1_showWindowHotkey.Text = FormatHotkey(def.HotkeyModifiers, def.HotkeyKey);
@@ -279,16 +283,16 @@ namespace HelloClipboard
         }
         private void poisonToggle1_alwaysTopMost_CheckedChanged(object sender, EventArgs e)
         {
-            _mainForm.TopMost = poisonToggle1_alwaysTopMost.Checked;
-            _mainForm.CheckAndUpdateTopMostImage();
             SettingsLoader.Current.AlwaysTopMost = poisonToggle1_alwaysTopMost.Checked;
             SettingsLoader.Save();
+            _mainForm.ApplyFormBehaviorSettings(true);
         }
         private void poisonToggle1_showInTaskbar_CheckedChanged(object sender, EventArgs e)
         {
             SettingsLoader.Current.ShowInTaskbar = poisonToggle1_showInTaskbar.Checked;
             SettingsLoader.Save();
-            _mainForm.UpdateTaskbarVisibility(poisonToggle1_showInTaskbar.Checked);
+            _mainForm.ApplyFormBehaviorSettings(true);
+            this.Close();
         }
         private void poisonToggle1_showTimeStamps_CheckedChanged(object sender, EventArgs e)
         {
@@ -316,11 +320,13 @@ namespace HelloClipboard
         {
             SettingsLoader.Current.HideToTray = poisonToggle1_hideToSystemTray.Checked;
             SettingsLoader.Save();
+            _mainForm.ApplyFormBehaviorSettings(true);
         }
         private void poisonToggle1_autoHide_CheckedChanged(object sender, EventArgs e)
         {
             SettingsLoader.Current.AutoHideWhenUnfocus = poisonToggle1_autoHide.Checked;
             SettingsLoader.Save();
+            _mainForm.ApplyFormBehaviorSettings(true);
         }
         private void poisonToggle1_preventDuplication_CheckedChanged(object sender, EventArgs e)
         {
@@ -337,6 +343,7 @@ namespace HelloClipboard
             SettingsLoader.Current.FocusDetailWindow = poisonToggle1_focusDetailWindow.Checked;
             SettingsLoader.Save();
             _mainForm.UpdateDetailWindowKeyPreview(poisonToggle1_focusDetailWindow.Checked);
+            _mainForm.ApplyFormBehaviorSettings(true);
         }
         private void poisonTextBox1_privateModeDuration_KeyPress(object sender, KeyPressEventArgs e)
         {
@@ -395,7 +402,7 @@ namespace HelloClipboard
                 return;
             if (mods == Keys.None)
             {
-                MessageBox.Show("En az bir mod tuşu (Ctrl, Alt, Shift veya Win) kullanmalısınız.", "Geçersiz kısayol", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("You must use at least one modifier key (Ctrl, Alt, Shift, or Win).", "Invalid Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             _pendingHotkeyKey = key;
@@ -419,7 +426,7 @@ namespace HelloClipboard
             {
                 parts.Add(key.ToString());
             }
-            return string.Join(" + ", parts);
+            return string.Join("+", parts);
         }
         private Keys NormalizeModifiers(Keys modifiers)
         {
@@ -505,7 +512,13 @@ namespace HelloClipboard
         private void poisonDropDownButton1_selectTheme_Click(object sender, EventArgs e)
         {
             poisonDropDownButton1_selectTheme.OpenDropDown();
+        }
 
+        private void poisonToggle1_quickPaste_CheckedChanged(object sender, EventArgs e)
+        {
+            SettingsLoader.Current.QuickPasteOnEnter = poisonToggle1_quickPaste.Checked;
+            SettingsLoader.Save();
+            _mainForm.ApplyFormBehaviorSettings(true);
         }
     }
 }

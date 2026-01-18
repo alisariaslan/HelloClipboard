@@ -1,5 +1,4 @@
-﻿using HelloClipboard.Models;
-using ReaLTaiizor.Enum.Poison;
+﻿using ReaLTaiizor.Enum.Poison;
 using System;
 using System.IO;
 using System.Text.Json;
@@ -27,6 +26,7 @@ namespace HelloClipboard
         public bool SuppressClipboardEvents { get; set; } = true;
         public bool FocusDetailWindow { get; set; } = false;
         public ThemeStyle SelectedTheme { get; set; } = ThemeStyle.Default;
+        public bool QuickPasteOnEnter { get; set; } = false;
     }
 
     public static class SettingsLoader

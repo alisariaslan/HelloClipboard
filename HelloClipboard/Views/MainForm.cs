@@ -44,6 +44,7 @@ namespace HelloClipboard
             MessagesListBox.SelectedIndexChanged += MessagesListBox_SelectedIndexChanged;
             MessagesListBox.MouseClick += MessagesListBox_MouseClick;
             MessagesListBox.MouseWheel += MessagesListBox_MouseWheel;
+            MessagesListBox.DoubleClick += MessagesListBox_DoubleClick;
             // Search Box Events
             poisonTextBox1_search.KeyDown += poisonTextBox1_search_KeyDown;
             poisonTextBox1_search.KeyPress += poisonTextBox1_search_KeyPress;
@@ -110,6 +111,21 @@ namespace HelloClipboard
         #endregion
 
         #region LISTBOX OPERATIONS
+        private void MessagesListBox_DoubleClick(object sender, EventArgs e)
+        {
+            if (MessagesListBox.SelectedItem is ClipboardItem selectedItem)
+            {
+                PasteItemToFocusedApp(selectedItem);
+            }
+        }
+        private async void PasteItemToFocusedApp(ClipboardItem item)
+        {
+            _viewModel.CopyClicked(item, asObject: false);
+            _trayApplicationContext.HideMainWindow();
+            await System.Threading.Tasks.Task.Delay(120);
+            NativeMethods.SendCtrlV();
+        }
+
         private void MessagesListBox_MouseWheel(object sender, MouseEventArgs e)
         {
             const int ScrollStep = 10;
@@ -295,11 +311,20 @@ namespace HelloClipboard
                     case Keys.Enter:
                         if (MessagesListBox.SelectedItem is ClipboardItem selectedItem)
                         {
-                            _viewModel.CopyClicked(selectedItem, asObject: false);
-                            _trayApplicationContext.HideMainWindow();
+                            if (SettingsLoader.Current.QuickPasteOnEnter)
+                            {
+                                PasteItemToFocusedApp(selectedItem);
+                            }
+                            else
+                            {
+                                _viewModel.CopyClicked(selectedItem, asObject: false);
+                                _trayApplicationContext.HideMainWindow();
+                            }
                         }
+
                         e.Handled = e.SuppressKeyPress = true;
                         break;
+
                 }
             }
         }
@@ -413,18 +438,55 @@ namespace HelloClipboard
         private async void checkUpdateToolStripMenuItem_Click(object sender, EventArgs e)
         {
             checkUpdateToolStripMenuItem.Enabled = false;
-            var updateService = _trayApplicationContext.GetUpdateService();
-            var update = await updateService.CheckForUpdateAsync(false);
-            if (update != null)
+
+            try
             {
-                var result = MessageBox.Show($"New version v{update.Version} ({update.BuildNumber}) is available!\n\nNotes: {update.Notes}\n\nDownload now?", "Update Found", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
-                if (result == DialogResult.Yes) await updateService.DownloadAndRunUpdateAsync();
+                var updateService = _trayApplicationContext.GetUpdateService();
+                var updateWrapper = await updateService.CheckForUpdateAsync(false);
+
+                if (!updateWrapper.Success)
+                {
+                    MessageBox.Show(
+                        $"Failed to check updates:\n{updateWrapper.ErrorMessage}",
+                        "Update Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+                else if (updateWrapper.UpdateInfo != null)
+                {
+                    var info = updateWrapper.UpdateInfo;
+                    var result = MessageBox.Show(
+                        $"New version v{info.Version} ({info.BuildNumber}) is available!\n\nNotes: {info.Notes}\n\nDownload now?",
+                        "Update Found",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Information);
+
+                    if (result == DialogResult.Yes)
+                        await updateService.DownloadAndRunUpdateAsync();
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "Your application is up to date.",
+                        "No Update",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
             }
-            else MessageBox.Show("Your application is up to date.", "No Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            checkUpdateToolStripMenuItem.Enabled = true;
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Unexpected error:\n{ex.Message}",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+            finally
+            {
+                checkUpdateToolStripMenuItem.Enabled = true;
+            }
         }
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e) => ShowHtmlDialog(AboutHtml.GetTitle(), AboutHtml.GetHtml());
-        private void helpToolStripMenuItem_Click(object sender, EventArgs e) => ShowHtmlDialog(HelpHtml.GetTitle(), HelpHtml.GetHtml());
         private void phoneSyncToolStripMenuItem_Click(object sender, EventArgs e) => ShowUnderDevelopmentDialog("Phone Sync");
         private void ShowUnderDevelopmentDialog(string featureName) => ShowHtmlDialog(UnderDevelopmentHtml.GetTitle(), UnderDevelopmentHtml.GetHtml(featureName));
         private void ShowHtmlDialog(string title, string html)
@@ -517,5 +579,22 @@ namespace HelloClipboard
         }
         #endregion
 
+        public void ApplyFormBehaviorSettings(bool showWarnings = false)
+        {
+            this.TopMost = SettingsLoader.Current.AlwaysTopMost;
+            this.CheckAndUpdateTopMostImage();
+            this.ShowInTaskbar = SettingsLoader.Current.ShowInTaskbar;
+            if (SettingsLoader.Current.FocusDetailWindow && SettingsLoader.Current.QuickPasteOnEnter)
+            {
+                MessageBox.Show(
+        "When the detail window is focused, the Enter key is handled by that window.\n" +
+        "Quick Paste with Enter wont work in this state.",
+        "Warning",
+        MessageBoxButtons.OK,
+        MessageBoxIcon.Information
+    );
+            }
+            _suppressAutoHide = false;
+        }
     }
 }

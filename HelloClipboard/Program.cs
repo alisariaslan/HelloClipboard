@@ -34,8 +34,6 @@ namespace HelloClipboard
                 Task.Run(() => StartPipeServer());
                 SettingsLoader.LoadSettings();
                 Application.Run(new TrayApplicationContext());
-
-                //Application.Run(new Form1());
             }
         }
         private static void StartPipeServer()
