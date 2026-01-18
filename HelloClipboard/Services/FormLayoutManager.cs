@@ -27,9 +27,6 @@ namespace HelloClipboard.Services
         {
             _form.StartPosition = FormStartPosition.Manual;
             FormPersistence.ApplyStoredGeometry(_form);
-            _form.ShowInTaskbar = SettingsLoader.Current.ShowInTaskbar;
-            if (SettingsLoader.Current.AlwaysTopMost)
-                _form.TopMost = true;
             _isLoaded = true;
         }
         public void OnShown()

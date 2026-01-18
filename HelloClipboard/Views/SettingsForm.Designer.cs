@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SettingsForm));
             poisonButton1_resetDefaults = new ReaLTaiizor.Controls.PoisonButton();
             poisonTabControl1 = new ReaLTaiizor.Controls.PoisonTabControl();
             tabPage1_general = new System.Windows.Forms.TabPage();
@@ -309,10 +310,10 @@
             tabPage2_general.Controls.Add(poisonTile1_showInTaskbar);
             tabPage2_general.Controls.Add(poisonTile1_alwaysTopMost);
             tabPage2_general.Controls.Add(poisonTile1_invertClipboard);
-            tabPage2_general.Location = new System.Drawing.Point(4, 38);
+            tabPage2_general.Location = new System.Drawing.Point(4, 35);
             tabPage2_general.Name = "tabPage2_general";
             tabPage2_general.Padding = new System.Windows.Forms.Padding(3);
-            tabPage2_general.Size = new System.Drawing.Size(432, 368);
+            tabPage2_general.Size = new System.Drawing.Size(432, 371);
             tabPage2_general.TabIndex = 1;
             tabPage2_general.Text = "Appearance";
             // 
@@ -911,8 +912,8 @@
             Controls.Add(poisonTabControl1);
             Controls.Add(poisonButton1_resetDefaults);
             Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4);
-            MaximizeBox = false;
             MinimizeBox = false;
             MinimumSize = new System.Drawing.Size(480, 520);
             Name = "SettingsForm";
@@ -922,6 +923,7 @@
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "Settings";
             Theme = ReaLTaiizor.Enum.Poison.ThemeStyle.Default;
+            TopMost = true;
             poisonTabControl1.ResumeLayout(false);
             tabPage1_general.ResumeLayout(false);
             poisonTile1_startWithWindows.ResumeLayout(false);

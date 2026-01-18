@@ -279,16 +279,16 @@ namespace HelloClipboard
         }
         private void poisonToggle1_alwaysTopMost_CheckedChanged(object sender, EventArgs e)
         {
-            _mainForm.TopMost = poisonToggle1_alwaysTopMost.Checked;
-            _mainForm.CheckAndUpdateTopMostImage();
             SettingsLoader.Current.AlwaysTopMost = poisonToggle1_alwaysTopMost.Checked;
             SettingsLoader.Save();
+            _mainForm.ApplyFormBehaviorSettings(true);
         }
         private void poisonToggle1_showInTaskbar_CheckedChanged(object sender, EventArgs e)
         {
             SettingsLoader.Current.ShowInTaskbar = poisonToggle1_showInTaskbar.Checked;
             SettingsLoader.Save();
-            _mainForm.UpdateTaskbarVisibility(poisonToggle1_showInTaskbar.Checked);
+            _mainForm.ApplyFormBehaviorSettings(true);
+            this.Close();
         }
         private void poisonToggle1_showTimeStamps_CheckedChanged(object sender, EventArgs e)
         {
@@ -316,11 +316,13 @@ namespace HelloClipboard
         {
             SettingsLoader.Current.HideToTray = poisonToggle1_hideToSystemTray.Checked;
             SettingsLoader.Save();
+            _mainForm.ApplyFormBehaviorSettings(true);
         }
         private void poisonToggle1_autoHide_CheckedChanged(object sender, EventArgs e)
         {
             SettingsLoader.Current.AutoHideWhenUnfocus = poisonToggle1_autoHide.Checked;
             SettingsLoader.Save();
+            _mainForm.ApplyFormBehaviorSettings(true);
         }
         private void poisonToggle1_preventDuplication_CheckedChanged(object sender, EventArgs e)
         {
@@ -395,7 +397,7 @@ namespace HelloClipboard
                 return;
             if (mods == Keys.None)
             {
-                MessageBox.Show("En az bir mod tuşu (Ctrl, Alt, Shift veya Win) kullanmalısınız.", "Geçersiz kısayol", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("You must use at least one modifier key (Ctrl, Alt, Shift, or Win).", "Invalid Shortcut", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             _pendingHotkeyKey = key;
@@ -419,7 +421,7 @@ namespace HelloClipboard
             {
                 parts.Add(key.ToString());
             }
-            return string.Join(" + ", parts);
+            return string.Join("+", parts);
         }
         private Keys NormalizeModifiers(Keys modifiers)
         {

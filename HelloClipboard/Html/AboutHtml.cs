@@ -1,5 +1,4 @@
 ﻿using HelloClipboard.Utils;
-using System.Windows.Forms;
 
 namespace HelloClipboard.Html
 {

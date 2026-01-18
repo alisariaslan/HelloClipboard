@@ -429,18 +429,55 @@ namespace HelloClipboard
         private async void checkUpdateToolStripMenuItem_Click(object sender, EventArgs e)
         {
             checkUpdateToolStripMenuItem.Enabled = false;
-            var updateService = _trayApplicationContext.GetUpdateService();
-            var update = await updateService.CheckForUpdateAsync(false);
-            if (update != null)
+
+            try
             {
-                var result = MessageBox.Show($"New version v{update.Version} ({update.BuildNumber}) is available!\n\nNotes: {update.Notes}\n\nDownload now?", "Update Found", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
-                if (result == DialogResult.Yes) await updateService.DownloadAndRunUpdateAsync();
+                var updateService = _trayApplicationContext.GetUpdateService();
+                var updateWrapper = await updateService.CheckForUpdateAsync(false);
+
+                if (!updateWrapper.Success)
+                {
+                    MessageBox.Show(
+                        $"Failed to check updates:\n{updateWrapper.ErrorMessage}",
+                        "Update Error",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
+                }
+                else if (updateWrapper.UpdateInfo != null)
+                {
+                    var info = updateWrapper.UpdateInfo;
+                    var result = MessageBox.Show(
+                        $"New version v{info.Version} ({info.BuildNumber}) is available!\n\nNotes: {info.Notes}\n\nDownload now?",
+                        "Update Found",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Information);
+
+                    if (result == DialogResult.Yes)
+                        await updateService.DownloadAndRunUpdateAsync();
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "Your application is up to date.",
+                        "No Update",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
             }
-            else MessageBox.Show("Your application is up to date.", "No Update", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            checkUpdateToolStripMenuItem.Enabled = true;
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Unexpected error:\n{ex.Message}",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+            finally
+            {
+                checkUpdateToolStripMenuItem.Enabled = true;
+            }
         }
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e) => ShowHtmlDialog(AboutHtml.GetTitle(), AboutHtml.GetHtml());
-        private void helpToolStripMenuItem_Click(object sender, EventArgs e) => ShowHtmlDialog(HelpHtml.GetTitle(), HelpHtml.GetHtml());
         private void phoneSyncToolStripMenuItem_Click(object sender, EventArgs e) => ShowUnderDevelopmentDialog("Phone Sync");
         private void ShowUnderDevelopmentDialog(string featureName) => ShowHtmlDialog(UnderDevelopmentHtml.GetTitle(), UnderDevelopmentHtml.GetHtml(featureName));
         private void ShowHtmlDialog(string title, string html)
@@ -533,5 +570,21 @@ namespace HelloClipboard
         }
         #endregion
 
+        public void ApplyFormBehaviorSettings(bool showWarnings = false)
+        {
+            this.TopMost = SettingsLoader.Current.AlwaysTopMost;
+            this.CheckAndUpdateTopMostImage();
+            this.ShowInTaskbar = SettingsLoader.Current.ShowInTaskbar;
+            if (SettingsLoader.Current.AutoHideWhenUnfocus && showWarnings)
+            {
+                MessageBox.Show(
+                    "Auto-hide is enabled. App will temporarily minimize when it loses focus.",
+                    "Info",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
+            }
+            _suppressAutoHide = false;
+        }
     }
 }

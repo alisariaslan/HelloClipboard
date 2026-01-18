@@ -1,5 +1,4 @@
-﻿using HelloClipboard.Models;
-using ReaLTaiizor.Enum.Poison;
+﻿using ReaLTaiizor.Enum.Poison;
 using System;
 using System.IO;
 using System.Text.Json;

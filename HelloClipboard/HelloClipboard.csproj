@@ -39,16 +39,7 @@
 		<PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3650.58" />
 		<PackageReference Include="ReaLTaiizor" Version="3.8.1.4" />
 		<PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
-		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.1" />
-	</ItemGroup>
-	<ItemGroup>
-		<Content Include="favicon.ico" />
-		<Content Include="settings.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-		<Content Include="tempconfigs.json">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
+		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.2" />
 	</ItemGroup>
 	<ItemGroup>
 		<BootstrapperPackage Include=".NETFramework,Version=v4.8">
