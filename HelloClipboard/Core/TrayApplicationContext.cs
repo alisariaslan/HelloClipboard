@@ -1,4 +1,5 @@
-﻿using HelloClipboard.Services;
+﻿using HelloClipboard.Models;
+using HelloClipboard.Services;
 using HelloClipboard.Utils;
 using System;
 using System.Collections.Generic;

@@ -311,11 +311,20 @@ namespace HelloClipboard
                     case Keys.Enter:
                         if (MessagesListBox.SelectedItem is ClipboardItem selectedItem)
                         {
-                            _viewModel.CopyClicked(selectedItem, asObject: false);
-                            _trayApplicationContext.HideMainWindow();
+                            if (SettingsLoader.Current.QuickPasteOnEnter)
+                            {
+                                PasteItemToFocusedApp(selectedItem);
+                            }
+                            else
+                            {
+                                _viewModel.CopyClicked(selectedItem, asObject: false);
+                                _trayApplicationContext.HideMainWindow();
+                            }
                         }
+
                         e.Handled = e.SuppressKeyPress = true;
                         break;
+
                 }
             }
         }
@@ -575,14 +584,15 @@ namespace HelloClipboard
             this.TopMost = SettingsLoader.Current.AlwaysTopMost;
             this.CheckAndUpdateTopMostImage();
             this.ShowInTaskbar = SettingsLoader.Current.ShowInTaskbar;
-            if (SettingsLoader.Current.AutoHideWhenUnfocus && showWarnings)
+            if (SettingsLoader.Current.FocusDetailWindow && SettingsLoader.Current.QuickPasteOnEnter)
             {
                 MessageBox.Show(
-                    "Auto-hide is enabled. App will temporarily minimize when it loses focus.",
-                    "Info",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information
-                );
+        "When the detail window is focused, the Enter key is handled by that window.\n" +
+        "Quick Paste with Enter wont work in this state.",
+        "Warning",
+        MessageBoxButtons.OK,
+        MessageBoxIcon.Information
+    );
             }
             _suppressAutoHide = false;
         }

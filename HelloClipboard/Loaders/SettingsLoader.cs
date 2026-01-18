@@ -26,6 +26,7 @@ namespace HelloClipboard
         public bool SuppressClipboardEvents { get; set; } = true;
         public bool FocusDetailWindow { get; set; } = false;
         public ThemeStyle SelectedTheme { get; set; } = ThemeStyle.Default;
+        public bool QuickPasteOnEnter { get; set; } = false;
     }
 
     public static class SettingsLoader

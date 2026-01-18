@@ -73,6 +73,10 @@
             poisonToggle1_enableHistory = new ReaLTaiizor.Controls.PoisonToggle();
             poisonLabel7_saveHistory = new ReaLTaiizor.Controls.PoisonLabel();
             tabPage4_behaviours = new System.Windows.Forms.TabPage();
+            poisonTile1_quickPaste = new ReaLTaiizor.Controls.PoisonTile();
+            poisonToggle1_quickPaste = new ReaLTaiizor.Controls.PoisonToggle();
+            poisonToggle1 = new ReaLTaiizor.Controls.PoisonToggle();
+            poisonLabel1_quickPaste = new ReaLTaiizor.Controls.PoisonLabel();
             poisonTile1_privateDuration = new ReaLTaiizor.Controls.PoisonTile();
             poisonTextBox1_privateModeDuration = new ReaLTaiizor.Controls.PoisonTextBox();
             poisonLabel1_privateDuration = new ReaLTaiizor.Controls.PoisonLabel();
@@ -111,6 +115,7 @@
             poisonTile1_maxHistoryCount.SuspendLayout();
             poisonTile1_saveHistory.SuspendLayout();
             tabPage4_behaviours.SuspendLayout();
+            poisonTile1_quickPaste.SuspendLayout();
             poisonTile1_privateDuration.SuspendLayout();
             poisonTile1_focusDetail.SuspendLayout();
             poisonTile1_suppressEvents.SuspendLayout();
@@ -626,15 +631,64 @@
             // tabPage4_behaviours
             // 
             tabPage4_behaviours.BackColor = System.Drawing.Color.Transparent;
+            tabPage4_behaviours.Controls.Add(poisonTile1_quickPaste);
             tabPage4_behaviours.Controls.Add(poisonTile1_privateDuration);
             tabPage4_behaviours.Controls.Add(poisonTile1_focusDetail);
             tabPage4_behaviours.Controls.Add(poisonTile1_suppressEvents);
             tabPage4_behaviours.Controls.Add(poisonTile1_preventDup);
-            tabPage4_behaviours.Location = new System.Drawing.Point(4, 35);
+            tabPage4_behaviours.Location = new System.Drawing.Point(4, 38);
             tabPage4_behaviours.Name = "tabPage4_behaviours";
-            tabPage4_behaviours.Size = new System.Drawing.Size(432, 371);
+            tabPage4_behaviours.Size = new System.Drawing.Size(432, 368);
             tabPage4_behaviours.TabIndex = 5;
             tabPage4_behaviours.Text = "Behaviours";
+            // 
+            // poisonTile1_quickPaste
+            // 
+            poisonTile1_quickPaste.ActiveControl = null;
+            poisonTile1_quickPaste.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            poisonTile1_quickPaste.Controls.Add(poisonToggle1_quickPaste);
+            poisonTile1_quickPaste.Controls.Add(poisonToggle1);
+            poisonTile1_quickPaste.Controls.Add(poisonLabel1_quickPaste);
+            poisonTile1_quickPaste.Location = new System.Drawing.Point(6, 270);
+            poisonTile1_quickPaste.Name = "poisonTile1_quickPaste";
+            poisonTile1_quickPaste.Size = new System.Drawing.Size(420, 60);
+            poisonTile1_quickPaste.TabIndex = 29;
+            poisonTile1_quickPaste.Text = "Press enter in the list for copy and paste";
+            poisonTile1_quickPaste.UseSelectable = true;
+            // 
+            // poisonToggle1_quickPaste
+            // 
+            poisonToggle1_quickPaste.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            poisonToggle1_quickPaste.AutoSize = true;
+            poisonToggle1_quickPaste.Location = new System.Drawing.Point(330, 8);
+            poisonToggle1_quickPaste.Name = "poisonToggle1_quickPaste";
+            poisonToggle1_quickPaste.Size = new System.Drawing.Size(80, 21);
+            poisonToggle1_quickPaste.TabIndex = 10;
+            poisonToggle1_quickPaste.Text = "Off";
+            poisonToggle1_quickPaste.UseSelectable = true;
+            poisonToggle1_quickPaste.CheckedChanged += poisonToggle1_quickPaste_CheckedChanged;
+            // 
+            // poisonToggle1
+            // 
+            poisonToggle1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            poisonToggle1.AutoSize = true;
+            poisonToggle1.Location = new System.Drawing.Point(675, 8);
+            poisonToggle1.Name = "poisonToggle1";
+            poisonToggle1.Size = new System.Drawing.Size(80, 21);
+            poisonToggle1.TabIndex = 9;
+            poisonToggle1.Text = "Off";
+            poisonToggle1.UseSelectable = true;
+            // 
+            // poisonLabel1_quickPaste
+            // 
+            poisonLabel1_quickPaste.AutoSize = true;
+            poisonLabel1_quickPaste.Font = new System.Drawing.Font("Segoe UI", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
+            poisonLabel1_quickPaste.FontWeight = ReaLTaiizor.Extension.Poison.PoisonLabelWeight.Bold;
+            poisonLabel1_quickPaste.Location = new System.Drawing.Point(4, 8);
+            poisonLabel1_quickPaste.Name = "poisonLabel1_quickPaste";
+            poisonLabel1_quickPaste.Size = new System.Drawing.Size(135, 19);
+            poisonLabel1_quickPaste.TabIndex = 5;
+            poisonLabel1_quickPaste.Text = "Enable Quick Paste";
             // 
             // poisonTile1_privateDuration
             // 
@@ -952,6 +1006,8 @@
             poisonTile1_saveHistory.ResumeLayout(false);
             poisonTile1_saveHistory.PerformLayout();
             tabPage4_behaviours.ResumeLayout(false);
+            poisonTile1_quickPaste.ResumeLayout(false);
+            poisonTile1_quickPaste.PerformLayout();
             poisonTile1_privateDuration.ResumeLayout(false);
             poisonTile1_privateDuration.PerformLayout();
             poisonTile1_focusDetail.ResumeLayout(false);
@@ -1035,5 +1091,9 @@
         private System.Windows.Forms.ToolStripMenuItem darkToolStripMenuItem;
         private ReaLTaiizor.Manager.PoisonStyleManager poisonStyleManager1;
         private ReaLTaiizor.Controls.PoisonStyleExtender poisonStyleExtender1;
+        private ReaLTaiizor.Controls.PoisonTile poisonTile1_quickPaste;
+        private ReaLTaiizor.Controls.PoisonToggle poisonToggle1_quickPaste;
+        private ReaLTaiizor.Controls.PoisonToggle poisonToggle1;
+        private ReaLTaiizor.Controls.PoisonLabel poisonLabel1_quickPaste;
     }
 }
