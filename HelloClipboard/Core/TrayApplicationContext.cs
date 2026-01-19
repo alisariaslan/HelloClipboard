@@ -134,11 +134,6 @@ namespace HelloClipboard
                     if (owned != null && !owned.IsDisposed) try { owned.Close(); } catch { }
 
                 _form.Hide();
-                if (!_trayMinimizedNotifyShown)
-                {
-                    _trayManager.ShowNotification(AppConstants.AppName, "Minimized to tray.");
-                    _trayMinimizedNotifyShown = true;
-                }
             });
         }
 

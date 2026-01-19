@@ -24,10 +24,11 @@ namespace HelloClipboard
         private const string _appSettingsFileName = "settings.json";
         private const string _tempConfigsFileName = "tempconfigs.json";
 
+        public const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
+
+
         public static string AppSettingsPath => Path.Combine(UserDataDir, _appSettingsFileName);
         public static string TempConfigsPath => Path.Combine(UserDataDir, _tempConfigsFileName);
 
-        public static string AppSettingsFileName => _appSettingsFileName;
-        public static string TempConfigsFileName => _tempConfigsFileName;
     }
 }

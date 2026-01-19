@@ -1,4 +1,5 @@
 ﻿using HelloClipboard.Models;
+using HelloClipboard.Services;
 using HelloClipboard.Utils;
 using System;
 using System.Collections.Generic;
@@ -20,12 +21,15 @@ namespace HelloClipboard
         private bool _caseSensitiveSearch;
         public bool CaseSensitive => _caseSensitiveSearch;
         public bool IsLocked { get; private set; }
+        private readonly TaskService _taskService;
+        public TaskService TaskService => _taskService;
         #endregion
 
         #region Constructor
         public MainFormViewModel(TrayApplicationContext trayApplicationContext)
         {
-            _trayApplicationContext = trayApplicationContext;
+            _trayApplicationContext = trayApplicationContext; 
+            _taskService = new TaskService();
         }
         #endregion
 

@@ -21,6 +21,7 @@ namespace HelloClipboard
         private FormLayoutManager _layoutManager;
         private string _currentSearchTerm = string.Empty;
         private bool _suppressAutoHide = false;
+        public MainFormViewModel ViewModel => _viewModel;
         public MainForm(TrayApplicationContext trayApplicationContext)
         {
             InitializeComponent();
@@ -584,16 +585,7 @@ namespace HelloClipboard
             this.TopMost = SettingsLoader.Current.AlwaysTopMost;
             this.CheckAndUpdateTopMostImage();
             this.ShowInTaskbar = SettingsLoader.Current.ShowInTaskbar;
-            if (SettingsLoader.Current.FocusDetailWindow && SettingsLoader.Current.QuickPasteOnEnter)
-            {
-                MessageBox.Show(
-        "When the detail window is focused, the Enter key is handled by that window.\n" +
-        "Quick Paste with Enter wont work in this state.",
-        "Warning",
-        MessageBoxButtons.OK,
-        MessageBoxIcon.Information
-    );
-            }
+          
             _suppressAutoHide = false;
         }
     }
