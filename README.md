@@ -4,11 +4,11 @@
 
 ## 🚀 Features
 
-- **Automatic History** – records every text copy without user intervention.
-- **Instant Search** – type to filter past items in real‑time.
-- **Detail Preview** – open a dedicated window with raw content and horizontal scrolling.
-- **Tray Integration** – runs silently; access via system tray icon.
-- **Custom Settings** – tweak history size, auto‑start, UI behavior, and clear history.
+* 📋 **Automatic History** – records every text copy without user intervention
+* 🔍 **Instant Search** – type to filter past items in real-time
+* 🪟 **Detail Preview** – open a dedicated window with raw content and horizontal scrolling
+* 📥 **Tray Integration** – runs silently; access via system tray icon
+* ⚙️ **Custom Settings** – tweak history size, auto-start, UI behavior, and clear history
 
 ## 📸 Screenshots
 
@@ -23,7 +23,7 @@
 
 ### Auto‑start
 
-The app can be configured to launch at Windows startup via its settings dialog.
+The application can be configured to launch at Windows startup via its settings dialog.
 
 ## 📚 Developer Guide
 
@@ -31,16 +31,8 @@ The app can be configured to launch at Windows startup via its settings dialog.
 |------|----------------|
 | **Build** | `HelloClipboard.sln` – use Visual Studio 2026 or newer. |
 | **Code Structure** | - `Core/TrayApplicationContext.cs` – main entry point.- `Services/ClipboardMonitor.cs` – core clipboard logic.- `Views/*` – UI forms and controls. |
-| **Configuration** | `HelloClipboard/Constants/Constants.cs` – shared constants and paths.`latest_version.json` – version metadata. |
+| **Configuration** | `HelloClipboard/Constants/Constants.cs` – shared constants and paths.`latest_version_v2.json` – version metadata. |
 | **Hotkeys & Privileges** | `TrayApplicationContext.ReloadGlobalHotkey()` handles hotkey registration; see `Utils/PriviligesHelper.cs`. |
-
-### Running Locally
-
-```bash
-dotnet build HelloClipboard.sln
-```
-
-The built executable is in `HelloClipboard/bin/Debug/net10.0-windows/`.
 
 ## 📄 License
 
@@ -48,6 +40,15 @@ MIT – see the [LICENSE](LICENSE) file.
 
 ---
 
+## Contact
+
+Report bugs or request features via GitHub Issues:
+[https://github.com/alisariaslan/HelloClipboard/issues](https://github.com/alisariaslan/HelloClipboard/issues)
+
+For other inquiries:
+**[dev@alisariaslan.com](mailto:dev@alisariaslan.com)**
+
+---
+
 **Contributing**
 Feel free to open issues or pull requests. Please follow the PR template in `.github/pull_request_template.md` for consistency.
-
