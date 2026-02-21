@@ -3,6 +3,7 @@ using HelloClipboard.Services;
 using HelloClipboard.Utils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace HelloClipboard
@@ -164,6 +165,7 @@ namespace HelloClipboard
 
                 _clipboardMonitor.ClearAll();
 
+                TempConfigLoader.Current.ItemTags.Clear();
                 int legacyCount = TempConfigLoader.Current.PinnedHashes.RemoveAll(h => !h.Contains("_"));
 
                 if (legacyCount > 0)

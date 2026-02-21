@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace HelloClipboard
 {
@@ -39,7 +40,7 @@ namespace HelloClipboard
             }
 
         }
-        public void SaveItemToHistoryFile(ClipboardItem item)
+        public async Task SaveItemToHistoryFileAsync(ClipboardItem item)
         {
             if (string.IsNullOrEmpty(item.Id)) return;
 
@@ -68,7 +69,7 @@ namespace HelloClipboard
                 if (rawData != null)
                 {
                     byte[] encryptedData = CryptoHelper.Encrypt(rawData);
-                    File.WriteAllBytes(filePath, encryptedData);
+                    await File.WriteAllBytesAsync(filePath, encryptedData);
                 }
             }
             catch (Exception) { /* Debug.WriteLine(ex.Message); */ }

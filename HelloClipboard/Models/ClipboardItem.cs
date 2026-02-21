@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 
 namespace HelloClipboard
@@ -20,6 +21,7 @@ namespace HelloClipboard
         public DateTime Timestamp { get; set; }
         public string ContentHash { get; set; }
         public bool IsPinned { get; set; }
+        public List<string> Tags { get; set; } = new List<string>();
 
         public ClipboardItem(ClipboardItemType type, string text, string title, Image image = null, string contentHash = null, bool isPinned = false)
         {

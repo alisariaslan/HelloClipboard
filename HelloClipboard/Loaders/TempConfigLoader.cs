@@ -17,6 +17,7 @@ namespace HelloClipboard
         public int MainFormWidth { get; set; } = -1;
         public int MainFormHeight { get; set; } = -1;
         public List<string> PinnedHashes { get; set; } = new List<string>();
+        public Dictionary<string, List<string>> ItemTags { get; set; } = new Dictionary<string, List<string>>();
 
     }
 

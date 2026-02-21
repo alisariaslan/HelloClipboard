@@ -12,6 +12,10 @@ config.py
 *.sln.docstates
 *.env
 
+Claude.md
+
+.claude
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 

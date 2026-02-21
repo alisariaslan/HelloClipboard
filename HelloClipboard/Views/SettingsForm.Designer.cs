@@ -121,6 +121,7 @@
             poisonTile1_suppressEvents.SuspendLayout();
             poisonTile1_preventDup.SuspendLayout();
             tabPage5_hotkey.SuspendLayout();
+
             poisonTile1_showWindowHotkey.SuspendLayout();
             poisonTile1_globalHotkey.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)poisonStyleManager1).BeginInit();
@@ -953,9 +954,9 @@
             poisonLabel1_globalHotkey.Size = new System.Drawing.Size(106, 19);
             poisonLabel1_globalHotkey.TabIndex = 5;
             poisonLabel1_globalHotkey.Text = "Global Hotkey";
-            // 
+            //
             // poisonStyleManager1
-            // 
+            //
             poisonStyleManager1.Owner = this;
             // 
             // SettingsForm
@@ -1017,6 +1018,7 @@
             poisonTile1_preventDup.ResumeLayout(false);
             poisonTile1_preventDup.PerformLayout();
             tabPage5_hotkey.ResumeLayout(false);
+
             poisonTile1_showWindowHotkey.ResumeLayout(false);
             poisonTile1_showWindowHotkey.PerformLayout();
             poisonTile1_globalHotkey.ResumeLayout(false);
@@ -1095,5 +1097,6 @@
         private ReaLTaiizor.Controls.PoisonToggle poisonToggle1_quickPaste;
         private ReaLTaiizor.Controls.PoisonToggle poisonToggle1;
         private ReaLTaiizor.Controls.PoisonLabel poisonLabel1_quickPaste;
+
     }
 }

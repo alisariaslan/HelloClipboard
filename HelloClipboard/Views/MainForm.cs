@@ -1,5 +1,6 @@
 ﻿using HelloClipboard.Constants;
 using HelloClipboard.Html;
+using HelloClipboard.Models;
 using HelloClipboard.Services;
 using HelloClipboard.Utils;
 using HelloClipboard.Views;
@@ -21,6 +22,7 @@ namespace HelloClipboard
         private FormLayoutManager _layoutManager;
         private string _currentSearchTerm = string.Empty;
         private bool _suppressAutoHide = false;
+        private bool _isSnippetMode = false;
         public MainFormViewModel ViewModel => _viewModel;
         public MainForm(TrayApplicationContext trayApplicationContext)
         {
@@ -36,7 +38,7 @@ namespace HelloClipboard
             this.Resize += MainForm_Resize;
             this.Move += MainForm_Move;
             this.Deactivate += (s, e) => MainFormDeactivated();
-            // ListBox Events
+            // ListBox Events - DisplayMember is only a fallback; OwnerDraw handles rendering
             MessagesListBox.DisplayMember = "Title";
             MessagesListBox.DrawMode = DrawMode.OwnerDrawFixed;
             MessagesListBox.ItemHeight = 24;
@@ -66,6 +68,7 @@ namespace HelloClipboard
         {
             _layoutManager.OnShown();
             UpdatePrivacyStatusUI();
+            RefreshTagFilter(); // Kaydedilen tag'leri butona yükle
             RefreshList();
         }
         private void MainForm_Resize(object sender, EventArgs e)
@@ -114,6 +117,11 @@ namespace HelloClipboard
         #region LISTBOX OPERATIONS
         private void MessagesListBox_DoubleClick(object sender, EventArgs e)
         {
+            if (_isSnippetMode && MessagesListBox.SelectedItem is SnippetItem snippet)
+            {
+                PasteSnippet(snippet);
+                return;
+            }
             if (MessagesListBox.SelectedItem is ClipboardItem selectedItem)
             {
                 PasteItemToFocusedApp(selectedItem);
@@ -123,7 +131,28 @@ namespace HelloClipboard
         {
             _viewModel.CopyClicked(item, asObject: false);
             _trayApplicationContext.HideMainWindow();
-            await System.Threading.Tasks.Task.Delay(120);
+            await System.Threading.Tasks.Task.Delay(50);
+            NativeMethods.SendCtrlV();
+        }
+        private async void PasteSnippet(SnippetItem snippet)
+        {
+            if (string.IsNullOrEmpty(snippet.Content)) return;
+            if (SettingsLoader.Current.SuppressClipboardEvents)
+                _trayApplicationContext.SuppressClipboardEvents(true);
+            try
+            {
+                Clipboard.SetText(snippet.Content, TextDataFormat.UnicodeText);
+            }
+            finally
+            {
+                if (SettingsLoader.Current.SuppressClipboardEvents)
+                {
+                    System.Threading.Tasks.Task.Delay(80).ContinueWith(_ =>
+                        _trayApplicationContext.SuppressClipboardEvents(false));
+                }
+            }
+            _trayApplicationContext.HideMainWindow();
+            await System.Threading.Tasks.Task.Delay(50);
             NativeMethods.SendCtrlV();
         }
 
@@ -144,6 +173,9 @@ namespace HelloClipboard
         }
         public void MessageAdd(ClipboardItem item)
         {
+            // Snippet modundayken ListBox'a ekleme; cache'e eklendi, geri dönünce görünür
+            if (_isSnippetMode) return;
+
             int index = _viewModel.GetInsertionIndex(
                 item,
                 MessagesListBox.Items.Count,
@@ -161,7 +193,10 @@ namespace HelloClipboard
         }
         public void RemoveOldestMessage()
         {
-            int removeIndex = _viewModel.GetIndexToRemove(MessagesListBox.Items.Cast<ClipboardItem>());
+            // Snippet modundayken görsel listeden kaldırma; RefreshList ile güncellenir
+            if (_isSnippetMode) return;
+
+            int removeIndex = _viewModel.GetIndexToRemove(MessagesListBox.Items.OfType<ClipboardItem>());
             if (removeIndex != -1)
             {
                 MessagesListBox.Items.RemoveAt(removeIndex);
@@ -171,6 +206,9 @@ namespace HelloClipboard
         }
         public void MessageRemoveItem(ClipboardItem item)
         {
+            // Snippet modundayken görseli değiştirme
+            if (_isSnippetMode) return;
+
             if (MessagesListBox.Items.Contains(item))
             {
                 MessagesListBox.Items.Remove(item);
@@ -179,6 +217,13 @@ namespace HelloClipboard
         }
         public void RefreshList(bool keepSelection = false)
         {
+            if (_isSnippetMode)
+            {
+                MessagesListBox.BeginUpdate();
+                try { RefreshSnippetList(); }
+                finally { MessagesListBox.EndUpdate(); }
+                return;
+            }
             MessagesListBox.BeginUpdate();
             try
             {
@@ -201,12 +246,14 @@ namespace HelloClipboard
         {
             if (MessagesListBox.SelectedIndex < 0) return;
 
-            OpenDetail(MessagesListBox.SelectedIndex);
+            if (!_isSnippetMode)
+            {
+                OpenDetail(MessagesListBox.SelectedIndex);
+                UpdateMenuStates();
+            }
 
             if (!SettingsLoader.Current.FocusDetailWindow)
                 poisonTextBox1_search.Focus();
-
-            UpdateMenuStates();
         }
         private void OpenDetail(int index)
         {
@@ -229,6 +276,11 @@ namespace HelloClipboard
         }
         private void MessagesListBox_DrawItem(object sender, DrawItemEventArgs e)
         {
+            if (_isSnippetMode)
+            {
+                DrawingHelper.RenderSnippetItem(e, MessagesListBox);
+                return;
+            }
             DrawingHelper.RenderClipboardItem(e, MessagesListBox, _currentSearchTerm, _viewModel);
         }
         private void OpenDetailForIndex(int index)
@@ -310,7 +362,11 @@ namespace HelloClipboard
                         }
                         break;
                     case Keys.Enter:
-                        if (MessagesListBox.SelectedItem is ClipboardItem selectedItem)
+                        if (_isSnippetMode && MessagesListBox.SelectedItem is SnippetItem snippet)
+                        {
+                            PasteSnippet(snippet);
+                        }
+                        else if (MessagesListBox.SelectedItem is ClipboardItem selectedItem)
                         {
                             if (SettingsLoader.Current.QuickPasteOnEnter)
                             {
@@ -343,6 +399,15 @@ namespace HelloClipboard
         #region CONTEXT MENU & ITEM ACTIONS
         private void delToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (_isSnippetMode)
+            {
+                if (!(MessagesListBox.SelectedItem is SnippetItem selectedSnippet)) return;
+                var confirmResult = MessageBox.Show($"Delete snippet '{selectedSnippet.Name}'?", "Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (confirmResult != DialogResult.Yes) return;
+                SnippetLoader.Remove(selectedSnippet);
+                RefreshList();
+                return;
+            }
             if (!(MessagesListBox.SelectedItem is ClipboardItem selected)) return;
             CloseDetailFormIfAvaible();
             _viewModel.DeleteItem(selected);
@@ -359,6 +424,35 @@ namespace HelloClipboard
             var pos = MessagesListBox.PointToClient(Cursor.Position);
             int index = MessagesListBox.IndexFromPoint(pos);
             if (index < 0) { e.Cancel = true; return; }
+
+            if (_isSnippetMode)
+            {
+                // Snippet modunda sadece ilgili menü öğeleri görünsün
+                copyToolStripMenuItem.Visible = false;
+                openToolStripMenuItem.Visible = false;
+                saveToolStripMenuItem.Visible = false;
+                pinUnpinToolStripMenuItem.Visible = false;
+                addTagToolStripMenuItem.Visible = false;
+                saveAsSnippetToolStripMenuItem.Visible = false;
+                toolStripSeparator1.Visible = false;
+                delToolStripMenuItem.Text = "Delete Snippet";
+                delToolStripMenuItem.Visible = true;
+                cancelStripMenuItem1.Visible = true;
+                MessagesListBox.SelectedIndex = index;
+                return;
+            }
+
+            // Normal clipboard modu
+            copyToolStripMenuItem.Visible = true;
+            openToolStripMenuItem.Visible = true;
+            saveToolStripMenuItem.Visible = true;
+            pinUnpinToolStripMenuItem.Visible = true;
+            addTagToolStripMenuItem.Visible = true;
+            saveAsSnippetToolStripMenuItem.Visible = true;
+            toolStripSeparator1.Visible = true;
+            delToolStripMenuItem.Text = "Delete";
+            delToolStripMenuItem.Visible = true;
+            cancelStripMenuItem1.Visible = true;
             OpenDetailForIndex(index);
             UpdateMenuStates();
         }
@@ -421,6 +515,61 @@ namespace HelloClipboard
         {
             var result = MessageBox.Show("Are you sure you want to clear the clipboard history?", "Clear Clipboard", MessageBoxButtons.YesNo);
             if (result == DialogResult.Yes) _trayApplicationContext.ClearClipboard();
+        }
+        private void addTagToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!(MessagesListBox.SelectedItem is ClipboardItem selected)) return;
+            string currentTags = selected.Tags != null && selected.Tags.Count > 0
+                ? string.Join(", ", selected.Tags)
+                : "";
+            string input = ShowInputDialog("Enter tags (comma separated):", "Add Tags", currentTags);
+            if (input == null) return;
+            var tags = input.Split(',')
+                .Select(t => t.Trim())
+                .Where(t => !string.IsNullOrEmpty(t))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            _viewModel.SetTags(selected, tags);
+            RefreshTagFilter();
+            RefreshList(true);
+        }
+        private void poisonDropDownButton_tagFilter_Click(object sender, EventArgs e)
+        {
+            poisonDropDownButton_tagFilter.OpenDropDown();
+        }
+        private void TagFilterMenuItem_Click(object sender, EventArgs e)
+        {
+            if (sender is ToolStripMenuItem item)
+            {
+                string tag = item.Tag as string; // null = "All Tags"
+                _viewModel.SetTagFilter(tag);
+                poisonDropDownButton_tagFilter.Text = tag ?? "All Tags";
+                RefreshList();
+            }
+        }
+        public void RefreshTagFilter()
+        {
+            string currentFilter = poisonDropDownButton_tagFilter.Text;
+            contextMenuStrip_tagFilter.Items.Clear();
+
+            var allItem = new ToolStripMenuItem("All Tags") { Tag = null };
+            allItem.Click += TagFilterMenuItem_Click;
+            if (currentFilter == "All Tags" || string.IsNullOrEmpty(currentFilter))
+                allItem.Font = new System.Drawing.Font(allItem.Font, System.Drawing.FontStyle.Bold);
+            contextMenuStrip_tagFilter.Items.Add(allItem);
+
+            var tags = _viewModel.GetAllTags();
+            if (tags.Count > 0)
+                contextMenuStrip_tagFilter.Items.Add(new ToolStripSeparator());
+
+            foreach (var tag in tags)
+            {
+                var menuItem = new ToolStripMenuItem(tag) { Tag = tag };
+                menuItem.Click += TagFilterMenuItem_Click;
+                if (currentFilter == tag)
+                    menuItem.Font = new System.Drawing.Font(menuItem.Font, System.Drawing.FontStyle.Bold);
+                contextMenuStrip_tagFilter.Items.Add(menuItem);
+            }
         }
         #endregion
 
@@ -571,6 +720,90 @@ namespace HelloClipboard
         }
         #endregion
 
+        #region SNIPPET MODE
+        private void btnSnippetTab_Click(object sender, EventArgs e)
+        {
+            _isSnippetMode = !_isSnippetMode;
+            snippetsToolStripMenuItem.Text = _isSnippetMode ? "< Clipboard" : "Snippets";
+            snippetsToolStripMenuItem.Font = _isSnippetMode
+                ? new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Bold)
+                : new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular);
+
+            btnSnippetAdd.Visible = _isSnippetMode;
+            btnSnippetEdit.Visible = _isSnippetMode;
+            btnSnippetDelete.Visible = _isSnippetMode;
+            poisonDropDownButton_tagFilter.Visible = !_isSnippetMode;
+            pcbox_clearClipboard.Visible = !_isSnippetMode;
+
+            // Snippet modunda arama kutusu placeholder'ı güncelle
+            poisonTextBox1_search.WaterMark = _isSnippetMode ? "Search snippets..." : "Search...";
+            poisonTextBox1_search.Text = string.Empty;
+            _currentSearchTerm = string.Empty;
+
+            CloseDetailFormIfAvaible();
+            RefreshList();
+        }
+
+        private void RefreshSnippetList()
+        {
+            MessagesListBox.Items.Clear();
+            var snippets = SnippetLoader.Items;
+            string search = _currentSearchTerm;
+            foreach (var s in snippets)
+            {
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    if (s.Name?.IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0 &&
+                        s.Content?.IndexOf(search, StringComparison.OrdinalIgnoreCase) < 0)
+                        continue;
+                }
+                MessagesListBox.Items.Add(s);
+            }
+            toolStripStatusLabel1.Text = $"Snippets: {MessagesListBox.Items.Count}";
+        }
+
+        private void btnSnippetAdd_Click(object sender, EventArgs e)
+        {
+            string name = ShowInputDialog("Snippet name:", "New Snippet", "");
+            if (string.IsNullOrWhiteSpace(name)) return;
+            string content = ShowMultilineInputDialog("Snippet content (supports multiple lines):", "New Snippet", "");
+            if (content == null) return;
+            SnippetLoader.Add(new SnippetItem(name, content));
+            RefreshList();
+        }
+
+        private void btnSnippetEdit_Click(object sender, EventArgs e)
+        {
+            if (!(MessagesListBox.SelectedItem is SnippetItem selected)) return;
+            string name = ShowInputDialog("Snippet name:", "Edit Snippet", selected.Name);
+            if (string.IsNullOrWhiteSpace(name)) return;
+            string content = ShowMultilineInputDialog("Snippet content (supports multiple lines):", "Edit Snippet", selected.Content);
+            if (content == null) return;
+            SnippetLoader.Update(selected, name, content);
+            RefreshList(true);
+        }
+
+        private void btnSnippetDelete_Click(object sender, EventArgs e)
+        {
+            if (!(MessagesListBox.SelectedItem is SnippetItem selected)) return;
+            var result = MessageBox.Show($"Delete snippet '{selected.Name}'?", "Delete", MessageBoxButtons.YesNo);
+            if (result != DialogResult.Yes) return;
+            SnippetLoader.Remove(selected);
+            RefreshList();
+        }
+
+        private void saveAsSnippetToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!(MessagesListBox.SelectedItem is ClipboardItem selected)) return;
+            if (string.IsNullOrEmpty(selected.Content)) return;
+            string name = ShowInputDialog("Snippet name:", "Save as Snippet",
+                selected.Title?.Length > 50 ? selected.Title.Substring(0, 50) : selected.Title ?? "");
+            if (string.IsNullOrWhiteSpace(name)) return;
+            SnippetLoader.Add(new SnippetItem(name, selected.Content));
+            MessageBox.Show("Snippet saved.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        #endregion
+
         #region THEME
         public void ThemeChanged()
         {
@@ -579,6 +812,105 @@ namespace HelloClipboard
             _detailManager.ApplyThemeToDetailWindows();
         }
         #endregion
+
+        private string ShowInputDialog(string prompt, string title, string defaultValue)
+        {
+            _suppressAutoHide = true;
+            try
+            {
+                using (var form = new Form())
+                {
+                    form.Text = title;
+                    form.StartPosition = FormStartPosition.CenterParent;
+                    form.FormBorderStyle = FormBorderStyle.FixedDialog;
+                    form.MinimizeBox = false;
+                    form.MaximizeBox = false;
+                    form.ClientSize = new Size(360, 115);
+                    form.TopMost = true;
+
+                    var label = new Label { Text = prompt, Left = 10, Top = 12, AutoSize = true };
+                    var textBox = new TextBox { Left = 10, Top = 36, Width = 338, Text = defaultValue ?? "" };
+                    textBox.SelectAll();
+                    var btnOk = new Button { Text = "OK", Left = 192, Top = 76, Width = 75, DialogResult = DialogResult.OK };
+                    var btnCancel = new Button { Text = "Cancel", Left = 273, Top = 76, Width = 75, DialogResult = DialogResult.Cancel };
+
+                    form.Controls.AddRange(new Control[] { label, textBox, btnOk, btnCancel });
+                    form.AcceptButton = btnOk;
+                    form.CancelButton = btnCancel;
+                    form.ActiveControl = textBox;
+
+                    return form.ShowDialog(this) == DialogResult.OK ? textBox.Text : null;
+                }
+            }
+            finally
+            {
+                _suppressAutoHide = false;
+            }
+        }
+
+        private string ShowMultilineInputDialog(string prompt, string title, string defaultValue)
+        {
+            _suppressAutoHide = true;
+            try
+            {
+                using (var form = new Form())
+                {
+                    form.Text = title;
+                    form.StartPosition = FormStartPosition.CenterParent;
+                    form.FormBorderStyle = FormBorderStyle.FixedDialog;
+                    form.MinimizeBox = false;
+                    form.MaximizeBox = false;
+                    form.ClientSize = new Size(420, 260);
+                    form.TopMost = true;
+
+                    var label = new Label { Text = prompt, Left = 10, Top = 10, AutoSize = true };
+                    var textBox = new TextBox
+                    {
+                        Left = 10,
+                        Top = 32,
+                        Width = 398,
+                        Height = 180,
+                        Multiline = true,
+                        ScrollBars = ScrollBars.Vertical,
+                        Text = defaultValue ?? "",
+                        AcceptsReturn = true,
+                        AcceptsTab = false
+                    };
+                    var hintLabel = new Label
+                    {
+                        Text = "Tip: Press Enter for new line. Ctrl+Enter to confirm.",
+                        Left = 10,
+                        Top = 218,
+                        AutoSize = true,
+                        ForeColor = System.Drawing.Color.Gray,
+                        Font = new System.Drawing.Font("Segoe UI", 7.5F)
+                    };
+                    var btnOk = new Button { Text = "OK", Left = 253, Top = 218, Width = 75, DialogResult = DialogResult.OK };
+                    var btnCancel = new Button { Text = "Cancel", Left = 333, Top = 218, Width = 75, DialogResult = DialogResult.Cancel };
+
+                    // Ctrl+Enter ile onayla
+                    textBox.KeyDown += (s, e) =>
+                    {
+                        if (e.KeyCode == Keys.Enter && e.Modifiers == Keys.Control)
+                        {
+                            form.DialogResult = DialogResult.OK;
+                            form.Close();
+                        }
+                    };
+
+                    form.Controls.AddRange(new Control[] { label, textBox, hintLabel, btnOk, btnCancel });
+                    form.CancelButton = btnCancel;
+                    form.ActiveControl = textBox;
+                    textBox.SelectAll();
+
+                    return form.ShowDialog(this) == DialogResult.OK ? textBox.Text : null;
+                }
+            }
+            finally
+            {
+                _suppressAutoHide = false;
+            }
+        }
 
         public void ApplyFormBehaviorSettings(bool showWarnings = false)
         {

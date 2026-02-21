@@ -56,7 +56,6 @@ namespace HelloClipboard
             poisonTextBox1_showWindowHotkey.Enabled = SettingsLoader.Current.EnableGlobalHotkey;
             _pendingHotkeyKey = SettingsLoader.Current.HotkeyKey;
             _pendingHotkeyModifiers = SettingsLoader.Current.HotkeyModifiers;
-
             AddSettingEvents();
 
         }
@@ -131,6 +130,7 @@ namespace HelloClipboard
             //HOTKEY
             poisonToggle1_globalHotkeys.CheckedChanged -= poisonToggle1_globalHotkeys_CheckedChanged;
             poisonTextBox1_showWindowHotkey.KeyDown -= poisonTextBox1_showWindowHotkey_KeyDown;
+
         }
 
         private void AddSettingEvents()
@@ -158,6 +158,7 @@ namespace HelloClipboard
             //HOTKEY
             poisonToggle1_globalHotkeys.CheckedChanged += poisonToggle1_globalHotkeys_CheckedChanged;
             poisonTextBox1_showWindowHotkey.KeyDown += poisonTextBox1_showWindowHotkey_KeyDown;
+
         }
 
         private async void poisonButton1_resetDefaults_Click(object sender, EventArgs e)

@@ -86,10 +86,20 @@
             poisonPanel1.SuspendLayout();
             panel4.SuspendLayout();
             SuspendLayout();
-            // 
+            //
             // contextMenuStrip1
-            // 
-            contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { copyToolStripMenuItem, openToolStripMenuItem, saveToolStripMenuItem, pinUnpinToolStripMenuItem, toolStripSeparator1, delToolStripMenuItem, cancelStripMenuItem1 });
+            //
+            addTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            addTagToolStripMenuItem.Name = "addTagToolStripMenuItem";
+            addTagToolStripMenuItem.Size = new System.Drawing.Size(128, 22);
+            addTagToolStripMenuItem.Text = "Add Tag";
+            addTagToolStripMenuItem.Click += addTagToolStripMenuItem_Click;
+            saveAsSnippetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            saveAsSnippetToolStripMenuItem.Name = "saveAsSnippetToolStripMenuItem";
+            saveAsSnippetToolStripMenuItem.Size = new System.Drawing.Size(128, 22);
+            saveAsSnippetToolStripMenuItem.Text = "Save as Snippet";
+            saveAsSnippetToolStripMenuItem.Click += saveAsSnippetToolStripMenuItem_Click;
+            contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { copyToolStripMenuItem, openToolStripMenuItem, saveToolStripMenuItem, pinUnpinToolStripMenuItem, addTagToolStripMenuItem, saveAsSnippetToolStripMenuItem, toolStripSeparator1, delToolStripMenuItem, cancelStripMenuItem1 });
             contextMenuStrip1.Name = "contextMenuStrip1";
             contextMenuStrip1.Size = new System.Drawing.Size(129, 142);
             contextMenuStrip1.Opening += contextMenuStrip1_Opening;
@@ -145,7 +155,12 @@
             // 
             poisonStyleExtender1.SetApplyPoisonTheme(menuStrip1, true);
             menuStrip1.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
-            menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { infoToolStripMenuItem, settingsToolStripMenuItem, checkUpdateToolStripMenuItem, androidSyncToolStripMenuItem });
+            snippetsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            snippetsToolStripMenuItem.Name = "snippetsToolStripMenuItem";
+            snippetsToolStripMenuItem.Size = new System.Drawing.Size(66, 24);
+            snippetsToolStripMenuItem.Text = "Snippets";
+            snippetsToolStripMenuItem.Click += btnSnippetTab_Click;
+            menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { infoToolStripMenuItem, settingsToolStripMenuItem, checkUpdateToolStripMenuItem, snippetsToolStripMenuItem, androidSyncToolStripMenuItem });
             menuStrip1.Location = new System.Drawing.Point(20, 60);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Padding = new System.Windows.Forms.Padding(0);
@@ -217,6 +232,73 @@
             // panel5
             // 
             panel5.AutoSize = true;
+            // Snippet buttons
+            btnSnippetTab = new System.Windows.Forms.Button();
+            btnSnippetTab.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            btnSnippetTab.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnSnippetTab.FlatAppearance.BorderSize = 0;
+            btnSnippetTab.Text = "Snippets";
+            btnSnippetTab.Location = new System.Drawing.Point(200, 8);
+            btnSnippetTab.Size = new System.Drawing.Size(60, 24);
+            btnSnippetTab.TabIndex = 20;
+            btnSnippetTab.Font = new System.Drawing.Font("Segoe UI", 8F);
+            btnSnippetTab.Visible = false;
+
+            btnSnippetAdd = new System.Windows.Forms.Button();
+            btnSnippetAdd.Text = "Add";
+            btnSnippetAdd.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnSnippetAdd.FlatAppearance.BorderSize = 1;
+            btnSnippetAdd.Location = new System.Drawing.Point(199, 8);
+            btnSnippetAdd.Size = new System.Drawing.Size(38, 24);
+            btnSnippetAdd.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            btnSnippetAdd.TabIndex = 21;
+            btnSnippetAdd.Font = new System.Drawing.Font("Segoe UI", 8F);
+            btnSnippetAdd.Visible = false;
+            btnSnippetAdd.Click += btnSnippetAdd_Click;
+
+            btnSnippetEdit = new System.Windows.Forms.Button();
+            btnSnippetEdit.Text = "Edit";
+            btnSnippetEdit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnSnippetEdit.FlatAppearance.BorderSize = 1;
+            btnSnippetEdit.Location = new System.Drawing.Point(239, 8);
+            btnSnippetEdit.Size = new System.Drawing.Size(38, 24);
+            btnSnippetEdit.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            btnSnippetEdit.TabIndex = 22;
+            btnSnippetEdit.Font = new System.Drawing.Font("Segoe UI", 8F);
+            btnSnippetEdit.Visible = false;
+            btnSnippetEdit.Click += btnSnippetEdit_Click;
+
+            btnSnippetDelete = new System.Windows.Forms.Button();
+            btnSnippetDelete.Text = "Del";
+            btnSnippetDelete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnSnippetDelete.FlatAppearance.BorderSize = 1;
+            btnSnippetDelete.Location = new System.Drawing.Point(279, 8);
+            btnSnippetDelete.Size = new System.Drawing.Size(38, 24);
+            btnSnippetDelete.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            btnSnippetDelete.TabIndex = 23;
+            btnSnippetDelete.Font = new System.Drawing.Font("Segoe UI", 8F);
+            btnSnippetDelete.Visible = false;
+            btnSnippetDelete.Click += btnSnippetDelete_Click;
+
+            panel5.Controls.Add(btnSnippetAdd);
+            panel5.Controls.Add(btnSnippetEdit);
+            panel5.Controls.Add(btnSnippetDelete);
+
+            contextMenuStrip_tagFilter = new System.Windows.Forms.ContextMenuStrip(components);
+            contextMenuStrip_tagFilter.Name = "contextMenuStrip_tagFilter";
+
+            poisonDropDownButton_tagFilter = new ReaLTaiizor.Controls.PoisonDropDownButton();
+            poisonDropDownButton_tagFilter.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            poisonDropDownButton_tagFilter.Location = new System.Drawing.Point(199, 7);
+            poisonDropDownButton_tagFilter.Name = "poisonDropDownButton_tagFilter";
+            poisonDropDownButton_tagFilter.Size = new System.Drawing.Size(90, 26);
+            poisonDropDownButton_tagFilter.TabIndex = 16;
+            poisonDropDownButton_tagFilter.Text = "All Tags";
+            poisonDropDownButton_tagFilter.UseSelectable = true;
+            poisonDropDownButton_tagFilter.ContextMenuStrip = contextMenuStrip_tagFilter;
+            poisonDropDownButton_tagFilter.SplitMenuStrip = contextMenuStrip_tagFilter;
+            poisonDropDownButton_tagFilter.Click += poisonDropDownButton_tagFilter_Click;
+            panel5.Controls.Add(poisonDropDownButton_tagFilter);
             panel5.Controls.Add(pcbox_clearClipboard);
             panel5.Controls.Add(pcbox_topMost);
             panel5.Controls.Add(panel6);
@@ -264,7 +346,7 @@
             panel6.Location = new System.Drawing.Point(0, 8);
             panel6.Name = "panel6";
             panel6.Padding = new System.Windows.Forms.Padding(12, 0, 0, 0);
-            panel6.Size = new System.Drawing.Size(262, 24);
+            panel6.Size = new System.Drawing.Size(194, 24);
             panel6.TabIndex = 15;
             // 
             // panel3
@@ -552,6 +634,15 @@
         private System.Windows.Forms.PictureBox pcbox_clearClipboard;
         private System.Windows.Forms.PictureBox pcbox_topMost;
         private System.Windows.Forms.PictureBox pcbox_togglePrivacy;
+        private System.Windows.Forms.ToolStripMenuItem addTagToolStripMenuItem;
+        private ReaLTaiizor.Controls.PoisonDropDownButton poisonDropDownButton_tagFilter;
+        private System.Windows.Forms.ContextMenuStrip contextMenuStrip_tagFilter;
+        private System.Windows.Forms.Button btnSnippetTab;
+        private System.Windows.Forms.Button btnSnippetAdd;
+        private System.Windows.Forms.Button btnSnippetEdit;
+        private System.Windows.Forms.Button btnSnippetDelete;
+        private System.Windows.Forms.ToolStripMenuItem saveAsSnippetToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem snippetsToolStripMenuItem;
     }
 }
 

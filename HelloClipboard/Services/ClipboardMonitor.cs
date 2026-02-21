@@ -55,6 +55,10 @@ namespace HelloClipboard.Services
                     {
                         item.IsPinned = true;
                     }
+                    if (!string.IsNullOrEmpty(item.Id) && TempConfigLoader.Current.ItemTags.TryGetValue(item.Id, out var tags))
+                    {
+                        item.Tags = tags;
+                    }
                     _clipboardCache.Add(item);
                     if (item.ContentHash != null) _clipboardHashPool.Add(item.ContentHash);
                 }
@@ -177,7 +181,7 @@ namespace HelloClipboard.Services
                     _clipboardCache.Add(existingItem);
 
                     if (SettingsLoader.Current.EnableClipboardHistory)
-                        Task.Run(() => _historyHelper.SaveItemToHistoryFile(existingItem));
+                        _ = _historyHelper.SaveItemToHistoryFileAsync(existingItem);
 
                     UpdateLastCaptureInfo(type, textContent, imageHash, now);
                     ItemUpdated?.Invoke(existingItem);
@@ -193,7 +197,7 @@ namespace HelloClipboard.Services
                 item.IsPinned = true;
 
             if (SettingsLoader.Current.EnableClipboardHistory && item.ContentHash != null)
-                Task.Run(() => _historyHelper.SaveItemToHistoryFile(item));
+                _ = _historyHelper.SaveItemToHistoryFileAsync(item);
 
             _clipboardCache.Add(item);
             _clipboardHashPool.Add(calculatedHash);

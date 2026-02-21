@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Windows.Forms;
 
 namespace HelloClipboard.Utils
 {
@@ -16,6 +18,12 @@ namespace HelloClipboard.Utils
         [DllImport("user32.dll")]
         public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool IsWindow(IntPtr hWnd);
+
         public static bool IsCurrentProcessFocused()
         {
             IntPtr foregroundWindow = GetForegroundWindow();
@@ -30,11 +38,45 @@ namespace HelloClipboard.Utils
 
         public static void SendCtrlV()
         {
+            // Press Ctrl
             keybd_event(VK_CONTROL, 0, 0, 0);
+            Thread.Sleep(10);
+            
+            // Press V
             keybd_event(VK_V, 0, 0, 0);
-
+            Thread.Sleep(10);
+            
+            // Release V
             keybd_event(VK_V, 0, KEYEVENTF_KEYUP, 0);
+            Thread.Sleep(10);
+            
+            // Release Ctrl
             keybd_event(VK_CONTROL, 0, KEYEVENTF_KEYUP, 0);
+        }
+
+        /// <summary>
+        /// Sends Ctrl+V to the target window with proper focus handling
+        /// </summary>
+        public static void SendPasteToTarget(IntPtr targetHwnd)
+        {
+            if (targetHwnd == IntPtr.Zero || !IsWindow(targetHwnd))
+            {
+                SendPaste();
+                return;
+            }
+
+            SetForegroundWindow(targetHwnd);
+            Thread.Sleep(50);
+            SendPaste();
+        }
+
+        /// <summary>
+        /// Sends Ctrl+V using reliable input simulation
+        /// </summary>
+        public static void SendPaste()
+        {
+            Thread.Sleep(30);
+            SendCtrlV();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using HelloClipboard.Constants;
+using HelloClipboard.Models;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -44,6 +45,8 @@ namespace HelloClipboard.Utils
                 displayText = $"[{item.Timestamp:HH:mm:ss}] " + displayText;
             if (item.IsPinned)
                 displayText = "[PIN] " + displayText;
+            if (item.Tags != null && item.Tags.Count > 0)
+                displayText = $"[{string.Join(",", item.Tags)}] " + displayText;
 
             // Metni çiz
             DrawTextWithHighlight(
@@ -57,6 +60,26 @@ namespace HelloClipboard.Utils
                 viewModel.GetHighlightRegex(searchTerm),
                 viewModel.CaseSensitive);
 
+            e.DrawFocusRectangle();
+        }
+
+        public static void RenderSnippetItem(DrawItemEventArgs e, ListBox listBox)
+        {
+            if (e.Index < 0 || e.Index >= listBox.Items.Count) return;
+            var item = listBox.Items[e.Index] as SnippetItem;
+            if (item == null) return;
+
+            bool selected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
+            Color backColor = selected ? AppColors.GetSelectionColor() : GetZebraColor(e.Index);
+            using (SolidBrush brush = new SolidBrush(backColor))
+                e.Graphics.FillRectangle(brush, e.Bounds);
+
+            string displayText = item.Name ?? "Untitled";
+            if (item.Tags != null && item.Tags.Count > 0)
+                displayText = $"[{string.Join(",", item.Tags)}] " + displayText;
+
+            var format = TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.EndEllipsis;
+            TextRenderer.DrawText(e.Graphics, displayText, e.Font, e.Bounds, AppColors.GetForeColor(), format);
             e.DrawFocusRectangle();
         }
 

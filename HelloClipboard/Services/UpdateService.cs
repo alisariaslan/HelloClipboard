@@ -134,7 +134,7 @@ namespace HelloClipboard
                     );
                     string targetPath = Path.Combine(downloadsPath, fileName);
 
-                    File.WriteAllBytes(targetPath, bytes);
+                    await File.WriteAllBytesAsync(targetPath, bytes);
 
                     MessageBox.Show(
                         $"Update downloaded to:\n{targetPath}\n\nThe application will now close and start the installer.",

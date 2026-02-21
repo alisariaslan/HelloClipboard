@@ -33,6 +33,7 @@ namespace HelloClipboard
                 Application.SetCompatibleTextRenderingDefault(false);
                 Task.Run(() => StartPipeServer());
                 SettingsLoader.LoadSettings();
+                SnippetLoader.Load();
                 Application.Run(new TrayApplicationContext());
             }
         }

@@ -19,6 +19,7 @@ namespace HelloClipboard
         private readonly TrayApplicationContext _trayApplicationContext;
         private bool _useRegexSearch;
         private bool _caseSensitiveSearch;
+        private string _tagFilter;
         public bool CaseSensitive => _caseSensitiveSearch;
         public bool IsLocked { get; private set; }
         private readonly TaskService _taskService;
@@ -42,7 +43,15 @@ namespace HelloClipboard
         private IEnumerable<ClipboardItem> GetFilteredItems(string searchTerm)
         {
             var cache = _trayApplicationContext.GetClipboardCache();
-            if (string.IsNullOrWhiteSpace(searchTerm)) return cache;
+
+            IEnumerable<ClipboardItem> result = cache;
+
+            // Tag filter
+            if (!string.IsNullOrEmpty(_tagFilter))
+                result = result.Where(i => i.Tags != null && i.Tags.Contains(_tagFilter, StringComparer.OrdinalIgnoreCase));
+
+            if (string.IsNullOrWhiteSpace(searchTerm)) return result;
+
             if (_useRegexSearch)
             {
                 try
@@ -51,7 +60,7 @@ namespace HelloClipboard
                         ? RegexOptions.None
                         : RegexOptions.IgnoreCase;
                     var regex = new Regex(searchTerm, options);
-                    return cache.Where(i => i.Content != null && regex.IsMatch(i.Content));
+                    return result.Where(i => i.Content != null && regex.IsMatch(i.Content));
                 }
                 catch
                 {
@@ -61,17 +70,15 @@ namespace HelloClipboard
             var comparison = _caseSensitiveSearch
                 ? StringComparison.Ordinal
                 : StringComparison.OrdinalIgnoreCase;
-            return cache.Where(i =>
+            return result.Where(i =>
                 i.Content != null &&
                 i.Content.IndexOf(searchTerm, comparison) >= 0);
         }
         public IEnumerable<ClipboardItem> GetDisplayList(string searchTerm = "")
         {
-            var cache = _trayApplicationContext.GetClipboardCache();
             bool invert = SettingsLoader.Current.InvertClipboardHistoryListing;
-            var filtered = string.IsNullOrWhiteSpace(searchTerm)
-                ? cache
-                : GetFilteredItems(searchTerm);
+            // Her zaman GetFilteredItems çağır; tag filtresi arama terimi olmasa da uygulanmalı
+            var filtered = GetFilteredItems(searchTerm);
             var pinned = filtered.Where(i => i.IsPinned);
             var unpinned = filtered.Where(i => !i.IsPinned);
             if (invert)
@@ -189,8 +196,9 @@ namespace HelloClipboard
             if (item.IsPinned)
             {
                 TempConfigLoader.Current.PinnedHashes.Remove(item.Id);
-                TempConfigLoader.Save();
             }
+            TempConfigLoader.Current.ItemTags.Remove(item.Id);
+            TempConfigLoader.Save();
             _trayApplicationContext.RequestDeletion(item);
         }
         #endregion
@@ -351,6 +359,35 @@ namespace HelloClipboard
                 PinText = item.IsPinned ? "Unpin" : "Pin"
             };
         }
+
+        #region Tags
+        public void SetTags(ClipboardItem item, List<string> tags)
+        {
+            if (item == null) return;
+            item.Tags = tags ?? new List<string>();
+            if (item.Tags.Count > 0)
+                TempConfigLoader.Current.ItemTags[item.Id] = item.Tags;
+            else
+                TempConfigLoader.Current.ItemTags.Remove(item.Id);
+            TempConfigLoader.Save();
+        }
+
+        public List<string> GetAllTags()
+        {
+            var cache = _trayApplicationContext.GetClipboardCache();
+            return cache
+                .Where(i => i.Tags != null)
+                .SelectMany(i => i.Tags)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(t => t)
+                .ToList();
+        }
+
+        public void SetTagFilter(string tag)
+        {
+            _tagFilter = tag;
+        }
+        #endregion
 
         public void Dispose()
         {
