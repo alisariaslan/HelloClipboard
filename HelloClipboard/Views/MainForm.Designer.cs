@@ -280,6 +280,7 @@
             btnSnippetDelete.Visible = false;
             btnSnippetDelete.Click += btnSnippetDelete_Click;
 
+            panel5.Controls.Add(btnSnippetTab);
             panel5.Controls.Add(btnSnippetAdd);
             panel5.Controls.Add(btnSnippetEdit);
             panel5.Controls.Add(btnSnippetDelete);

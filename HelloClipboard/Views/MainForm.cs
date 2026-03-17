@@ -219,8 +219,16 @@ namespace HelloClipboard
         {
             if (_isSnippetMode)
             {
+                SnippetItem previouslySelected = null;
+                if (keepSelection)
+                    previouslySelected = MessagesListBox.SelectedItem as SnippetItem;
                 MessagesListBox.BeginUpdate();
-                try { RefreshSnippetList(); }
+                try
+                {
+                    RefreshSnippetList();
+                    if (keepSelection && previouslySelected != null)
+                        MessagesListBox.SelectedItem = previouslySelected;
+                }
                 finally { MessagesListBox.EndUpdate(); }
                 return;
             }

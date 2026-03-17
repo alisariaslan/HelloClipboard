@@ -174,8 +174,16 @@ namespace HelloClipboard.Services
                     {
                         TempConfigLoader.Current.PinnedHashes.Remove(oldId);
                         TempConfigLoader.Current.PinnedHashes.Add(existingItem.Id);
-                        TempConfigLoader.Save();
                     }
+
+                    if (TempConfigLoader.Current.ItemTags.TryGetValue(oldId, out var oldTags))
+                    {
+                        TempConfigLoader.Current.ItemTags.Remove(oldId);
+                        TempConfigLoader.Current.ItemTags[existingItem.Id] = oldTags;
+                    }
+
+                    if (existingItem.IsPinned || TempConfigLoader.Current.ItemTags.ContainsKey(existingItem.Id))
+                        TempConfigLoader.Save();
 
                     _clipboardCache.Remove(existingItem);
                     _clipboardCache.Add(existingItem);
